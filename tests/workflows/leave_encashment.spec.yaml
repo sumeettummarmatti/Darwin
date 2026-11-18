@@ -1,0 +1,6 @@
+# Golden-run spec for leave_encashment, used by `hrx test --workflow leave_encashment`.
+workflow: leave_encashment
+subjects: [EMP-3310, EMP-5000, EMP-5001, EMP-5002, EMP-5003, EMP-5004]
+expect:
+  completes: true
+  no_duplicate_side_effects: true

@@ -1,0 +1,46 @@
+# Leave encashment on exit — added cold with hrx (docs/DEVGUIDE.md).
+# Finance signs off above ₹50,000 (the threshold lives in the policy pack, not here).
+workflow: leave_encashment
+version: 1
+service_line: leave_encashment
+description: Encash earned leave on exit, capped at 30 days; Finance signs off any payout above the pack's threshold.
+principal: agent:leave_encashment
+inputs:
+  person_id: { type: string }
+metrics:
+  budget_inr_per_run: 0.10
+  target_automation_rate: 0.80
+
+steps:
+  - id: compute
+    title: Compute encashment by rule
+    skill: policy.compute
+    deterministic: true
+    args:
+      pack: leave_encashment
+      facts: { earned_leave_balance: "{{get(subject.leave_balance, 'earned', 0)}}", basic_monthly: "{{subject.basic_monthly}}" }
+
+  - id: finance_sign_off
+    title: Finance sign-off
+    reserved: true
+    action: payroll.sign_off
+    when: "steps.compute.needs_finance_signoff == True"
+    needs: [compute]
+    question: "Sign off a leave encashment of ₹{{steps.compute.amount}} ({{steps.compute.encashable_days}} days) for {{subject.display_name}}?"
+    packet_from: [compute]
+
+  - id: pay
+    title: Add encashment to the settlement draft
+    connector: payroll
+    action: prepare_settlement
+    needs: [compute, finance_sign_off]
+    args: { employee_ref: "{{subject.id}}", leave_encashment: "{{steps.compute.amount}}", total: "{{steps.compute.amount}}", bank_account_token: "{{subject.bank_account_token}}" }
+    idempotency_key: "encash:{{subject.id}}:pay:v1"
+
+  - id: record
+    title: Record the encashment
+    connector: hr.record
+    action: record_event
+    needs: [pay]
+    args: { person_id: "{{subject.id}}", event: leave_encashment.prepared, payload: { days: "{{steps.compute.encashable_days}}", amount: "{{steps.compute.amount}}" } }
+    idempotency_key: "encash:{{subject.id}}:record:v1"

@@ -1,0 +1,45 @@
+# Leave encashment on exit — added cold with `hrx scaffold workflow leave-encashment`
+# (docs/DEVGUIDE.md walks through it). Requirement: encash earned leave on exit,
+# capped at 30 days; Finance signs off any payout above ₹50,000.
+pack: leave_encashment
+jurisdiction: IN
+version: 1
+effective_from: 2026-01-01
+owner: finance_controller
+
+defaults:
+  earned_leave_balance: 0
+
+tables:
+  cap_days: { default: 30 }
+  finance_signoff_above_inr: { default: 50000 }
+
+derive:
+  - id: LE-001
+    name: encashable_days
+    expr: "min(earned_leave_balance, lookup('cap_days', 'default'))"
+  - id: LE-002
+    name: amount
+    expr: "round(basic_monthly / 26 * encashable_days)"
+  - id: LE-003
+    name: needs_finance_signoff
+    expr: "amount > lookup('finance_signoff_above_inr', 'default')"
+
+guards:
+  - id: LE-G1
+    assert: "earned_leave_balance >= 0"
+    error: "negative leave balance"
+
+tests:
+  - name: "capped at thirty days"
+    given: { earned_leave_balance: 45, basic_monthly: 52000 }
+    expect: { encashable_days: 30, amount: 60000, needs_finance_signoff: true }
+  - name: "small payout needs no sign-off"
+    given: { earned_leave_balance: 10, basic_monthly: 52000 }
+    expect: { encashable_days: 10, amount: 20000, needs_finance_signoff: false }
+  - name: "exactly ₹50,000 is not above the threshold"
+    given: { earned_leave_balance: 25, basic_monthly: 52000 }
+    expect: { amount: 50000, needs_finance_signoff: false }
+  - name: "negative balances are refused"
+    given: { earned_leave_balance: -2, basic_monthly: 52000 }
+    expect_error: "negative"
