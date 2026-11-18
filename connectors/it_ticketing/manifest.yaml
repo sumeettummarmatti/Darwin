@@ -1,0 +1,10 @@
+connector: it.ticketing
+version: 1
+system: tickets
+domain: it
+description: TBO IT service desk (ticketing mock).
+actions:
+  open_ticket:   { side_effect: true, irreversible: false, compensation: close_ticket, capability: notify }
+  close_ticket:  { side_effect: true, irreversible: false, capability: notify }
+  comment:       { side_effect: true, irreversible: false, capability: notify }
+cost_inr_per_call: 0.0

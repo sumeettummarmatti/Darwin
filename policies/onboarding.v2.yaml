@@ -1,0 +1,57 @@
+# Onboarding policy: probation, day-one logistics, and the clauses the helpdesk
+# cites. Every helpdesk answer quotes a clause ID and this pack's version.
+pack: onboarding
+version: 2
+effective_from: 2026-01-01
+owner: hr_business_partner
+
+defaults:
+  employment_type: permanent
+
+tables:
+  probation_months: { permanent: 6, fixed_term: 0, contractor: 0, default: 6 }
+
+derive:
+  - id: ONB-001
+    name: probation_months
+    expr: "lookup('probation_months', employment_type)"
+  - id: ONB-002
+    name: induction_slot
+    expr: "'10:00 IST, day one'"
+  - id: ONB-003
+    name: chase_after_days
+    expr: "2"
+
+clauses:
+  - id: ONB-C1
+    title: What to bring on day one
+    text: "Bring an original government photo ID and your signed offer letter. Bank and PAN details are collected in the secure pre-joining form, never on paper on day one."
+    keywords: [bring, day one, first day, documents, id, offer letter, carry]
+  - id: ONB-C2
+    title: Laptop issue
+    text: "Laptops are issued at the IT desk at 10:00 on day one. The class depends on your role family and grade."
+    keywords: [laptop, machine, computer, it desk, device]
+  - id: ONB-C3
+    title: Access card
+    text: "Your access card is issued at reception on day one. Zones follow your role and office location."
+    keywords: [access card, badge, id card, reception, zones]
+  - id: ONB-C4
+    title: Buddy
+    text: "A buddy is assigned before day one and introduced to you by email."
+    keywords: [buddy, mentor, introduction]
+  - id: ONB-C5
+    title: Induction
+    text: "Induction runs from 10:00 to 13:00 on day one. Payroll questions go to the payroll desk."
+    keywords: [induction, orientation, schedule, timing]
+  - id: ONB-C6
+    title: Probation
+    text: "Probation is six months for permanent roles. Confirmation is reviewed by your reporting manager."
+    keywords: [probation, confirmation]
+  - id: ONB-C7
+    title: Form 16 for joiners
+    text: "Form 16 is issued annually for the financial year. For a mid-year joiner, Part A from TBO covers only the period of employment with TBO; income from a previous employer appears on that employer's Form 16."
+    keywords: [form 16, form-16, tax certificate, tds]
+
+tests:
+  - { given: { employment_type: permanent }, expect: { probation_months: 6 } }
+  - { given: { employment_type: contractor }, expect: { probation_months: 0 } }

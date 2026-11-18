@@ -1,0 +1,9 @@
+connector: mail
+version: 1
+system: mail
+domain: mail
+purpose: exit_communication
+description: Mail mock — every message is captured to a viewer, never sent. No real mail vendor, ever.
+actions:
+  send: { side_effect: true, irreversible: true, capability: notify }
+cost_inr_per_call: 0.0

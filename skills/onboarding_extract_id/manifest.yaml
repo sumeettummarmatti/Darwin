@@ -1,0 +1,11 @@
+skill: onboarding.extract_id
+version: 1
+kind: model
+description: Reads the uploaded ID scan and checks it is legible and matches the record. Unsure ⇒ human queue, never a guess.
+inputs: [args.scan_text, args.scan_quality, subject.display_name]
+outputs: { legible: boolean, name_matches: boolean, confidence: number, reasoning: string }
+model_tier: 1
+escalate_to_tier: 2
+escalate_when: "confidence < 0.8"
+capabilities: [compute]
+prompt_version: 1

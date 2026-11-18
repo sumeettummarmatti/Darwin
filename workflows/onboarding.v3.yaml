@@ -1,0 +1,155 @@
+# Onboarding — offer accepted → ready for day one.
+# IT, Admin, Finance and the manager loops close with no email and no chasing.
+# Read what is NOT here: no retries, no audit calls, no metering, no approval
+# plumbing. The kernel supplies all of it.
+workflow: onboarding
+version: 3
+service_line: onboarding
+description: Offer accepted → ready for day one. Entitlements by rule; every side effect keyed, verified and audited.
+principal: agent:onboarding
+trigger:
+  events: [hire.offer_accepted]
+inputs:
+  person_id: { type: string }
+  band_exception_requested: { type: boolean, default: false }
+metrics:
+  budget_inr_per_run: 1.50
+  target_automation_rate: 0.85
+
+steps:
+  - id: resolve_entitlements
+    title: Resolve entitlements by rule
+    skill: policy.compute
+    deterministic: true
+    args:
+      pack: entitlements
+      facts: { grade: "{{subject.grade}}", role_family: "{{subject.role_family}}", location: "{{subject.location}}", employment_type: "{{subject.employment_type}}" }
+
+  - id: onboarding_terms
+    title: Probation and day-one terms
+    skill: policy.compute
+    deterministic: true
+    args:
+      pack: onboarding
+      facts: { employment_type: "{{subject.employment_type}}" }
+
+  - id: band_exception
+    title: Payroll band exception
+    reserved: true
+    action: policy.grant_exception
+    when: "inputs.band_exception_requested == True"
+    needs: [resolve_entitlements]
+    question: "Approve a payroll band exception for {{subject.display_name}} ({{subject.grade}}) above the standard band {{steps.resolve_entitlements.payroll_band}}?"
+    packet_from: [resolve_entitlements]
+    decision_fields: { approved_band: string }
+
+  - id: verify_id_document
+    title: Check the uploaded ID scan
+    skill: onboarding.extract_id
+    args: { scan_text: "{{subject.id_scan_text}}", scan_quality: "{{subject.id_scan_quality}}" }
+
+  - id: it_ticket
+    title: Raise IT provisioning ticket
+    connector: it.ticketing
+    action: open_ticket
+    needs: [resolve_entitlements]
+    args:
+      queue: it-provisioning
+      title: "New joiner kit — class {{steps.resolve_entitlements.laptop_class}} laptop for {{subject.id}}"
+      body: "Software: {{steps.resolve_entitlements.software_bundle}}. Needed by {{subject.start_date}}."
+      priority: normal
+      due: "{{subject.start_date}}"
+    idempotency_key: "onb:{{subject.id}}:ticket:v3"
+    compensation: close_ticket
+
+  - id: allocate_laptop
+    title: Allocate laptop
+    connector: it.assets
+    action: allocate
+    needs: [it_ticket]
+    args:
+      asset_class: "{{steps.resolve_entitlements.laptop_class}}"
+      holder_token: "{{subject.identity_key_token}}"
+      holder_ref: "{{subject.id}}"
+      software: "{{steps.resolve_entitlements.software_bundle}}"
+    idempotency_key: "onb:{{subject.id}}:asset:v3"
+    compensation: release
+    invariants:
+      - check: "args.asset_class == steps.resolve_entitlements.laptop_class"
+        class: entitlement_mismatch
+        claim: "laptop class in the request differs from the entitlement rule"
+
+  - id: issue_access_card
+    title: Issue access card
+    connector: admin.access
+    action: issue_card
+    needs: [resolve_entitlements]
+    args:
+      holder_token: "{{subject.identity_key_token}}"
+      zones: "{{steps.resolve_entitlements.access_zones}}"
+      valid_from: "{{subject.start_date}}"
+    idempotency_key: "onb:{{subject.id}}:card:v3"
+    compensation: revoke_card
+
+  - id: create_account
+    title: Create email + directory entry
+    connector: directory
+    action: create_account
+    args:
+      display_name: "{{subject.display_name}}"
+      email_local: "{{subject.email_local}}"
+      manager_id: "{{subject.manager_id}}"
+      buddy_id: "{{subject.buddy_id}}"
+      org_unit: "{{subject.org_unit}}"
+    idempotency_key: "onb:{{subject.id}}:account:v3"
+    compensation: suspend_account
+
+  - id: payroll_setup
+    title: Set up payroll (PAN and bank as vault tokens)
+    connector: payroll
+    action: setup_employee
+    needs: [resolve_entitlements, verify_id_document, band_exception]
+    args:
+      employee_ref: "{{subject.id}}"
+      pan_token: "{{subject.pan_token}}"
+      bank_account_token: "{{subject.bank_account_token}}"
+      band: "{{steps.band_exception.approved_band if 'band_exception' in steps else steps.resolve_entitlements.payroll_band}}"
+      start_date: "{{subject.start_date}}"
+    idempotency_key: "onb:{{subject.id}}:payroll:v3"
+    compensation: deactivate
+
+  - id: welcome_draft
+    title: Draft welcome email
+    skill: onboarding.welcome_draft
+    needs: [create_account]
+    args: { start_date: "{{subject.start_date}}", buddy_name: "{{subject.buddy_name}}", manager_name: "{{subject.manager_name}}" }
+
+  - id: send_welcome
+    title: Send welcome email
+    connector: mail
+    action: send
+    needs: [welcome_draft]
+    args: { to: "{{steps.create_account.data.email}}", subject: "{{steps.welcome_draft.subject}}", body: "{{steps.welcome_draft.body}}" }
+    idempotency_key: "onb:{{subject.id}}:welcome:v3"
+
+  - id: schedule_induction
+    title: Schedule induction with manager and buddy
+    connector: calendar
+    action: create_event
+    needs: [create_account]
+    args:
+      title: "Induction — {{subject.display_name}}"
+      at: "{{subject.start_date}}T10:00"
+      attendees: ["{{steps.create_account.data.email}}", "{{subject.manager_id}}", "{{subject.buddy_id}}"]
+    idempotency_key: "onb:{{subject.id}}:induction:v3"
+
+  - id: record_ready
+    title: Record ready-for-day-one
+    connector: hr.record
+    action: record_event
+    needs: [allocate_laptop, issue_access_card, payroll_setup, send_welcome, schedule_induction, onboarding_terms]
+    args:
+      person_id: "{{subject.id}}"
+      event: onboarding.ready_for_day_one
+      payload: { laptop: "{{steps.allocate_laptop.data.serial}}", card: "{{steps.issue_access_card.record_id}}", probation_months: "{{steps.onboarding_terms.probation_months}}" }
+    idempotency_key: "onb:{{subject.id}}:ready:v3"

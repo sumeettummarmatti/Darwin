@@ -1,0 +1,10 @@
+skill: onboarding.welcome_draft
+version: 1
+kind: model
+description: Drafts the welcome email for a new joiner. Names reach the model as placeholders and are restored inside the kernel.
+inputs: [subject.display_name, subject.role_title, subject.location, args.start_date, args.buddy_name, args.manager_name]
+outputs: { subject: string, body: string, confidence: number }
+model_tier: 1
+escalate_to_tier: 1
+capabilities: [draft, notify]
+prompt_version: 1

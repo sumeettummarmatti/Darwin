@@ -1,0 +1,13 @@
+skill: prativaad.review
+version: 1
+kind: model
+description: >
+  Prativaad gate A's model residue. Sees only the plan's shape (action names, argument keys, the
+  rules layer's findings) — never personal data — and asks the judgement-shaped question the
+  deterministic checks cannot: "find the reason this must not run".
+inputs: [plan.workflow, plan.step, plan.action, plan.arg_keys, plan.rules_objections, plan.classes_to_consider]
+outputs: { verdict: string, objections: array, confidence: number }
+model_tier: 1
+escalate_to_tier: 1
+capabilities: [recommend]
+prompt_version: 1

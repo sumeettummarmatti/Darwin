@@ -1,0 +1,12 @@
+connector: it.assets
+version: 1
+system: assets
+domain: it
+purpose: onboarding_logistics
+description: Laptop / asset allocation (asset mock). Not idempotent on its side — our outbox is.
+actions:
+  allocate: { side_effect: true, irreversible: true, compensation: release, capability: provision }
+  release:  { side_effect: true, irreversible: false, capability: deprovision }
+  recover:  { side_effect: true, irreversible: true, capability: deprovision }
+queries: [allocations_for]
+cost_inr_per_call: 0.0

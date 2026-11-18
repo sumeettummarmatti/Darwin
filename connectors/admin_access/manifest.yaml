@@ -1,0 +1,11 @@
+connector: admin.access
+version: 1
+system: access
+domain: admin
+purpose: onboarding_logistics
+description: Physical access cards (Admin mock).
+actions:
+  issue_card:  { side_effect: true, irreversible: true, compensation: revoke_card, capability: provision }
+  revoke_card: { side_effect: true, irreversible: true, capability: deprovision }
+queries: [cards_for]
+cost_inr_per_call: 0.0

@@ -1,0 +1,8 @@
+connector: esign
+version: 1
+system: esign
+domain: esign
+description: SPARE — document signing envelopes, pre-registered for the live extension test.
+actions:
+  send_envelope: { side_effect: true, irreversible: true, capability: notify }
+cost_inr_per_call: 0.0

@@ -1,0 +1,13 @@
+connector: hr.record
+version: 1
+system: sor
+domain: hr_record
+description: SETU's own system of record. Writes to it go through the governed executor like any external call.
+actions:
+  record_event:      { side_effect: true, irreversible: false, capability: record }
+  start_retention:   { side_effect: true, irreversible: false, capability: record }
+  record_leave:      { side_effect: true, irreversible: false, capability: record }
+  mark_exited:       { side_effect: true, irreversible: false, capability: record }
+  upgrade_pointer:   { side_effect: true, irreversible: false, capability: record }
+  suppress_and_delete: { side_effect: true, irreversible: true, capability: record }
+cost_inr_per_call: 0.0

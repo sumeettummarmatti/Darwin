@@ -1,0 +1,61 @@
+# Role → entitlement resolution for onboarding. Tier 0: no model in this path.
+pack: entitlements
+version: 2
+effective_from: 2026-01-01
+owner: hr_business_partner
+description: Laptop class, software bundle, access zones and payroll band, by rule.
+
+defaults:
+  employment_type: permanent
+
+tables:
+  laptop_by_family:   { engineering: A, data: A, product: B, operations: B, finance: B, hr: C, sales: C, default: C }
+  lead_days_by_class: { A: 9, B: 5, C: 3 }
+  software_by_family:
+    engineering: [ide-suite, docker-desktop, vpn, sso, git-client]
+    data:        [ide-suite, notebook-server, vpn, sso, bi-reader]
+    product:     [design-suite, vpn, sso, bi-reader]
+    finance:     [erp-finance, vpn, sso, spreadsheet-pro]
+    default:     [office-suite, vpn, sso]
+  zones_by_location:
+    IN-HR: [GGN-LOBBY, GGN-FLOOR-4, GGN-CAFE]
+    IN-KA: [BLR-LOBBY, BLR-FLOOR-2, BLR-CAFE]
+    IN-MH: [BOM-LOBBY, BOM-FLOOR-7]
+    default: [VISITOR]
+  extra_zones_by_family: { engineering: [LAB], data: [LAB], finance: [FIN-SECURE], default: [] }
+  band_by_grade: { L1: B1, L2: B1, L3: B2, L4: B3, L5: B4, L6: B5, L7: B6 }
+
+derive:
+  - id: ENT-001
+    name: laptop_class
+    expr: "'A' if grade in ['L6', 'L7'] else lookup('laptop_by_family', role_family)"
+  - id: ENT-002
+    name: asset_lead_days
+    expr: "lookup('lead_days_by_class', laptop_class)"
+  - id: ENT-003
+    name: software_bundle
+    expr: "lookup('software_by_family', role_family)"
+  - id: ENT-004
+    name: access_zones
+    expr: "lookup('zones_by_location', location) + lookup('extra_zones_by_family', role_family)"
+  - id: ENT-005
+    name: payroll_band
+    expr: "lookup('band_by_grade', grade)"
+
+guards:
+  - id: ENT-G1
+    when: "employment_type == 'contractor'"
+    assert: "'FIN-SECURE' not in access_zones"
+    error: "contractors may not be granted the finance secure zone"
+
+tests:
+  - given: { grade: L4, role_family: engineering, location: IN-KA }
+    expect: { laptop_class: A, payroll_band: B3, access_zones: [BLR-LOBBY, BLR-FLOOR-2, BLR-CAFE, LAB] }
+  - given: { grade: L3, role_family: finance, location: IN-HR }
+    expect: { laptop_class: B, asset_lead_days: 5, access_zones: [GGN-LOBBY, GGN-FLOOR-4, GGN-CAFE, FIN-SECURE] }
+  - name: "senior grades get class A regardless of family"
+    given: { grade: L6, role_family: hr, location: IN-MH }
+    expect: { laptop_class: A }
+  - name: "contractor in finance is refused the secure zone"
+    given: { grade: L3, role_family: finance, location: IN-HR, employment_type: contractor }
+    expect_error: "finance secure zone"

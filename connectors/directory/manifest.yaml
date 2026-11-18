@@ -1,0 +1,9 @@
+connector: directory
+version: 1
+system: directory
+domain: directory
+description: Email + directory (mock). Exit suspends; it never deletes.
+actions:
+  create_account:  { side_effect: true, irreversible: true, compensation: suspend_account, capability: provision }
+  suspend_account: { side_effect: true, irreversible: false, capability: deprovision }
+cost_inr_per_call: 0.0

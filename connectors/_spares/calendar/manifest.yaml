@@ -1,0 +1,8 @@
+connector: calendar
+version: 1
+system: calendar
+domain: calendar
+description: SPARE — pre-registered for the live extension test (meetings, reminders).
+actions:
+  create_event: { side_effect: true, irreversible: false, capability: schedule }
+cost_inr_per_call: 0.0

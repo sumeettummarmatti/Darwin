@@ -1,0 +1,11 @@
+connector: payroll
+version: 1
+system: payroll
+domain: payroll
+purpose: payroll
+description: Payroll setup and settlement drafts (Finance mock). PAN and bank travel as vault tokens only.
+actions:
+  setup_employee:     { side_effect: true, irreversible: true, compensation: deactivate, capability: provision }
+  prepare_settlement: { side_effect: true, irreversible: true, money: true, capability: prepare }
+  deactivate:         { side_effect: true, irreversible: false, capability: deprovision }
+cost_inr_per_call: 0.0

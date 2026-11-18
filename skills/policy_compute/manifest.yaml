@@ -1,0 +1,8 @@
+skill: policy.compute
+version: 1
+kind: deterministic
+description: Evaluate a policy pack against facts. Tier 0 — the rules engine decides; no model, ever.
+inputs: [args.pack, args.facts]
+outputs: {}
+capabilities: [compute]
+policy_tags: [tier0]
