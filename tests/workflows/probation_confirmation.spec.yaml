@@ -1,0 +1,6 @@
+# Golden-run spec for probation_confirmation, used by `hrx test --workflow probation_confirmation`.
+workflow: probation_confirmation
+subjects: [EMP-5000, EMP-5001, EMP-5002, EMP-5003]
+expect:
+  completes: true
+  no_duplicate_side_effects: true

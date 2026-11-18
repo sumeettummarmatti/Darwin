@@ -1,0 +1,63 @@
+# Reserved-decision registry — EXTENSION POINT 5. Configuration HR can change.
+# v3 adds the PARAKH (talent intelligence) entries — config only, no code.
+# v4 adds probation confirmation (live-extension rehearsal 2).
+# An agent can never complete any action below. The kernel enforces it; the UI
+# merely reflects it. Editing this file changes kernel behaviour with no deploy.
+registry: reserved_decisions
+version: 4
+owner: hr_head
+
+reserved:
+  # Exit
+  - { action: exit.accept_resignation,     approver_role: [reporting_manager, hr_business_partner], mode: sequential }
+  - { action: exit.notice_buyout_agree,    approver_role: [hr_head] }
+  - { action: exit.set_release_date,       approver_role: [reporting_manager] }
+  # Hiring
+  - { action: hire.final_decision,         approver_role: [hiring_manager, hr_head], mode: sequential }
+  - { action: hire.offer_approve,          approver_role: [hr_head, finance_controller], mode: sequential }
+  - { action: hire.reject_candidate,       approver_role: [hiring_manager] }
+  # Compensation and policy
+  - { action: comp.change_salary_grade_role, approver_role: [hr_head, finance_controller], mode: sequential }
+  - { action: policy.grant_exception,      approver_role: [hr_head] }
+  # Discipline
+  - { action: discipline.terminate,        approver_role: [hr_head, legal], mode: sequential }
+  - { action: discipline.pip_initiate,     approver_role: [hr_business_partner] }
+  # Finance and statutory
+  - { action: payroll.sign_off,            approver_role: [finance_controller] }
+  - { action: statutory.file,              approver_role: [finance_controller] }
+  # Onboarding
+  - { action: onboarding.document_verify,  approver_role: [hr_business_partner], note: "identity documents are verified by a person" }
+  # Talent intelligence (PARAKH)
+  - { action: sourcing.campaign_approve,     approver_role: [talent_acquisition_lead], note: "target list, notice-first template and lawful-basis attestation" }
+  - { action: sourcing.add_source,           approver_role: [legal, dpo], mode: sequential, note: "a new data source is a lawful-basis determination" }
+  - { action: sourcing.restricted_exception, approver_role: [legal, hr_head], mode: sequential }
+  # Probation
+  - { action: probation.confirm,           approver_role: [reporting_manager], note: "confirm or extend probation" }
+  # Leave beyond the auto-booking limit
+  - { action: leave.manager_approve,       approver_role: [reporting_manager] }
+
+route_only_never_decide:
+  - { action: posh.complaint,        route_to_role: posh_committee }
+  - { action: grievance.complaint,   route_to_role: ethics_officer }
+  - { action: whistleblower.report,  route_to_role: ethics_officer }
+
+agent_capabilities:
+  may: [prepare, compute, draft, notify, schedule, recommend, provision, deprovision, record]
+  may_never: [approve, accept, reject_candidate, sign_off, decide]
+
+# Facts that only a reserved decision may set. Prativaad's reserved_leakage
+# check objects to any step that acts on one without a reserved step upstream.
+reserved_facts: [last_working_day, notice_buyout_days, salary, grade, offer_ctc, band_exception]
+
+tests:
+  - { action: probation.confirm, principal: agent, expect: refuse }
+  - { action: sourcing.campaign_approve, principal: agent, expect: refuse }
+  - { action: sourcing.add_source, principal: human, roles: [talent_acquisition_lead], expect: refuse, name: "a recruiter cannot add a sourcing source" }
+  - { action: exit.accept_resignation, principal: agent, expect: refuse }
+  - { action: payroll.sign_off,        principal: agent, expect: refuse }
+  - { action: hire.reject_candidate,   principal: agent, expect: refuse }
+  - { action: anything.approve_leave,  principal: agent, expect: refuse, name: "may_never verb prefix is caught on any action" }
+  - { action: it.assets.allocate,      principal: agent, expect: permit }
+  - { action: grievance.complaint,     principal: agent, expect: route_only }
+  - { action: exit.notice_buyout_agree, principal: human, roles: [hr_head], expect: permit }
+  - { action: exit.notice_buyout_agree, principal: human, roles: [hiring_manager], expect: refuse, name: "wrong role is refused even for a human" }

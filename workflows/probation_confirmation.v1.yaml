@@ -1,0 +1,49 @@
+# Probation confirmation — second cold rehearsal with hrx. Zero core changes.
+# The rule says when the review is due; the manager decides; the platform records and tells people.
+workflow: probation_confirmation
+version: 1
+service_line: probation_confirmation
+description: Open the probation review when it falls due; the reporting manager confirms or extends; the record and calendar follow.
+principal: agent:probation_confirmation
+inputs:
+  person_id: { type: string }
+metrics:
+  budget_inr_per_run: 0.10
+  target_automation_rate: 0.70
+
+steps:
+  - id: compute
+    title: Compute the review date by rule
+    skill: policy.compute
+    deterministic: true
+    args:
+      pack: probation_confirmation
+      facts: { date_of_joining: "{{subject.date_of_joining}}", today: "{{today}}", employment_type: "{{subject.employment_type}}" }
+
+  - id: manager_decision
+    title: Confirm or extend probation
+    reserved: true
+    action: probation.confirm
+    when: "steps.compute.review_open == True"
+    needs: [compute]
+    question: "Probation for {{subject.display_name}} ends on {{steps.compute.due_on}}. Confirm them, or extend (once, per policy)?"
+    packet_from: [compute]
+    decision_fields: { outcome: string }
+
+  - id: record
+    title: Record the outcome
+    connector: hr.record
+    action: record_event
+    needs: [manager_decision]
+    when: "steps.compute.review_open == True"
+    args: { person_id: "{{subject.id}}", event: probation.decided, payload: { due_on: "{{steps.compute.due_on}}", outcome: "{{get(steps.manager_decision, 'outcome') or 'confirmed'}}" } }
+    idempotency_key: "probation:{{subject.id}}:record:v1"
+
+  - id: notify
+    title: Put the outcome on the employee's calendar
+    connector: calendar
+    action: create_event
+    needs: [record]
+    when: "steps.compute.review_open == True"
+    args: { title: "Probation outcome", at: "{{today}}", attendees: ["{{subject.email}}"] }
+    idempotency_key: "probation:{{subject.id}}:notify:v1"

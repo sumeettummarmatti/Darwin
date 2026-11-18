@@ -1,0 +1,39 @@
+# Probation confirmation — second cold rehearsal of the live extension test (hrx scaffold).
+# The rule computes when a review is due; only the reporting manager confirms or extends.
+pack: probation_confirmation
+version: 1
+effective_from: 2026-01-01
+owner: hr_business_partner
+
+defaults:
+  employment_type: permanent
+
+tables:
+  probation_days: { permanent: 182, default: 0 }
+  review_window_days: { default: 14 }
+  max_extensions: { default: 1 }
+
+derive:
+  - id: PC-001
+    name: probation_days
+    expr: "lookup('probation_days', employment_type)"
+  - id: PC-002
+    name: due_on
+    expr: "add_days(date_of_joining, probation_days)"
+  - id: PC-003
+    name: days_to_due
+    expr: "days_between(today, due_on)"
+  - id: PC-004
+    name: review_open
+    expr: "probation_days > 0 and days_to_due <= lookup('review_window_days', 'default')"
+
+tests:
+  - name: "review opens two weeks before the end of probation"
+    given: { date_of_joining: "2026-06-01", today: "2026-11-20" }
+    expect: { due_on: "2026-11-30", review_open: true }
+  - name: "too early to review"
+    given: { date_of_joining: "2026-10-01", today: "2026-11-20" }
+    expect: { review_open: false }
+  - name: "no probation for contractors"
+    given: { date_of_joining: "2026-06-01", today: "2026-11-20", employment_type: contractor }
+    expect: { probation_days: 0, review_open: false }
