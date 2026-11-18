@@ -47,7 +47,12 @@ class AuditEntry:
 
 
 def _digest(prev_hash: str, row: dict[str, Any]) -> str:
-    material = prev_hash + "|" + dumps({k: row.get(k) for k in _HASHED})
+    fields = {k: row.get(k) for k in _HASHED}
+    # Normalise numeric types so the hash is identical before and after a database round trip.
+    fields["inr"] = float(fields["inr"] or 0)
+    for key in ("tier", "tokens_in", "tokens_out", "latency_ms"):
+        fields[key] = int(fields[key] or 0)
+    material = prev_hash + "|" + dumps(fields)
     return "sha256:" + hashlib.sha256(material.encode()).hexdigest()
 
 

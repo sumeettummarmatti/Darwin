@@ -161,7 +161,13 @@ class Expression:
 
     def evaluate(self, facts: Mapping[str, Any], functions: Mapping[str, Callable] | None = None) -> Any:
         funcs = {**SAFE_FUNCTIONS, **(functions or {})}
-        return _Evaluator(facts, funcs).visit(self._tree)
+        try:
+            return _Evaluator(facts, funcs).visit(self._tree)
+        except ExpressionError:
+            raise
+        except (TypeError, ValueError, ZeroDivisionError, KeyError, OverflowError) as exc:
+            # Bad data fails closed as a policy error, never as a crash.
+            raise ExpressionError(f"{self.source!r}: {type(exc).__name__}: {exc}") from exc
 
     def __repr__(self) -> str:
         return f"Expression({self.source!r})"
