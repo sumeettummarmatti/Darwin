@@ -1,0 +1,74 @@
+# DRAFT v5 — prepared for the demo (Friday: the state amendment).
+# The draft "simplifies" fixed-term notice to follow the contract clause and,
+# in doing so, drops the statutory-floor guard. Prativaad gate B should block it.
+# Notice periods. Contract may exceed the statutory floor, never undercut it.
+# Statutory floor values are ILLUSTRATIVE for the demo (state Shops &
+# Establishments rules + contract terms); counsel supplies the real table.
+pack: notice_period
+jurisdiction: IN
+version: 5
+effective_from: 2026-12-01
+owner: hr_head
+
+defaults:
+  contract_notice_days: null
+  resignation_date: null
+  requested_last_day: null
+  basic_monthly: 0
+
+tables:
+  statutory_floor_days: { IN-KA: 30, IN-HR: 30, IN-MH: 30, default: 30 }
+
+rules:
+  - id: NP-001
+    when: "employment_type == 'permanent' and grade in ['L1', 'L2', 'L3']"
+    then: { notice_days: 30 }
+  - id: NP-002
+    when: "employment_type == 'permanent' and grade in ['L4', 'L5']"
+    then: { notice_days: 60 }
+  - id: NP-003
+    when: "employment_type == 'permanent' and grade in ['L6', 'L7']"
+    then: { notice_days: 90 }
+  - id: NP-004
+    when: "employment_type == 'probation'"
+    then: { notice_days: 14 }
+  - id: NP-005
+    when: "employment_type == 'fixed_term'"
+    then: { notice_days: "contract_notice_days" }
+
+derive:
+  - id: NP-010
+    name: last_working_day
+    when: "resignation_date != None"
+    expr: "add_days(resignation_date, notice_days)"
+  - id: NP-011
+    name: shortfall_days
+    when: "requested_last_day != None and resignation_date != None"
+    expr: "max(notice_days - days_between(resignation_date, requested_last_day), 0)"
+  - id: NP-012
+    name: buyout_amount
+    when: "requested_last_day != None and resignation_date != None"
+    expr: "round(basic_monthly / 26 * shortfall_days)"
+  - id: NP-013
+    name: buyout_is_reserved
+    expr: "True"
+
+# Gate B (Prativaad policy-change review) checks these properties over every
+# combination of the adversarial domains before a new version can activate.
+properties:
+  - id: NP-P1
+    holds: "employment_type != 'fixed_term' or notice_days >= lookup('statutory_floor_days', state)"
+    claim: "below statutory floor"
+adversarial:
+  employment_type: [permanent, probation, fixed_term]
+  grade: [L2, L5, L7]
+  state: [IN-KA, IN-HR, IN-MH]
+  contract_notice_days: [10, 7, 15, 30, 45]
+
+tests:
+  - { given: { grade: L5, employment_type: permanent, state: IN-HR }, expect: { notice_days: 60 } }
+  - { given: { grade: L2, employment_type: probation, state: IN-HR }, expect: { notice_days: 14 } }
+  - { given: { grade: L3, employment_type: permanent, state: IN-KA, resignation_date: "2026-11-20" }, expect: { last_working_day: "2026-12-20" } }
+  - name: "buyout computes shortfall and amount, and is always reserved"
+    given: { grade: L4, employment_type: permanent, state: IN-HR, resignation_date: "2026-11-01", requested_last_day: "2026-12-01", basic_monthly: 78000 }
+    expect: { notice_days: 60, shortfall_days: 30, buyout_amount: 90000, buyout_is_reserved: true }
