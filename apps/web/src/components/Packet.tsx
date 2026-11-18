@@ -57,7 +57,10 @@ export function Packet({ item, onDecided }: { item: any; onDecided?: (result: an
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const p = item.packet || {};
-  const canDecide = (item.approver_roles || []).some((r: string) => user.roles.includes(r));
+  // An open item that already has approvals is a sequential one: only the next role may act.
+  const approvals = item.approvals || [];
+  const nextRole: string | null = approvals.length > 0 ? item.approver_roles[approvals.length] ?? null : null;
+  const canDecide = nextRole ? user.roles.includes(nextRole) : (item.approver_roles || []).some((r: string) => user.roles.includes(r));
 
   async function decide(decision: string) {
     setBusy(true); setError(null);
@@ -88,7 +91,7 @@ export function Packet({ item, onDecided }: { item: any; onDecided?: (result: an
           <span className="small muted">approver: {(item.approver_roles || []).join(" → ")}</span>
         </div>
         <h2 style={{ fontSize: 20, margin: "4px 0 6px" }}>{item.question}</h2>
-        {p.summary && <p style={{ margin: 0, color: "var(--ink-2)" }}>{p.summary}</p>}
+        {p.summary && p.summary !== item.title && <p style={{ margin: 0, color: "var(--ink-2)" }}>{p.summary}</p>}
       </div>
 
       {p.subject && Object.keys(p.subject).length > 0 && (
@@ -146,7 +149,7 @@ export function Packet({ item, onDecided }: { item: any; onDecided?: (result: an
             <span className="spacer" />
             {item.kind === "reserved" && <button className="btn ghost small" onClick={agentTries}>Let an agent try</button>}
           </div>
-          {!canDecide && <div className="small muted">You are acting as {user.name}. This needs {item.approver_roles.join(" or ")} — switch user at the top.</div>}
+          {!canDecide && <div className="small muted">You are acting as {user.name}. {nextRole ? `The next approval must come from ${nextRole.replace(/_/g, " ")}` : `This needs ${item.approver_roles.join(" or ")}`} — switch user at the top.</div>}
           <div className="small muted mono">binds to {short(item.context_hash, 26)}</div>
         </div>
       ) : (
