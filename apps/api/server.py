@@ -20,7 +20,7 @@ from fastapi.responses import FileResponse, JSONResponse
 
 from core import config, intents, metrics
 from core.connectors_sdk import TransportError
-from core.db import dumps, loads
+from core.db import loads
 from core.kernel import Kernel
 from core.queue import QueueError
 from core.rules.packs import PackLoadError, parse_pack
@@ -552,4 +552,4 @@ def spa(path: str) -> Any:
     target = WEB_DIST / path
     if path and target.is_file():
         return FileResponse(target)
-    return FileResponse(WEB_DIST / "index.html")
+    return FileResponse(WEB_DIST / "index.html", headers={"Cache-Control": "no-cache"})
