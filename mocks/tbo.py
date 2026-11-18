@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS calls (
 """
 
 CHAOS_MODES = ("error_500", "timeout_after_commit", "ack_no_commit", "down")
+READ_OPS = {"allocations_for", "returns_for", "cards_for", "signals", "applicants"}
 
 
 def _now() -> str:
@@ -112,7 +113,9 @@ class TboMocks:
         handler = self._ops.get((system, op))
         if handler is None:
             raise TransportError(f"unknown operation {system}.{op}", status=404)
-        mode = self._take_chaos(system)
+        # Reads only suffer outages; write-only failure modes (timeout after commit,
+        # 200 without commit) are kept for the writes they are meant to exercise.
+        mode = self._take_chaos(system, read_only=op in READ_OPS)
         if mode in ("error_500", "down"):
             self._log(system, op, "500")
             raise TransportError(f"{system} returned 500 Internal Server Error", status=500)
@@ -150,10 +153,12 @@ class TboMocks:
     def chaos_state(self) -> list[dict[str, Any]]:
         return self._rows("SELECT * FROM chaos")
 
-    def _take_chaos(self, system: str) -> str | None:
+    def _take_chaos(self, system: str, read_only: bool = False) -> str | None:
         with self._lock:
             row = self._conn.execute("SELECT mode, remaining FROM chaos WHERE system=?", (system,)).fetchone()
             if not row:
+                return None
+            if read_only and row["mode"] not in ("error_500", "down"):
                 return None
             if row["remaining"] > 0:
                 if row["remaining"] == 1:
