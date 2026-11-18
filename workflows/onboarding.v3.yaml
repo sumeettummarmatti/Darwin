@@ -113,7 +113,7 @@ steps:
       employee_ref: "{{subject.id}}"
       pan_token: "{{subject.pan_token}}"
       bank_account_token: "{{subject.bank_account_token}}"
-      band: "{{steps.band_exception.approved_band if 'band_exception' in steps else steps.resolve_entitlements.payroll_band}}"
+      band: "{{get(get(steps, 'band_exception'), 'approved_band') or steps.resolve_entitlements.payroll_band}}"
       start_date: "{{subject.start_date}}"
     idempotency_key: "onb:{{subject.id}}:payroll:v3"
     compensation: deactivate
