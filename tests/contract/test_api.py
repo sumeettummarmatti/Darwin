@@ -47,3 +47,9 @@ def test_chat_intents(client):
 def test_drill_endpoint_refuses_everything(client):
     out = client.post("/api/drill", json={"user_id": "USR-103"}).json()
     assert out["all_refused"]
+
+
+def test_policy_activation_refuses_path_traversal(client):
+    yaml_text = "pack: ../../core/evil\nversion: 9\neffective_from: 2026-01-01\nrules: [{id: R1, then: {x: 1}}]\ntests: [{given: {}, expect: {x: 1}}]\n"
+    r = client.post("/api/policies/notice_period/activate", json={"yaml": yaml_text}).json()
+    assert r["ok"] is False

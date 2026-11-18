@@ -9,6 +9,7 @@ A thin layer: every endpoint delegates to the kernel. The console is an
 from __future__ import annotations
 
 import os
+import re
 import threading
 from pathlib import Path
 from typing import Any
@@ -27,6 +28,7 @@ from core.rules.packs import PackLoadError, parse_pack
 from core.reserved import RegistryLoadError, parse_registry
 
 WEB_DIST = config.ROOT / "apps" / "web" / "dist"
+SAFE_NAME = re.compile(r"[a-z0-9_]+")
 
 
 class Holder:
@@ -386,6 +388,11 @@ def policy_activate(name: str, body: dict[str, Any] = Body(...)) -> dict[str, An
         pack = parse_pack(raw, "<activate>")
     except PackLoadError as exc:
         return {"ok": False, "reason": str(exc)}
+    # The file name comes from the draft, so it must be a plain identifier: no path traversal.
+    if not SAFE_NAME.fullmatch(pack.name) or (pack.jurisdiction and not SAFE_NAME.fullmatch(pack.jurisdiction.lower())):
+        return {"ok": False, "reason": "pack and jurisdiction names must be lowercase letters, digits and underscores"}
+    if pack.name != name:
+        return {"ok": False, "reason": f"draft declares pack '{pack.name}' but is being activated as '{name}'"}
     suffix = f".{pack.jurisdiction.lower()}" if pack.jurisdiction else ""
     path = config.POLICIES_DIR / f"{pack.name}{suffix}.v{pack.version}.yaml"
     if path.exists():
@@ -549,7 +556,7 @@ def mock_http(system: str, op: str, payload: dict[str, Any] = Body(default={})) 
 def spa(path: str) -> Any:
     if not WEB_DIST.exists():
         return JSONResponse({"message": "SETU API is running. Build the console with `make web` (apps/web)."})
-    target = WEB_DIST / path
-    if path and target.is_file():
+    target = (WEB_DIST / path).resolve()
+    if path and target.is_file() and WEB_DIST.resolve() in target.parents:
         return FileResponse(target)
     return FileResponse(WEB_DIST / "index.html", headers={"Cache-Control": "no-cache"})
