@@ -20,8 +20,8 @@
       "steps_human": 20,
       "target_automation_rate": 0.7,
       "escalation_rate": 0.0,
-      "cycle_p50_s": 8640505.0,
-      "cycle_p95_s": 8640505.0,
+      "cycle_p50_s": 8640506.0,
+      "cycle_p95_s": 8640506.0,
       "tier_mix": {
         "0": 100,
         "1": 8,
@@ -72,6 +72,30 @@
       "cycle_p95_s": 5.0,
       "tier_mix": {
         "0": 133,
+        "1": 0,
+        "2": 0,
+        "3": 0
+      }
+    },
+    "leave_encashment": {
+      "workflow": "leave_encashment@v1",
+      "description": "Encash earned leave on exit, capped at 30 days; Finance signs off any payout above the pack's threshold.",
+      "runs": 0,
+      "completed": 0,
+      "in_flight": 0,
+      "cost_p50": null,
+      "cost_p95": null,
+      "cost_mean": null,
+      "budget_inr_per_run": 0.1,
+      "automation_rate": null,
+      "steps_done": 0,
+      "steps_human": 0,
+      "target_automation_rate": 0.8,
+      "escalation_rate": null,
+      "cycle_p50_s": null,
+      "cycle_p95_s": null,
+      "tier_mix": {
+        "0": 0,
         "1": 0,
         "2": 0,
         "3": 0
@@ -189,7 +213,7 @@
     "checked": 1391,
     "broken_at": null,
     "reason": null,
-    "head": "sha256:c9efd4dd46112a024e27677a774f12e2075f82883b4536d7a2fc8309356bcec9"
+    "head": "sha256:77a7b601a7f44221b70085a0547e23adeab86826fa265559bd20d38b7ba60bc0"
   },
   "prativaad": {
     "objections": 71,

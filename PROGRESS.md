@@ -10,43 +10,41 @@ Running log. Newest session at the top. Update at the end of every working sessi
 
 | | |
 |---|---|
-| **Phase** | 0 — Round 1 submission |
-| **Next gate** | Gate 0: 6-page architecture doc + 5-min video submitted |
-| **Blocking unknowns** | Round 1 deadline · team size · TBO volumes · mock API contracts |
-| **Kernel decision pending** | Temporal vs own Postgres state machine (Phase 1, task 1.1) |
-| **Lines of production code** | 0 — deliberately. Phase 0 is a writing and filming job |
+| **Phase** | Build (Phases 1–5 compressed into one session on the user's instruction — see D13) |
+| **Next gate** | Real model provider + TBO's mock contracts; then re-run `make bench` and the fault corpus |
+| **Blocking unknowns** | Round deadlines · TBO volumes · TBO mock API contracts · real model provider for calibration |
+| **Kernel decision** | Own durable state machine on SQLite (D14); workflow format unchanged |
+| **Tests** | 78 passing (`make test`); `hrx validate` and `hrx test` green |
 
 ### Gate status
 
 | Gate | What it proves | State |
 |---|---|---|
-| 0 | Round 1 submitted, no unprovable claims | ⬜ open |
-| 1 | Vertical slice: one step through all 7 governed-flow steps | ⬜ |
-| 2 | Onboarding end to end, real ₹/run and automation rate | ⬜ |
-| 3 | Reserved-decision drill clean | ⬜ |
-| 4 | **Exit line added with zero `core/` commits** | ⬜ |
-| 5 | Every published number reproducible by `make bench`; 3 unseen requirements rehearsed | ⬜ |
+| 0 | Round 1 submitted, no unprovable claims | ⬜ open — documents exist (DESIGN, docs/*); 6-pager and video not produced |
+| 1 | Vertical slice: one step through all 7 governed-flow steps | ✅ every connector step: Prativaad → authorize → outbox → connector → read-back → audit → ₹ |
+| 2 | Onboarding end to end, real ₹/run and automation rate | ✅ on the simulated provider (rates are a declared card, see COST.md) |
+| 3 | Reserved-decision drill clean | ✅ `/api/drill`, `tests/test_governance.py` |
+| 4 | **Exit line added with zero `core/` commits** | ✅ exit commit touches no `core/` file; PARAKH needed two kernel additions first (D17) |
+| 5 | Every published number reproducible by `make bench`; 3 unseen requirements rehearsed | 🟨 bench ✅; one rehearsal (leave encashment) of three |
 
 ### Measurements
 
-Empty until Gate 2. Do not pre-fill.
+From `make bench`, sim profile, synthetic dataset (bench/results/latest.md). Rupees use the declared rate card.
 
 | Workflow | ₹/run p50 | ₹/run p95 | Automation rate | Cycle time p50 | Escalation rate | Measured on |
 |---|---|---|---|---|---|---|
-| Onboarding | — | — | — | — | — | — |
-| Exit | — | — | — | — | — | — |
-| Leave | — | — | — | — | — | — |
-| Helpdesk | — | — | — | — | — | — |
+| Onboarding | ₹0.0070 | ₹0.0225 | 98% | demo clock (not meaningful) | 11% | 9 runs |
+| Exit | ₹0.0073 | ₹0.0081 | 81% | demo clock | 0% | 8 runs |
+| Leave | ₹0.0000 | ₹0.0000 | 90% | demo clock | 0% | 40 runs |
+| Helpdesk | ₹0.0024 | ₹0.0278 | 100% | demo clock | 0% | 32 runs |
 
 | Prativaad | Value | Measured on |
 |---|---|---|
-| Objections per 100 workflows | — | — |
-| Objection precision (upheld by human) | — | — |
-| Catch rate on fault corpus | — | — |
-| False-clear rate on fault corpus | — | — |
-| Cost overhead (% of workflow) | — | — |
-
----
+| Objections per run (bench week) | 71 over 90 runs, mostly low-severity compensation advisories | bench |
+| Objection precision (upheld by human) | 100% of resolved (resolutions are mostly kernel read-back verifications) | bench |
+| Catch rate on fault corpus | 88% (rules); 88% (rules + model) | 16 planted, sim |
+| False-alarm rate on clean steps | 0% | 4 clean |
+| Cost overhead | 21% of run cost (cap: 8% of run budget) | bench |
 
 ## Decisions
 
@@ -65,7 +63,15 @@ Append-only. If a decision is reversed, add a new row rather than editing the ol
 | D9 | 2026-11-19 | No-raid guard checks **TBO's** non-solicit obligations, not the candidate's freedom to move | Post-employment non-competes are void under s.27 Indian Contract Act; non-solicit clauses binding TBO are enforceable | — |
 | D10 | 2026-11-19 | ICP scoring is **deterministic**; the model only returns claims with character spans | Satisfies the cost rule, the explainability guardrail and invented-qualification defence with one mechanism | — |
 | D11 | 2026-11-19 | `core/` freeze CI check and the cost meter both land in **week 1**, not later | "Zero core commits" is unverifiable after the fact; a late cost meter produces estimates dressed as measurements | — |
-| D12 | 2026-11-19 | Phase 0 is **documents and video only** — no production code until Gate 0 | Round 1 is shortlisted on design, governance and cost logic. Writing kernel code now optimises for a round we have not reached | — |
+| D12 | 2026-11-19 | Phase 0 is **documents and video only** — no production code until Gate 0 | Round 1 is shortlisted on design, governance and cost logic. Writing kernel code now optimises for a round we have not reached | Reversed by D13 |
+| D13 | 2026-11-19 | Build the platform now, overnight, kernel-first | Explicit instruction from the team lead to build and push through the night. Reverses D12 | — |
+| D14 | 2026-11-19 | Own durable state machine on SQLite instead of Temporal | Zero-setup `make up` for judges; state in the same DB as the record; every step persisted before and after acting so a killed process resumes (tested). Schema is plain SQL that ports to Postgres | — |
+| D15 | 2026-11-19 | Default model provider is an in-process **simulated** profile with a declared rate card | No real data may reach any model; reproducible bench; provider swap stays a config change (`openai_compatible` profile exists). All rupee figures are labelled as rate-card based | — |
+| D16 | 2026-11-19 | Our own record is written through the same governed executor (`hr.record` connector) | No back door: idempotency, read-back and audit apply to our writes too | — |
+| D17 | 2026-11-19 | Kernel additions before PARAKH: fan-out (`foreach`) steps, read-only actions, nested PII scrubbing, gate-D and suppression hooks for skills, SoR operations for sourced people | A differently-shaped line found real gaps. Made as separate `core:` commits before the line so the line itself touches no `core/` file | — |
+| D18 | 2026-11-19 | Prativaad model residue runs once per run, not before every irreversible step | Measured 46% of run spend with no catches on the sim provider; now 21%. Deterministic checks still run on every irreversible step | — |
+| D19 | 2026-11-19 | Deterministic vault tokens (keyed HMAC of field + value) | Lets the kernel link a new hire to a prior contractor record (duplicate laptop) without anything outside the vault seeing the PAN | — |
+| D20 | 2026-11-19 | Asset linkage uses a dedicated identity-key token, not the PAN token | Passing the PAN token to the asset system would itself breach purpose limitation | — |
 
 ---
 
@@ -103,6 +109,27 @@ Only the ones that could change what we do this week. Full list in `DESIGN.md` �
 ---
 
 ## Session log
+
+### 2026-11-19 (night) — the platform, built
+
+**Shipped** (all pushed to `main`, scoped commits, `core/` changes separate from service lines)
+- Kernel (VIDHI): safe policy language and packs that refuse to load untested; reserved registry with load-time and run-time enforcement; hash-linked audit; PII proxy and deterministic vault; model router with measured escalation and per-call ₹ metering; governed executor (outbox, same-key retries, read-back verification, breaker); human queue with context packets and hash-bound receipts; durable orchestrator (scheduled steps, fan-out, saga, kill-switch parking, workflow circuit breaker); Prativaad gates A–D; DPDP retention, DSR, consent, suppression; intent API; metrics with drill-downs.
+- Service lines on extension points: onboarding, exit, leave, helpdesk, PARAKH (sourcing, reply, assess-probe), leave encashment (added cold with hrx as the extension rehearsal).
+- Console (React + Vite): overview, demo story, workflows with the run rail, decisions and receipts, chat, talent, guardrails, policy packs with gate-B review, personal-data payload viewer, audit chain.
+- `hrx` scaffold / validate / test; `make bench` + fault corpus; 78 tests; Makefile, Dockerfile, CI with core-freeze and licence audit; README, DEVGUIDE, GOVERNANCE, COST, DEMO_SCRIPT.
+
+**Found and fixed along the way** (each in its own commit)
+- Bad facts crashed evaluation instead of failing closed; audit hash broke on SQLite int→REAL round trip; names scrubbed before emails left the domain visible; Prativaad crashed when it could not read to verify (now waits); a crashing skill stalled its run (now routes to a human); a band exception approved without a band broke payroll templating (found by the bench).
+
+**Honest results** — Prativaad's model layer adds nothing on the sim provider; overhead 21% of (very small) run cost. Helpdesk is 25% tier 0 by nature. Cycle times are demo-clock artefacts.
+
+**Open**
+1. Run the bench and fault corpus against a real tier-1 model (`openai_compatible`), then decide on Prativaad's model layer (PLAN §10 trigger: < 20% added ⇒ shrink).
+2. Two more cold rehearsals of the live extension test (only leave encashment done).
+3. Round 1 6-pager and video (`docs/DEMO_SCRIPT.md` has the beat sheet).
+4. Threshold calibration curve needs a real model — not claimed.
+5. Slack/Teams adapters: the chat surface uses the intent API, but no Bolt adapter is wired (no real workspace allowed).
+
 
 ### 2026-11-19 — Talent intelligence added; planning docs written
 

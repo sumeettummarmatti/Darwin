@@ -17,7 +17,9 @@ export default function Overview() {
   }
 
   if (!m) return <div className="empty">Loading measurements…</div>;
-  const wfs = Object.entries(m.workflows) as [string, any][];
+  const CORE_LINES = ["onboarding", "exit", "leave", "helpdesk"];
+  // Lines with no runs yet stay off the table, except the four core lines.
+  const wfs = (Object.entries(m.workflows) as [string, any][]).filter(([n, w]) => w.runs > 0 || CORE_LINES.includes(n));
   const totalRuns = wfs.reduce((a, [, w]) => a + w.runs, 0);
   const g = m.governance;
   const pv = m.prativaad;
@@ -49,7 +51,7 @@ export default function Overview() {
               const sum = tiers.reduce((a, b) => a + b, 0) || 1;
               return (
                 <tr key={name}>
-                  <td><b style={{ textTransform: "capitalize" }}>{name}</b><div className="small muted mono">{w.workflow}</div></td>
+                  <td><b style={{ textTransform: "capitalize" }}>{name.replace(/_/g, " ")}</b><div className="small muted mono">{w.workflow}</div></td>
                   <td>{w.completed}<span className="muted small"> / {w.runs}</span></td>
                   <td><button className="metric-btn" onClick={() => open("cost", name)}><b>{fmtInr(w.cost_p50, 4)}</b></button>
                     <div className="small muted">budget {fmtInr(w.budget_inr_per_run, 2)}</div></td>

@@ -3,7 +3,7 @@
 from tests.conftest import decide_open, settle
 
 
-def test_small_encashment_needs_no_signoff(kernel):
+def test_encashment_above_threshold_needs_finance_signoff(kernel):
     # Rahul: 21 earned days × ₹92,000/26 = ₹74,308 → above ₹50,000 → Finance signs off.
     run_id = kernel.orchestrator.start("leave_encashment", subject_id="EMP-3310", inputs={}, principal=kernel.principal("USR-103"))
     item = next(i for i in kernel.queue.list() if i["run_id"] == run_id)
