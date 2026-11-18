@@ -68,6 +68,29 @@ class SorService:
                          (p["last_working_day"], p["person_id"]))
         return {"status": "exited"}
 
+    def _op_register_pointer(self, p: dict[str, Any]) -> dict[str, Any]:
+        """Store a person with no lawful basis as a pointer: public link and nothing derived.
+
+        The fields kept are exactly those the caller passes from the sourcing_basis
+        pack's pointer definition; a suppressed identity is never stored again."""
+        if self.k.dpdp.is_suppressed(p["public_url"]):
+            return {"status": "suppressed", "stored": False}
+        identity = self.k.dpdp.identity_hash(p["public_url"])
+        person_id = "SRC-" + identity.split(":")[1][:8].upper()
+        allowed = set(p.get("store_fields") or [])
+        attrs = {k: v for k, v in (p.get("pointer") or {}).items() if k in allowed}
+        attrs["identity_hash"] = identity
+        self.k.sor.create_person(person_id, "sourced", f"Pointer · {p['pointer'].get('source_id', 'public source')}", attrs,
+                                 processing_mode="pointer_only", lawful_basis="none", actor=p.get("actor", "kernel"))
+        return {"status": "stored", "person_id": person_id, "fields": sorted(attrs)}
+
+    def _op_register_applicant(self, p: dict[str, Any]) -> dict[str, Any]:
+        """An applicant gave us their data for a role: store them with that basis."""
+        self.k.sor.create_person(p["candidate_id"], "candidate", p["display_name"], dict(p.get("attrs") or {}),
+                                 processing_mode="full", lawful_basis=p.get("basis", "voluntary_provision"),
+                                 actor=p.get("actor", "kernel"))
+        return {"status": "stored", "person_id": p["candidate_id"]}
+
     def _op_upgrade_pointer(self, p: dict[str, Any]) -> dict[str, Any]:
         self.k.sor.set_mode(p["person_id"], "full", p.get("basis", "itemised_consent"), p.get("actor", "kernel"),
                             "reply with explicit interest — consent artefact recorded")
