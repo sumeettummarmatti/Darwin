@@ -1,0 +1,173 @@
+# Exit — resignation → final settlement. Built ONLY from extension points:
+# this file, the notice_period + settlement packs, and existing connectors and
+# skills. Zero files in core/ (see the commit history for this line).
+workflow: exit
+version: 1
+service_line: exit
+description: Resignation → final settlement. The agent prepares; humans accept, agree buyouts and sign off pay.
+principal: agent:exit
+trigger:
+  events: [exit.resignation_submitted]
+  intents: [exit.resign]
+inputs:
+  person_id: { type: string }
+  letter_text: { type: string, default: "" }
+  resignation_date: { type: date, default: "{{today}}" }
+  requested_last_day: { type: date, default: null }
+metrics:
+  budget_inr_per_run: 2.50
+  target_automation_rate: 0.70
+
+steps:
+  # ── intake ──────────────────────────────────────────────────────────────
+  - id: screen_letter
+    title: Screen letter for route-only matters
+    skill: intake.screen
+    deterministic: true
+    args: { text: "{{inputs.letter_text}}" }
+
+  - id: route_grievance
+    title: Route grievance — and stop
+    route_only: true
+    action: grievance.complaint
+    when: "steps.screen_letter.route_only == True"
+    needs: [screen_letter]
+    args: { source_ref: "{{run.id}}:letter_text" }
+
+  # ── prepare (agent) ─────────────────────────────────────────────────────
+  - id: compute_notice
+    title: Compute notice period by rule
+    skill: policy.compute
+    deterministic: true
+    args:
+      pack: notice_period
+      facts:
+        employment_type: "{{subject.employment_type}}"
+        grade: "{{subject.grade}}"
+        state: "{{subject.location}}"
+        contract_notice_days: "{{subject.contract_notice_days}}"
+        resignation_date: "{{inputs.resignation_date}}"
+        requested_last_day: "{{inputs.requested_last_day}}"
+        basic_monthly: "{{subject.basic_monthly}}"
+
+  - id: compute_settlement_preview
+    title: Preview settlement by rule (gratuity, encashment)
+    skill: policy.compute
+    deterministic: true
+    needs: [compute_notice]
+    args:
+      pack: settlement
+      facts:
+        date_of_joining: "{{subject.date_of_joining}}"
+        last_working_day: "{{steps.compute_notice.last_working_day}}"
+        basic_monthly: "{{subject.basic_monthly}}"
+        earned_leave_balance: "{{get(subject.leave_balance, 'earned', 0)}}"
+
+  - id: prepare_packet
+    title: Prepare decision packet
+    skill: exit.prepare_packet
+    needs: [compute_notice, compute_settlement_preview]
+
+  # ── reserved: humans decide ─────────────────────────────────────────────
+  - id: accept_resignation
+    title: Accept resignation
+    reserved: true
+    action: exit.accept_resignation
+    needs: [prepare_packet]
+    question: "Accept {{subject.display_name}}'s resignation with a last working day of {{steps.compute_notice.last_working_day}}?"
+    packet_from: [compute_notice, compute_settlement_preview, prepare_packet]
+    decision_fields: { last_working_day: date }
+    export:
+      last_working_day: "outputs.last_working_day if get(outputs, 'last_working_day') else steps.compute_notice.last_working_day"
+
+  - id: notice_buyout
+    title: Notice-period buyout
+    reserved: true
+    action: exit.notice_buyout_agree
+    when: "inputs.requested_last_day != None and get(steps.compute_notice, 'shortfall_days', 0) > 0"
+    needs: [accept_resignation]
+    question: "Agree a buyout of {{steps.compute_notice.shortfall_days}} notice days (₹{{steps.compute_notice.buyout_amount}}) so {{subject.display_name}} can leave on {{inputs.requested_last_day}}?"
+    packet_from: [compute_notice]
+    export:
+      last_working_day: "inputs.requested_last_day"
+      notice_buyout_days: "steps.compute_notice.shortfall_days"
+
+  # ── deprovision (agent, after acceptance) ───────────────────────────────
+  - id: revoke_access_card
+    title: Revoke access card at 18:00 on the last working day
+    connector: admin.access
+    action: revoke_card
+    needs: [accept_resignation]
+    schedule_at: "{{facts.last_working_day}} 18:00"
+    args: { holder_token: "{{subject.identity_key_token}}", effective_at: "{{facts.last_working_day}}T18:00" }
+    idempotency_key: "exit:{{subject.id}}:card:v1"
+
+  - id: recover_laptop
+    title: Raise laptop recovery
+    connector: it.assets
+    action: recover
+    needs: [accept_resignation]
+    args: { holder_token: "{{subject.identity_key_token}}", due: "{{facts.last_working_day}}" }
+    idempotency_key: "exit:{{subject.id}}:asset:v1"
+
+  - id: suspend_email
+    title: Suspend (not delete) email after the last working day
+    connector: directory
+    action: suspend_account
+    needs: [accept_resignation]
+    schedule_at: "{{facts.last_working_day}} 23:30"
+    args: { employee_ref: "{{subject.email}}", effective_at: "{{facts.last_working_day}}T23:30" }
+    idempotency_key: "exit:{{subject.id}}:email:v1"
+
+  # ── settle ──────────────────────────────────────────────────────────────
+  - id: compute_settlement
+    title: Compute final settlement by rule
+    skill: policy.compute
+    deterministic: true
+    needs: [accept_resignation, notice_buyout]
+    args:
+      pack: settlement
+      facts:
+        date_of_joining: "{{subject.date_of_joining}}"
+        last_working_day: "{{facts.last_working_day}}"
+        basic_monthly: "{{subject.basic_monthly}}"
+        earned_leave_balance: "{{get(subject.leave_balance, 'earned', 0)}}"
+
+  - id: prepare_settlement
+    title: Prepare settlement draft in payroll
+    connector: payroll
+    action: prepare_settlement
+    needs: [compute_settlement]
+    args:
+      employee_ref: "{{subject.id}}"
+      bank_account_token: "{{subject.bank_account_token}}"
+      gratuity: "{{steps.compute_settlement.gratuity_amount}}"
+      leave_encashment: "{{steps.compute_settlement.leave_encashment}}"
+      total: "{{steps.compute_settlement.settlement_total}}"
+      due_by: "{{steps.compute_settlement.fnf_due_by}}"
+    idempotency_key: "exit:{{subject.id}}:settlement:v1"
+
+  - id: payroll_sign_off
+    title: Payroll sign-off
+    reserved: true
+    action: payroll.sign_off
+    needs: [prepare_settlement]
+    question: "Sign off the final settlement of ₹{{steps.compute_settlement.settlement_total}} for {{subject.display_name}}, due by {{steps.compute_settlement.fnf_due_by}}?"
+    packet_from: [compute_settlement]
+
+  # ── close ───────────────────────────────────────────────────────────────
+  - id: mark_exited
+    title: Mark exited in the record
+    connector: hr.record
+    action: mark_exited
+    needs: [payroll_sign_off, revoke_access_card, suspend_email, recover_laptop]
+    args: { person_id: "{{subject.id}}", last_working_day: "{{facts.last_working_day}}" }
+    idempotency_key: "exit:{{subject.id}}:exited:v1"
+
+  - id: start_retention
+    title: Start DPDP retention clocks
+    connector: hr.record
+    action: start_retention
+    needs: [mark_exited]
+    args: { person_id: "{{subject.id}}", from_date: "{{facts.last_working_day}}" }
+    idempotency_key: "exit:{{subject.id}}:retention:v1"

@@ -1,0 +1,23 @@
+skill: exit.prepare_packet
+version: 1
+kind: model
+description: Assembles the decision packet a human uses to accept a resignation. Explains computed values; never computes or decides.
+inputs:                                   # the PII proxy strips everything else
+  - subject.display_name
+  - subject.grade
+  - subject.date_of_joining
+  - steps.compute_notice.notice_days
+  - steps.compute_notice.last_working_day
+  - steps.compute_notice.shortfall_days
+  - steps.compute_settlement_preview.service_years_completed
+  - steps.compute_settlement_preview.gratuity_eligible
+  - steps.compute_settlement_preview.leave_encashment
+  - steps.compute_settlement_preview.settlement_total
+  - inputs.requested_last_day
+outputs: { summary: string, recommendation: string, confidence: number, reasoning: string, gratuity_explanation: "string?" }
+model_tier: 1
+escalate_to_tier: 2
+escalate_when: "confidence < 0.7"
+capabilities: [prepare, draft, recommend]          # 'accept' is absent — and could not be granted
+prompt_version: 1
+policy_tags: [exit, no_raw_pii_to_model]

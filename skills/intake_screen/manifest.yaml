@@ -1,0 +1,10 @@
+skill: intake.screen
+version: 1
+kind: deterministic
+description: >
+  Screens free text against the route-only lexicon (intents pack). Deterministic word matching —
+  it ROUTES a POSH / grievance / whistleblower matter; it never reads it for merit, classifies or summarises.
+inputs: [args.text]
+outputs: { route_only: boolean, action: "string?", rule_id: "string?" }
+capabilities: [compute]
+policy_tags: [tier0, route_only]

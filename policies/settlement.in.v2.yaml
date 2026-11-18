@@ -1,0 +1,79 @@
+# Full & final settlement: gratuity, leave encashment, EPF on final wages and
+# statutory timelines. The rules engine computes every number that acts; a
+# model may explain, never decide.
+#
+# Sources (summarised; counsel to confirm):
+#   Payment of Gratuity Act 1972 — s.4(1) five years' continuous service;
+#     s.4(2) 15 days' wages per completed year (wage/26 per day), a part year
+#     over six months counts as a year; ceiling ₹20,00,000.
+#   Code on Wages 2019 s.17(2) — wages due on resignation paid within two
+#     working days (calendar days used here; working-day calendar not modelled).
+#   PGA s.7(3) — gratuity paid within 30 days of becoming payable.
+#   EPF — employer share 12% of basic, on the statutory wage ceiling.
+pack: settlement
+jurisdiction: IN
+version: 2
+effective_from: 2026-04-01
+owner: finance_controller
+
+defaults:
+  earned_leave_balance: 0
+
+tables:
+  encashment_cap_days: { default: 45 }
+  gratuity_ceiling_inr: { default: 2000000 }
+  epf_wage_ceiling_inr: { default: 15000 }
+
+derive:
+  - id: ST-001
+    name: service_months
+    expr: "completed_months(date_of_joining, last_working_day)"
+  - id: ST-002
+    name: service_years_completed
+    expr: "service_months // 12"
+  - id: ST-003
+    name: gratuity_eligible
+    expr: "service_years_completed >= 5"
+  - id: ST-004
+    name: gratuity_years
+    expr: "service_years_completed + (1 if service_months % 12 >= 6 else 0)"
+  - id: ST-005
+    name: gratuity_amount
+    expr: "min(round(basic_monthly * 15 / 26 * gratuity_years), lookup('gratuity_ceiling_inr', 'default')) if gratuity_eligible else 0"
+  - id: ST-006
+    name: encashable_days
+    expr: "min(earned_leave_balance, lookup('encashment_cap_days', 'default'))"
+  - id: ST-007
+    name: leave_encashment
+    expr: "round(basic_monthly / 26 * encashable_days)"
+  - id: ST-008
+    name: epf_employer_on_final
+    expr: "round(min(basic_monthly, lookup('epf_wage_ceiling_inr', 'default')) * 0.12)"
+  - id: ST-009
+    name: fnf_due_by
+    expr: "add_days(last_working_day, 2)"
+  - id: ST-010
+    name: gratuity_due_by
+    expr: "add_days(last_working_day, 30) if gratuity_eligible else None"
+  - id: ST-011
+    name: settlement_total
+    expr: "gratuity_amount + leave_encashment"
+
+guards:
+  - id: ST-G1
+    assert: "days_between(date_of_joining, last_working_day) > 0"
+    error: "last working day precedes date of joining"
+
+tests:
+  - name: "4 years 2 months — not eligible for gratuity (the rule decides, not a model)"
+    given: { date_of_joining: "2022-09-15", last_working_day: "2026-11-30", basic_monthly: 92000, earned_leave_balance: 21 }
+    expect: { service_years_completed: 4, gratuity_eligible: false, gratuity_amount: 0, leave_encashment: 74308, fnf_due_by: "2026-12-02" }
+  - name: "6 years 7 months — part year over six months counts"
+    given: { date_of_joining: "2020-01-10", last_working_day: "2026-08-20", basic_monthly: 52000, earned_leave_balance: 60 }
+    expect: { gratuity_eligible: true, gratuity_years: 7, gratuity_amount: 210000, encashable_days: 45 }
+  - name: "gratuity is capped at the statutory ceiling"
+    given: { date_of_joining: "1996-01-01", last_working_day: "2026-06-30", basic_monthly: 900000 }
+    expect: { gratuity_amount: 2000000 }
+  - name: "bad dates are refused"
+    given: { date_of_joining: "2026-12-01", last_working_day: "2026-11-01", basic_monthly: 1 }
+    expect_error: "precedes"
