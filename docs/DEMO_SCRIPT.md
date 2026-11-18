@@ -23,7 +23,7 @@ Everything runs from the console (`make up`, open http://localhost:8000). **Demo
 
 1. `Reset`. Acting as Priya.
 2. Story beats 1–9 as above, switching users with the top bar: Rohan (USR-111) and Priya for acceptance, Deepa (USR-103) for the buyout, Vikram (USR-104) for payroll sign-off, Ishaan (USR-107) for the route-only acknowledgement, Ananya (USR-110) for the campaign.
-3. **+1 week** in the top bar (twice if needed) to pass Rahul's last working day: card revoked at 18:00, email suspended, retention clocks started. Personal data → retention table.
+3. **+30 days** in the top bar (twice if needed) to pass Rahul's last working day: card revoked at 18:00, email suspended, retention clocks started. Personal data → retention table.
 4. Audit chain → edit a row → verification breaks → restore.
 5. Guardrails → model provider → `sim_alt`; run `make test` in a terminal — still green.
 6. **Live extension test:** `./hrx scaffold workflow <their-requirement>` → write the pack rules and tests → `./hrx validate` (expect the governance lint to catch something) → `./hrx test --workflow <name>` → start a run in the console. Rehearsed on leave encashment; see `docs/DEVGUIDE.md`.

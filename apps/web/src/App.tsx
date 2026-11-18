@@ -111,7 +111,7 @@ export default function App() {
             <span className="grow" />
             <span className="clock"><Clock3 size={15} /> {fmtTime(boot.clock)}</span>
             <button className="btn small" onClick={() => advance(1)}>+1 day</button>
-            <button className="btn small" onClick={() => advance(7)}>+1 week</button>
+            <button className="btn small" onClick={() => advance(30)}>+30 days</button>
             <button className="btn small ghost" onClick={reset} title="Reseed the synthetic dataset"><RotateCcw size={14} /> Reset</button>
           </header>
           <main className="content">
