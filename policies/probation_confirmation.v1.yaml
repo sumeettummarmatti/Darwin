@@ -11,6 +11,7 @@ defaults:
 tables:
   probation_days: { permanent: 182, default: 0 }
   review_window_days: { default: 14 }
+  overdue_grace_days: { default: 30 }
   max_extensions: { default: 1 }
 
 derive:
@@ -25,7 +26,7 @@ derive:
     expr: "days_between(today, due_on)"
   - id: PC-004
     name: review_open
-    expr: "probation_days > 0 and days_to_due <= lookup('review_window_days', 'default')"
+    expr: "probation_days > 0 and days_to_due <= lookup('review_window_days', 'default') and days_to_due >= -lookup('overdue_grace_days', 'default')"
 
 tests:
   - name: "review opens two weeks before the end of probation"
@@ -34,6 +35,12 @@ tests:
   - name: "too early to review"
     given: { date_of_joining: "2026-10-01", today: "2026-11-20" }
     expect: { review_open: false }
+  - name: "long-tenured staff are not reopened"
+    given: { date_of_joining: "2021-03-01", today: "2026-11-20" }
+    expect: { review_open: false }
+  - name: "an overdue review within the grace period still opens"
+    given: { date_of_joining: "2026-05-10", today: "2026-11-20" }
+    expect: { review_open: true }
   - name: "no probation for contractors"
     given: { date_of_joining: "2026-06-01", today: "2026-11-20", employment_type: contractor }
     expect: { probation_days: 0, review_open: false }
