@@ -1,0 +1,12 @@
+skill: helpdesk.answer
+version: 1
+kind: model
+description: Answers an employee question grounded in policy clauses, citing clause ID and pack version. Retrieval is deterministic; the model only phrases.
+inputs: [args.question, args.retrieved, args.retrieval_support]
+outputs: { answer: string, citations: array, confidence: number }
+model_tier: 1
+escalate_to_tier: 2
+escalate_when: "confidence < 0.7"
+capabilities: [draft]
+prompt_version: 2
+retrieval_packs: [onboarding, leave, notice_period, settlement]

@@ -1,0 +1,7 @@
+skill: helpdesk.leave_balance
+version: 1
+kind: deterministic
+description: Answers "how many leaves do I have" straight from the record. Tier 0.
+inputs: [subject.leave_balance, subject.display_name]
+outputs: { answer: string, citations: array }
+capabilities: [compute]

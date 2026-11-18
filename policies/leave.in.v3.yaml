@@ -1,0 +1,39 @@
+# Leave rules. Within policy the platform books leave on its own; over balance
+# is a policy exception (reserved to the HR Head); long leave goes to the
+# reporting manager.
+pack: leave
+jurisdiction: IN
+version: 3
+effective_from: 2026-01-01
+owner: hr_business_partner
+
+defaults:
+  advance_days: 1
+
+tables:
+  max_auto_days: { casual: 3, earned: 5, sick: 3, default: 0 }
+
+rules:
+  - id: LV-001
+    when: "days_requested > balance"
+    then: { route: "'exception'", auto_book: false, reason: "'request exceeds balance'" }
+  - id: LV-002
+    when: "leave_type == 'sick'"
+    then: { route: "'auto'", auto_book: true, reason: "'sick leave within balance'", certificate_required: "days_requested > 2" }
+  - id: LV-003
+    when: "days_requested <= lookup('max_auto_days', leave_type) and advance_days >= 1"
+    then: { route: "'auto'", auto_book: true, reason: "'within balance and auto-booking limit'" }
+  - id: LV-004
+    then: { route: "'manager'", auto_book: false, reason: "'longer than the auto-booking limit or short notice'" }
+
+derive:
+  - id: LV-010
+    name: balance_after
+    expr: "balance - days_requested if auto_book else balance"
+
+tests:
+  - { given: { leave_type: casual, days_requested: 2, balance: 8 }, expect: { route: auto, balance_after: 6 } }
+  - { given: { leave_type: earned, days_requested: 9, balance: 14 }, expect: { route: manager } }
+  - { given: { leave_type: casual, days_requested: 6, balance: 4 }, expect: { route: exception } }
+  - { given: { leave_type: sick, days_requested: 3, balance: 10 }, expect: { route: auto, certificate_required: true } }
+  - { given: { leave_type: casual, days_requested: 1, balance: 5, advance_days: 0 }, expect: { route: manager }, name: "same-day casual leave goes to the manager" }

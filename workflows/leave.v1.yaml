@@ -1,0 +1,64 @@
+# Leave — the high-volume line. Within policy the platform books it; beyond
+# the auto-booking limit the manager decides; beyond balance the HR Head does.
+workflow: leave
+version: 1
+service_line: leave
+description: Apply for leave. Booked by rule when within policy; otherwise a named human decides.
+principal: agent:leave
+trigger:
+  intents: [leave.apply]
+inputs:
+  person_id: { type: string }
+  leave_type: { type: string, default: casual }
+  days: { type: number, default: 1 }
+  start_date: { type: date, default: "{{today}}" }
+metrics:
+  budget_inr_per_run: 0.20
+  target_automation_rate: 0.80
+
+steps:
+  - id: evaluate
+    title: Evaluate against the leave pack
+    skill: policy.compute
+    deterministic: true
+    args:
+      pack: leave
+      facts:
+        leave_type: "{{inputs.leave_type}}"
+        days_requested: "{{inputs.days}}"
+        balance: "{{get(subject.leave_balance, inputs.leave_type, 0)}}"
+        advance_days: "{{days_between(today, inputs.start_date)}}"
+
+  - id: manager_approval
+    title: Manager approval (beyond auto-booking limit)
+    reserved: true
+    action: leave.manager_approve
+    when: "steps.evaluate.route == 'manager'"
+    needs: [evaluate]
+    question: "Approve {{inputs.days}} day(s) of {{inputs.leave_type}} leave for {{subject.display_name}} from {{inputs.start_date}}?"
+    packet_from: [evaluate]
+
+  - id: policy_exception
+    title: Policy exception (exceeds balance)
+    reserved: true
+    action: policy.grant_exception
+    when: "steps.evaluate.route == 'exception'"
+    needs: [evaluate]
+    question: "{{subject.display_name}} asked for {{inputs.days}} day(s) of {{inputs.leave_type}} leave with a balance of {{get(subject.leave_balance, inputs.leave_type, 0)}}. Grant an exception?"
+    packet_from: [evaluate]
+
+  - id: book_leave
+    title: Book leave in the record
+    connector: hr.record
+    action: record_leave
+    needs: [evaluate, manager_approval, policy_exception]
+    args: { person_id: "{{subject.id}}", leave_type: "{{inputs.leave_type}}", days: "{{inputs.days}}", start: "{{inputs.start_date}}" }
+    idempotency_key: "leave:{{subject.id}}:{{inputs.leave_type}}:{{inputs.start_date}}:v1"
+
+  - id: out_of_office
+    title: Add out-of-office to calendar
+    connector: calendar
+    action: create_event
+    needs: [book_leave]
+    args: { title: "Out of office — {{inputs.leave_type}} leave", at: "{{inputs.start_date}}", days: "{{inputs.days}}", attendees: ["{{subject.email}}"] }
+    idempotency_key: "leave:{{subject.id}}:ooo:{{inputs.start_date}}:v1"

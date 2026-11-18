@@ -1,0 +1,28 @@
+# Helpdesk — conversational answers, grounded in policy clauses or the record.
+workflow: helpdesk
+version: 1
+service_line: helpdesk
+description: Answers employee questions. Record lookups are tier 0; policy questions cite clause and pack version.
+principal: agent:helpdesk
+trigger:
+  intents: [helpdesk.answer, helpdesk.leave_balance]
+inputs:
+  person_id: { type: string }
+  question: { type: string, default: "" }
+  kind: { type: string, default: policy }
+metrics:
+  budget_inr_per_run: 0.10
+  target_automation_rate: 0.95
+
+steps:
+  - id: leave_balance
+    title: Read leave balance from the record
+    skill: helpdesk.leave_balance
+    deterministic: true
+    when: "inputs.kind == 'leave_balance'"
+
+  - id: answer
+    title: Answer from policy clauses
+    skill: helpdesk.answer
+    when: "inputs.kind == 'policy'"
+    args: { question: "{{inputs.question}}" }
