@@ -1,0 +1,16 @@
+# Demo principals. SYNTHETIC — fictional people, demo login only (no real IdP).
+users:
+  - { id: USR-101, name: Priya Raman,     title: HR Business Partner (Eng, Product, Data), roles: [hr_business_partner], org_units: [ENG, PRODUCT, DATA] }
+  - { id: USR-108, name: Sana Qureshi,    title: HR Business Partner (Finance, Sales, Ops), roles: [hr_business_partner], org_units: [FIN, SALES, OPS] }
+  - { id: USR-103, name: Deepa Krishnan,  title: HR Head, roles: [hr_head, hr_business_partner], org_units: ["*"] }
+  - { id: USR-104, name: Vikram Shah,     title: Finance Controller, roles: [finance_controller], org_units: ["*"] }
+  - { id: USR-102, name: Arjun Mehta,     title: Engineering Hiring Manager, roles: [hiring_manager, reporting_manager], org_units: [ENG, DATA] }
+  - { id: USR-111, name: Rohan Das,       title: Engineering Manager, roles: [reporting_manager], org_units: [ENG] }
+  - { id: USR-110, name: Ananya Rao,      title: Talent Acquisition Lead, roles: [talent_acquisition_lead], org_units: [ENG, PRODUCT, DATA] }
+  - { id: USR-105, name: Leela Fernandes, title: Legal Counsel, roles: [legal], org_units: ["*"] }
+  - { id: USR-106, name: Farah Khan,      title: Data Protection Officer, roles: [dpo], org_units: ["*"] }
+  - { id: USR-107, name: Ishaan Bose,     title: Ethics Officer & POSH Committee, roles: [ethics_officer, posh_committee], org_units: ["*"] }
+  - { id: USR-109, name: Kabir Singh,     title: IT Lead, roles: [it_lead], org_units: ["*"] }
+  - { id: USR-3310, name: Rahul Menon,    title: Platform Engineer (employee self-service), roles: [employee], org_units: [ENG], person_id: EMP-3310 }
+  - { id: USR-4821, name: Meera Iyer,     title: Senior Analyst (joining), roles: [employee], org_units: [DATA], person_id: EMP-4821 }
+  - { id: USR-2207, name: Tanvi Kulkarni, title: Product Designer (employee self-service), roles: [employee], org_units: [PRODUCT], person_id: EMP-2207 }
