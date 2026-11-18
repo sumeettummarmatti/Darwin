@@ -3,6 +3,11 @@ import { api, fmtInr, fmtTime } from "../api";
 import { usePoll } from "../hooks";
 
 function Val({ v }: { v: any }) {
+  if (v !== null && typeof v === "object") {
+    // Nested payloads (retrieved clauses, candidate lists) scroll inside their cell.
+    const text = JSON.stringify(v, null, 1);
+    return <pre>{text.split(/(«[^»]+»)/g).map((part, i) => part.startsWith("«") ? <span key={i} className="tok">{part}</span> : part)}</pre>;
+  }
   const s = typeof v === "string" ? v : JSON.stringify(v);
   if (s && s.includes("«")) {
     return <span>{s.split(/(«[^»]+»)/g).map((part, i) => part.startsWith("«") ? <span key={i} className="tok">{part}</span> : part)}</span>;
