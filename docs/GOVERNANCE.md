@@ -4,7 +4,7 @@ What the platform will never let an agent do, how that is enforced, and how to c
 
 ## 1. Reserved decisions
 
-`policies/reserved_decisions.v3.yaml` lists every action only a named person may decide, with the approver roles and whether approvals are sequential. HR edits it in the console; a new version loads only if its tests pass, and it takes effect immediately with no deployment.
+`policies/reserved_decisions.v4.yaml` (the highest version loads) lists every action only a named person may decide, with the approver roles and whether approvals are sequential. HR edits it in the console; a new version loads only if its tests pass, and it takes effect immediately with no deployment.
 
 | Action | Approver(s) |
 |---|---|
@@ -24,6 +24,7 @@ What the platform will never let an agent do, how that is enforced, and how to c
 | `sourcing.campaign_approve` | Talent Acquisition Lead |
 | `sourcing.add_source` | Legal → DPO |
 | `sourcing.restricted_exception` | Legal → HR Head |
+| `probation.confirm` | reporting manager |
 
 **How it is enforced.** Every proposed action is classified by the kernel before anything else. An agent attempting a reserved action, or any action whose verb is `approve`, `accept`, `reject_candidate`, `sign_off` or `decide`, gets `403 RESERVED` and an audit entry — whatever the UI shows. A workflow or skill that grants one of those verbs to an agent fails validation when it loads, so it cannot be deployed. A human approver must hold the required role; sequential approvals must come in order.
 

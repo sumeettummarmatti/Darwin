@@ -20,8 +20,8 @@
       "steps_human": 20,
       "target_automation_rate": 0.7,
       "escalation_rate": 0.0,
-      "cycle_p50_s": 8640506.0,
-      "cycle_p95_s": 8640506.0,
+      "cycle_p50_s": 8640505.0,
+      "cycle_p95_s": 8640505.0,
       "tier_mix": {
         "0": 100,
         "1": 8,
@@ -117,11 +117,35 @@
       "target_automation_rate": 0.85,
       "escalation_rate": 0.1111111111111111,
       "cycle_p50_s": 0.0,
-      "cycle_p95_s": 5.0,
+      "cycle_p95_s": 6.0,
       "tier_mix": {
         "0": 91,
         "1": 17,
         "2": 1,
+        "3": 0
+      }
+    },
+    "probation_confirmation": {
+      "workflow": "probation_confirmation@v1",
+      "description": "Open the probation review when it falls due; the reporting manager confirms or extends; the record and calendar follow.",
+      "runs": 0,
+      "completed": 0,
+      "in_flight": 0,
+      "cost_p50": null,
+      "cost_p95": null,
+      "cost_mean": null,
+      "budget_inr_per_run": 0.1,
+      "automation_rate": null,
+      "steps_done": 0,
+      "steps_human": 0,
+      "target_automation_rate": 0.7,
+      "escalation_rate": null,
+      "cycle_p50_s": null,
+      "cycle_p95_s": null,
+      "tier_mix": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
         "3": 0
       }
     },
@@ -213,7 +237,7 @@
     "checked": 1391,
     "broken_at": null,
     "reason": null,
-    "head": "sha256:77a7b601a7f44221b70085a0547e23adeab86826fa265559bd20d38b7ba60bc0"
+    "head": "sha256:d3e39b2c9b7231a27522bf9b3040a4cd685a84e79f8eb67ab088ab442c075fb5"
   },
   "prativaad": {
     "objections": 71,

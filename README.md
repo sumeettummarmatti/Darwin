@@ -91,7 +91,7 @@ From `make bench` (one deterministic week on the synthetic dataset, simulated pr
 |---|---|---|---|---|
 | 1 | Automate end to end | Durable orchestrator, connectors, scheduled steps, fan-out | `core/orchestrator.py`, `workflows/` | Overview "no human touch", drillable to each human step |
 | 2 | Platform, not point solution | Five extension points, `hrx`, load-time validation | `workflows/ skills/ connectors/ policies/` | Exit, PARAKH and leave-encashment commits touch no `core/` file (below) |
-| 3 | Humans on decisions that matter | Reserved registry as config; `may_never` verbs fail at load; agents get 403 | `policies/reserved_decisions.v3.yaml`, `core/reserved.py` | Guardrails → Run the drill |
+| 3 | Humans on decisions that matter | Reserved registry as config; `may_never` verbs fail at load; agents get 403 | `policies/reserved_decisions.v4.yaml`, `core/reserved.py` | Guardrails → Run the drill |
 | 4 | Comply by design | Versioned packs with tests; refuse to load untested; gate B property testing | `policies/`, `core/rules/` | Policy packs → Draft a change → Ask Prativaad |
 | 5 | Clean system of record | Employment spells, PII rows with purpose + retention, hash-linked audit | `core/sor.py`, `core/audit.py` | Audit chain → edit a row → verification breaks |
 | 6 | Fail safely | Idempotency keys, outbox, read-back, breaker, saga, human queue with context | `core/executor.py` | Guardrails → break the asset system; tests/chaos |
