@@ -14,7 +14,7 @@ Running log. Newest session at the top. Update at the end of every working sessi
 | **Next gate** | Real model provider + TBO's mock contracts; then re-run `make bench` and the fault corpus |
 | **Blocking unknowns** | Round deadlines · TBO volumes · TBO mock API contracts · real model provider for calibration |
 | **Kernel decision** | Own durable state machine on SQLite (D14); workflow format unchanged |
-| **Tests** | 78 passing (`make test`); `hrx validate` and `hrx test` green |
+| **Tests** | 82 passing (`make test`); `hrx validate` and `hrx test` green |
 
 ### Gate status
 
@@ -25,7 +25,7 @@ Running log. Newest session at the top. Update at the end of every working sessi
 | 2 | Onboarding end to end, real ₹/run and automation rate | ✅ on the simulated provider (rates are a declared card, see COST.md) |
 | 3 | Reserved-decision drill clean | ✅ `/api/drill`, `tests/test_governance.py` |
 | 4 | **Exit line added with zero `core/` commits** | ✅ exit commit touches no `core/` file; PARAKH needed two kernel additions first (D17) |
-| 5 | Every published number reproducible by `make bench`; 3 unseen requirements rehearsed | 🟨 bench ✅; one rehearsal (leave encashment) of three |
+| 5 | Every published number reproducible by `make bench`; 3 unseen requirements rehearsed | 🟨 bench ✅; two rehearsals of three (leave encashment, probation confirmation) |
 
 ### Measurements
 
@@ -114,7 +114,7 @@ Only the ones that could change what we do this week. Full list in `DESIGN.md` �
 
 **Shipped** (all pushed to `main`, scoped commits, `core/` changes separate from service lines)
 - Kernel (VIDHI): safe policy language and packs that refuse to load untested; reserved registry with load-time and run-time enforcement; hash-linked audit; PII proxy and deterministic vault; model router with measured escalation and per-call ₹ metering; governed executor (outbox, same-key retries, read-back verification, breaker); human queue with context packets and hash-bound receipts; durable orchestrator (scheduled steps, fan-out, saga, kill-switch parking, workflow circuit breaker); Prativaad gates A–D; DPDP retention, DSR, consent, suppression; intent API; metrics with drill-downs.
-- Service lines on extension points: onboarding, exit, leave, helpdesk, PARAKH (sourcing, reply, assess-probe), leave encashment (added cold with hrx as the extension rehearsal).
+- Service lines on extension points: onboarding, exit, leave, helpdesk, PARAKH (sourcing, reply, assess-probe), and two cold rehearsals with hrx — leave encashment and probation confirmation.
 - Console (React + Vite): overview, demo story, workflows with the run rail, decisions and receipts, chat, talent, guardrails, policy packs with gate-B review, personal-data payload viewer, audit chain.
 - `hrx` scaffold / validate / test; `make bench` + fault corpus; 78 tests; Makefile, Dockerfile, CI with core-freeze and licence audit; README, DEVGUIDE, GOVERNANCE, COST, DEMO_SCRIPT.
 
@@ -125,7 +125,7 @@ Only the ones that could change what we do this week. Full list in `DESIGN.md` �
 
 **Open**
 1. Run the bench and fault corpus against a real tier-1 model (`openai_compatible`), then decide on Prativaad's model layer (PLAN §10 trigger: < 20% added ⇒ shrink).
-2. Two more cold rehearsals of the live extension test (only leave encashment done).
+2. One more cold rehearsal of the live extension test (leave encashment and probation confirmation done; probation's first rule had a window bug that its workflow test caught).
 3. Round 1 6-pager and video (`docs/DEMO_SCRIPT.md` has the beat sheet).
 4. Threshold calibration curve needs a real model — not claimed.
 5. Slack/Teams adapters: the chat surface uses the intent API, but no Bolt adapter is wired (no real workspace allowed).

@@ -21,7 +21,7 @@ Open **Demo story** in the console and press the buttons in order — it plays o
 
 | Command | What it does |
 |---|---|
-| `make test` | 78 tests: policy packs, governance, golden runs, chaos, Hypothesis idempotency property, API contract, fault corpus |
+| `make test` | 82 tests: policy packs, governance, golden runs, chaos, Hypothesis idempotency property, API contract, fault corpus |
 | `./hrx validate` | Schema, load-time invariants and the governance lint (Prativaad gate C) |
 | `./hrx test` | Replays synthetic runs under an injected retry storm; fails on any duplicate side effect |
 | `make bench` | Every number in this README comes from here → [`bench/results/latest.md`](bench/results/latest.md) |
@@ -53,7 +53,7 @@ proposal → kill switch → Prativaad (irreversible only) → policy + RBAC ∩
 
 ![A run as a rail: blue stations are the agent's, maroon seals are a human's](docs/img/run-rail.jpg)
 
-### Five service lines, one kernel
+### Service lines, one kernel
 
 | Line | What runs | Reserved (human) decisions |
 |---|---|---|
@@ -62,7 +62,8 @@ proposal → kill switch → Prativaad (irreversible only) → policy + RBAC ∩
 | **Leave** (`workflows/leave.v1.yaml`) | Booked by rule within policy | Manager beyond the auto limit; HR Head above balance |
 | **Helpdesk** (`workflows/helpdesk.v1.yaml`) | Record lookups at tier 0; policy answers cite clause + pack version | — |
 | **Talent / PARAKH** (`workflows/sourcing.v1.yaml`) | Lawful-basis gate, no-raid guard, span-backed claims, deterministic ICP score, gate-D bias flags | Campaign approval; rejection is reserved to the hiring manager |
-| **Leave encashment** (`workflows/leave_encashment.v1.yaml`) | Added cold with `hrx` as the live-extension rehearsal | Finance sign-off above the pack's ₹50,000 threshold |
+| **Leave encashment** (`workflows/leave_encashment.v1.yaml`) | Added cold with `hrx` as live-extension rehearsal 1 | Finance sign-off above the pack's ₹50,000 threshold |
+| **Probation confirmation** (`workflows/probation_confirmation.v1.yaml`) | Rehearsal 2: rule opens the review; registry v4 adds the reserved action | Reporting manager confirms or extends |
 
 ---
 
@@ -114,10 +115,10 @@ From `make bench` (one deterministic week on the synthetic dataset, simulated pr
 ```bash
 git log --oneline -- core/                       # every kernel change, each with its reason
 git show --stat ccac514                          # PARAKH: workflows, skills, policies, connectors — no core/
-git log --stat --format='%h %s' -- workflows/leave_encashment.v1.yaml
+git log --stat --format='%h %s' -- workflows/leave_encashment.v1.yaml workflows/probation_confirmation.v1.yaml
 ```
 
-Two kernel additions were needed before PARAKH (fan-out steps and system-of-record operations for people who are not employees). They were made as separate `core:` commits *before* the line, and building it also surfaced one kernel bug (a crashing skill could stall a run), fixed in its own commit. All three are recorded in [PROGRESS.md](PROGRESS.md): a differently-shaped line is supposed to find gaps. The line itself, and leave encashment after it, land on extension points only. CI fails any PR labelled `service-line` that touches `core/` (`tools/ci/core_freeze.sh`).
+Two kernel additions were needed before PARAKH (fan-out steps and system-of-record operations for people who are not employees). They were made as separate `core:` commits *before* the line, and building it also surfaced one kernel bug (a crashing skill could stall a run), fixed in its own commit. All three are recorded in [PROGRESS.md](PROGRESS.md): a differently-shaped line is supposed to find gaps. The line itself, and the two rehearsal lines after it (leave encashment, probation confirmation), land on extension points only. CI fails any PR labelled `service-line` that touches `core/` (`tools/ci/core_freeze.sh`).
 
 [docs/DEVGUIDE.md](docs/DEVGUIDE.md) walks through adding leave encashment from zero.
 
