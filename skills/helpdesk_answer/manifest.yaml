@@ -9,4 +9,6 @@ escalate_to_tier: 2
 escalate_when: "confidence < 0.7"
 capabilities: [draft]
 prompt_version: 2
+needs_human_title: "Helpdesk question needs HR"
+needs_human_question: "The policy clauses do not clearly answer this employee question. Is the draft answer right to send?"
 retrieval_packs: [onboarding, leave, notice_period, settlement]

@@ -9,3 +9,5 @@ escalate_to_tier: 2
 escalate_when: "confidence < 0.8"
 capabilities: [compute]
 prompt_version: 1
+needs_human_title: "ID scan unreadable"
+needs_human_question: "{{subject.display_name}}'s ID scan could not be read reliably. Check the original document: is it legible and does the name match the record?"

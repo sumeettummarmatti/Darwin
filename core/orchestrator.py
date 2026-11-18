@@ -136,12 +136,15 @@ class SkillContext:
         self.escalations += result.escalations
         output = minimised.rehydrate(result.output)
         if result.needs_human:
+            # Low confidence is treated like a reserved decision: stop and ask one plain question.
+            template = self._spec.raw.get("needs_human_question") or "The agent was not confident enough to rely on its draft. Is the draft correct?"
+            question = render(template, self._scope)
+            tiers = f"tier {self._spec.model_tier}" + (f" → tier {result.tier}" if result.tier != self._spec.model_tier else "")
             raise NeedsHuman(
-                f"The model could not answer with enough confidence ({result.reason}). Accept the draft, correct it, or answer directly?",
-                {"summary": f"{self._spec.name} needs a human", "draft": output, "reason": result.reason,
-                 "escalations": result.escalations, "model": result.model,
-                 "recommendation": {"text": "Draft attached — not a decision", "labelled": "agent draft"}},
-                kind="low_confidence", title=f"Low confidence · {self._spec.name}")
+                question,
+                {"summary": f"{self._spec.description} The model ({tiers}) stayed below its confidence threshold, so the platform stopped instead of guessing.",
+                 "draft": output, "reason": result.reason, "escalations": result.escalations, "model": result.model},
+                kind="low_confidence", title=self._spec.raw.get("needs_human_title") or f"Low confidence · {self._spec.name}")
         return output
 
     # ── proposals and escalation ──────────────────────────────────────────────
@@ -462,8 +465,11 @@ class Orchestrator:
         if spec.irreversible and not sr["gate"]:
             raw_pii = self.k.vault.raw_values_for(run["subject"]) if run["subject"] else set()
             try:
+                # The model residue reviews the plan once per run (first irreversible step);
+                # every irreversible step still gets the deterministic checks.
+                review = self.k.prativaad_model_review(run, step, agent) if self.k.prativaad.spent_inr(run["id"]) == 0 else None
                 gate = self.k.prativaad.gate_a(run=run, wf=wf, step=step, connector=connector, args=args, idem_key=key or "",
-                                               scope=scope, raw_pii=raw_pii, model_review=self.k.prativaad_model_review(run, step, agent))
+                                               scope=scope, raw_pii=raw_pii, model_review=review)
                 blocking = gate.blocking
                 unresolved = self._auto_resolve(connector, step, args, key or "", blocking) if blocking else []
             except TransportError as exc:
@@ -473,7 +479,8 @@ class Orchestrator:
                 return self._set_step(run["id"], step.id, status="running", attempts=sr["attempts"] + 1, scheduled_for=retry_at,
                                       note=f"Prativaad could not read {connector.name} to check for duplicates ({exc}); waiting")
             if gate.cost_inr:
-                self._add_cost(run["id"], step.id, gate.cost_inr, tier=1)
+                # Prativaad's review is metered to the run but does not change where the step itself ran.
+                self._add_cost(run["id"], step.id, gate.cost_inr, tier=0)
             ids = self.k.prativaad.latest_objection_ids(run["id"], step.id)
             if blocking:
                 if unresolved:
