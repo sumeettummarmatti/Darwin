@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from core.audit import AuditChain, AuditEntry
+from core.audit import AuditChain
 from core.clock import Clock
 from core.db import Store, dumps, loads
 from core.pii import Vault

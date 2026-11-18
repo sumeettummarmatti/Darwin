@@ -298,7 +298,7 @@ class Prativaad:
                         f"{conn.name}.{step.action} moves money to or for a person and no reserved: step precedes it — "
                         "comparable actions are reserved (payroll.sign_off / finance approval)")
                 if spec.irreversible and not step.compensation:
-                    add("warning", step.id, "C-COMP", f"irreversible action {conn.name}.{step.action} declares no compensation:")
+                    add("warning", step.id, "C-COMP", f"irreversible action {conn.name}.{step.action} declares no compensation")
                 if spec.side_effect and step.idempotency_key and "v" not in step.idempotency_key.split(":")[-1]:
                     add("warning", step.id, "C-KEYVER", "idempotency key has no version suffix (e.g. ':v1'); a workflow bump would reuse old keys")
             if step.kind == "skill":
