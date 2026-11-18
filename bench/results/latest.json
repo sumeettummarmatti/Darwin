@@ -1,0 +1,557 @@
+{
+  "generated_by": "make bench (bench/run.py)",
+  "profile": "sim",
+  "dataset": "synthetic seed (tools/seed.py), seeded RNG",
+  "note": "Human approvals in this harness are simulated and labelled as such in each receipt note.",
+  "runs_started": 90,
+  "workflows": {
+    "exit": {
+      "workflow": "exit@v1",
+      "description": "Resignation \u2192 final settlement. The agent prepares; humans accept, agree buyouts and sign off pay.",
+      "runs": 8,
+      "completed": 8,
+      "in_flight": 0,
+      "cost_p50": 0.007272000000000001,
+      "cost_p95": 0.008064,
+      "cost_mean": 0.007568,
+      "budget_inr_per_run": 2.5,
+      "automation_rate": 0.8148148148148149,
+      "steps_done": 108,
+      "steps_human": 20,
+      "target_automation_rate": 0.7,
+      "escalation_rate": 0.0,
+      "cycle_p50_s": 8640505.0,
+      "cycle_p95_s": 8640505.0,
+      "tier_mix": {
+        "0": 100,
+        "1": 8,
+        "2": 0,
+        "3": 0
+      }
+    },
+    "helpdesk": {
+      "workflow": "helpdesk@v1",
+      "description": "Answers employee questions. Record lookups are tier 0; policy questions cite clause and pack version.",
+      "runs": 32,
+      "completed": 32,
+      "in_flight": 0,
+      "cost_p50": 0.002392,
+      "cost_p95": 0.027752999999999996,
+      "cost_mean": 0.0071259999999999995,
+      "budget_inr_per_run": 0.1,
+      "automation_rate": 1.0,
+      "steps_done": 32,
+      "steps_human": 0,
+      "target_automation_rate": 0.95,
+      "escalation_rate": 0.0,
+      "cycle_p50_s": 0.0,
+      "cycle_p95_s": 0.0,
+      "tier_mix": {
+        "0": 8,
+        "1": 16,
+        "2": 8,
+        "3": 0
+      }
+    },
+    "leave": {
+      "workflow": "leave@v1",
+      "description": "Apply for leave. Booked by rule when within policy; otherwise a named human decides.",
+      "runs": 40,
+      "completed": 40,
+      "in_flight": 0,
+      "cost_p50": 0.0,
+      "cost_p95": 0.0,
+      "cost_mean": 0.0,
+      "budget_inr_per_run": 0.2,
+      "automation_rate": 0.9022556390977443,
+      "steps_done": 133,
+      "steps_human": 13,
+      "target_automation_rate": 0.8,
+      "escalation_rate": 0.0,
+      "cycle_p50_s": 0.0,
+      "cycle_p95_s": 5.0,
+      "tier_mix": {
+        "0": 133,
+        "1": 0,
+        "2": 0,
+        "3": 0
+      }
+    },
+    "onboarding": {
+      "workflow": "onboarding@v3",
+      "description": "Offer accepted \u2192 ready for day one. Entitlements by rule; every side effect keyed, verified and audited.",
+      "runs": 9,
+      "completed": 9,
+      "in_flight": 0,
+      "cost_p50": 0.007,
+      "cost_p95": 0.022454,
+      "cost_mean": 0.00872511111111111,
+      "budget_inr_per_run": 1.5,
+      "automation_rate": 0.981651376146789,
+      "steps_done": 109,
+      "steps_human": 2,
+      "target_automation_rate": 0.85,
+      "escalation_rate": 0.1111111111111111,
+      "cycle_p50_s": 0.0,
+      "cycle_p95_s": 5.0,
+      "tier_mix": {
+        "0": 91,
+        "1": 17,
+        "2": 1,
+        "3": 0
+      }
+    },
+    "sourcing": {
+      "workflow": "sourcing@v1",
+      "description": "Gather signals, gate on lawful basis, guard TBO's non-solicit obligations, rank applicants by deterministic ICP score, and send notice-first contact only inside a human-approved campaign.",
+      "runs": 1,
+      "completed": 1,
+      "in_flight": 0,
+      "cost_p50": 0.01564,
+      "cost_p95": 0.01564,
+      "cost_mean": 0.01564,
+      "budget_inr_per_run": 1.0,
+      "automation_rate": 0.9090909090909091,
+      "steps_done": 11,
+      "steps_human": 1,
+      "target_automation_rate": 0.8,
+      "escalation_rate": 0.0,
+      "cycle_p50_s": 5.0,
+      "cycle_p95_s": 5.0,
+      "tier_mix": {
+        "0": 10,
+        "1": 1,
+        "2": 0,
+        "3": 0
+      }
+    },
+    "sourcing_assess": {
+      "workflow": "sourcing_assess@v1",
+      "description": "Ask the extractor about a single sourced person. Refused for anyone with no lawful basis.",
+      "runs": 0,
+      "completed": 0,
+      "in_flight": 0,
+      "cost_p50": null,
+      "cost_p95": null,
+      "cost_mean": null,
+      "budget_inr_per_run": 0.05,
+      "automation_rate": null,
+      "steps_done": 0,
+      "steps_human": 0,
+      "target_automation_rate": null,
+      "escalation_rate": null,
+      "cycle_p50_s": null,
+      "cycle_p95_s": null,
+      "tier_mix": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0
+      }
+    },
+    "sourcing_reply": {
+      "workflow": "sourcing_reply@v1",
+      "description": "Handle a reply to outreach. Interest \u21d2 consent and upgrade; objection \u21d2 suppress and delete the pointer.",
+      "runs": 0,
+      "completed": 0,
+      "in_flight": 0,
+      "cost_p50": null,
+      "cost_p95": null,
+      "cost_mean": null,
+      "budget_inr_per_run": 0.05,
+      "automation_rate": null,
+      "steps_done": 0,
+      "steps_human": 0,
+      "target_automation_rate": 1.0,
+      "escalation_rate": null,
+      "cycle_p50_s": null,
+      "cycle_p95_s": null,
+      "tier_mix": {
+        "0": 0,
+        "1": 0,
+        "2": 0,
+        "3": 0
+      }
+    }
+  },
+  "governance": {
+    "refusals": 2,
+    "governed_actions": 217,
+    "policy_block_rate": 0.009216589861751152,
+    "refusals_by_reason": {
+      "RESERVED": 2
+    },
+    "reserved_decisions": 44,
+    "time_to_approve_p50_s": 5.0
+  },
+  "audit_chain": {
+    "ok": true,
+    "checked": 1391,
+    "broken_at": null,
+    "reason": null,
+    "head": "sha256:c9efd4dd46112a024e27677a774f12e2075f82883b4536d7a2fc8309356bcec9"
+  },
+  "prativaad": {
+    "objections": 71,
+    "by_class": {
+      "compensation_coverage": 50,
+      "duplicate_side_effect": 3,
+      "date_ordering": 8,
+      "proxy_bias": 1,
+      "pii_overreach": 3,
+      "entitlement_mismatch": 2,
+      "reserved_leakage": 2,
+      "policy_version_staleness": 2
+    },
+    "by_layer": {
+      "rules": 71,
+      "model": 0
+    },
+    "resolved": 7,
+    "upheld": 7,
+    "precision": 1.0,
+    "cost_inr": 0.080584,
+    "overhead_share": 0.21054391731244548
+  },
+  "models": {
+    "by_tier": {
+      "tier1": {
+        "calls": 85,
+        "inr": 0.240344,
+        "tokens_in": 20257,
+        "tokens_out": 4893
+      },
+      "tier2": {
+        "calls": 9,
+        "inr": 0.18286999999999998,
+        "tokens_in": 1882,
+        "tokens_out": 496
+      }
+    },
+    "escalations": 9,
+    "profile": "sim"
+  },
+  "projection": {
+    "rows": [
+      {
+        "workflow": "onboarding",
+        "runs_per_month_assumed": 40,
+        "measured_inr_per_run_p50": 0.007,
+        "inference_inr_per_month": 0.28,
+        "hosting_inr_per_month": 54.99,
+        "total_inr_per_month": 55.27
+      },
+      {
+        "workflow": "exit",
+        "runs_per_month_assumed": 38,
+        "measured_inr_per_run_p50": 0.007272000000000001,
+        "inference_inr_per_month": 0.28,
+        "hosting_inr_per_month": 52.24,
+        "total_inr_per_month": 52.52
+      },
+      {
+        "workflow": "leave",
+        "runs_per_month_assumed": 900,
+        "measured_inr_per_run_p50": 0.0,
+        "inference_inr_per_month": 0.0,
+        "hosting_inr_per_month": 1237.31,
+        "total_inr_per_month": 1237.31
+      },
+      {
+        "workflow": "helpdesk",
+        "runs_per_month_assumed": 3750,
+        "measured_inr_per_run_p50": 0.002392,
+        "inference_inr_per_month": 8.97,
+        "hosting_inr_per_month": 5155.46,
+        "total_inr_per_month": 5164.43
+      }
+    ],
+    "hosting_inr_per_month_assumed": 6500.0,
+    "assumptions": "Volumes and hosting are ASSUMPTIONS from config/costs.yaml (placeholder until TBO shares figures); \u20b9/run is measured p50 of completed runs on the synthetic dataset with the active model profile's declared rate card.",
+    "total_inr_per_month": 6509.53
+  },
+  "fault_corpus": {
+    "cases": 20,
+    "planted": 16,
+    "clean": 4,
+    "catch_rate_rules": 0.875,
+    "catch_rate_total": 0.875,
+    "model_only_catches": 0,
+    "false_clear_rate": 0.125,
+    "false_alarm_rate": 0.0,
+    "judgement_cases": 2,
+    "judgement_caught": 0,
+    "model_profile": "sim",
+    "rows": [
+      {
+        "id": "F01",
+        "title": "Laptop allocated while a prior allocation is still open",
+        "expect": "duplicate_side_effect",
+        "clean": false,
+        "judgement": false,
+        "caught_by_rules": true,
+        "caught_by_model": false,
+        "false_alarm": false,
+        "raised": [
+          "compensation_coverage",
+          "duplicate_side_effect"
+        ]
+      },
+      {
+        "id": "F02",
+        "title": "Second access card for an active cardholder",
+        "expect": "duplicate_side_effect",
+        "clean": false,
+        "judgement": false,
+        "caught_by_rules": true,
+        "caught_by_model": false,
+        "false_alarm": false,
+        "raised": [
+          "compensation_coverage",
+          "duplicate_side_effect"
+        ]
+      },
+      {
+        "id": "F03",
+        "title": "Raw PAN in a payroll payload",
+        "expect": "pii_overreach",
+        "clean": false,
+        "judgement": false,
+        "caught_by_rules": true,
+        "caught_by_model": false,
+        "false_alarm": false,
+        "raised": [
+          "compensation_coverage",
+          "pii_overreach"
+        ]
+      },
+      {
+        "id": "F04",
+        "title": "Raw bank account in a payroll payload",
+        "expect": "pii_overreach",
+        "clean": false,
+        "judgement": false,
+        "caught_by_rules": true,
+        "caught_by_model": false,
+        "false_alarm": false,
+        "raised": [
+          "compensation_coverage",
+          "pii_overreach"
+        ]
+      },
+      {
+        "id": "F05",
+        "title": "Personal phone number pasted into an IT ticket body",
+        "expect": "pii_overreach",
+        "clean": false,
+        "judgement": false,
+        "caught_by_rules": true,
+        "caught_by_model": false,
+        "false_alarm": false,
+        "raised": [
+          "compensation_coverage",
+          "pii_overreach"
+        ]
+      },
+      {
+        "id": "F06",
+        "title": "Laptop class differs from the entitlement rule",
+        "expect": "entitlement_mismatch",
+        "clean": false,
+        "judgement": false,
+        "caught_by_rules": true,
+        "caught_by_model": false,
+        "false_alarm": false,
+        "raised": [
+          "compensation_coverage",
+          "entitlement_mismatch"
+        ]
+      },
+      {
+        "id": "F07",
+        "title": "Access zones wider than the entitlement",
+        "expect": "entitlement_mismatch",
+        "clean": false,
+        "judgement": false,
+        "caught_by_rules": true,
+        "caught_by_model": false,
+        "false_alarm": false,
+        "raised": [
+          "compensation_coverage",
+          "entitlement_mismatch"
+        ]
+      },
+      {
+        "id": "F08",
+        "title": "Card revoked on a last working day no human agreed",
+        "expect": "reserved_leakage",
+        "clean": false,
+        "judgement": false,
+        "caught_by_rules": true,
+        "caught_by_model": false,
+        "false_alarm": false,
+        "raised": [
+          "compensation_coverage",
+          "reserved_leakage"
+        ]
+      },
+      {
+        "id": "F09",
+        "title": "Payroll band set from a salary fact with no approval upstream",
+        "expect": "reserved_leakage",
+        "clean": false,
+        "judgement": false,
+        "caught_by_rules": true,
+        "caught_by_model": false,
+        "false_alarm": false,
+        "raised": [
+          "compensation_coverage",
+          "reserved_leakage"
+        ]
+      },
+      {
+        "id": "F10",
+        "title": "Plan built on a superseded notice-period pack",
+        "expect": "policy_version_staleness",
+        "clean": false,
+        "judgement": false,
+        "caught_by_rules": true,
+        "caught_by_model": false,
+        "false_alarm": false,
+        "raised": [
+          "compensation_coverage",
+          "policy_version_staleness"
+        ]
+      },
+      {
+        "id": "F11",
+        "title": "Plan built on a superseded settlement pack",
+        "expect": "policy_version_staleness",
+        "clean": false,
+        "judgement": false,
+        "caught_by_rules": true,
+        "caught_by_model": false,
+        "false_alarm": false,
+        "raised": [
+          "compensation_coverage",
+          "policy_version_staleness"
+        ]
+      },
+      {
+        "id": "F12",
+        "title": "Card revocation still scheduled for the old last day after a buyout",
+        "expect": "date_ordering",
+        "clean": false,
+        "judgement": false,
+        "caught_by_rules": true,
+        "caught_by_model": false,
+        "false_alarm": false,
+        "raised": [
+          "date_ordering"
+        ]
+      },
+      {
+        "id": "F13",
+        "title": "Email suspension scheduled after the amended last day",
+        "expect": "date_ordering",
+        "clean": false,
+        "judgement": false,
+        "caught_by_rules": true,
+        "caught_by_model": false,
+        "false_alarm": false,
+        "raised": [
+          "date_ordering"
+        ]
+      },
+      {
+        "id": "F14",
+        "title": "Irreversible recovery with no compensation declared",
+        "expect": "compensation_coverage",
+        "clean": false,
+        "judgement": false,
+        "caught_by_rules": true,
+        "caught_by_model": false,
+        "false_alarm": false,
+        "raised": [
+          "compensation_coverage"
+        ]
+      },
+      {
+        "id": "F15",
+        "title": "Laptop allocated for a joiner whose offer was withdrawn yesterday",
+        "expect": "reserved_leakage",
+        "clean": false,
+        "judgement": true,
+        "caught_by_rules": false,
+        "caught_by_model": false,
+        "false_alarm": false,
+        "raised": [
+          "compensation_coverage"
+        ]
+      },
+      {
+        "id": "F16",
+        "title": "Second outreach to a sourced person inside the cooling-off window",
+        "expect": "duplicate_side_effect",
+        "clean": false,
+        "judgement": true,
+        "caught_by_rules": false,
+        "caught_by_model": false,
+        "false_alarm": false,
+        "raised": [
+          "compensation_coverage"
+        ]
+      },
+      {
+        "id": "C01",
+        "title": "Clean laptop allocation",
+        "expect": null,
+        "clean": true,
+        "judgement": false,
+        "caught_by_rules": false,
+        "caught_by_model": false,
+        "false_alarm": false,
+        "raised": [
+          "compensation_coverage"
+        ]
+      },
+      {
+        "id": "C02",
+        "title": "Clean card issue",
+        "expect": null,
+        "clean": true,
+        "judgement": false,
+        "caught_by_rules": false,
+        "caught_by_model": false,
+        "false_alarm": false,
+        "raised": [
+          "compensation_coverage"
+        ]
+      },
+      {
+        "id": "C03",
+        "title": "Clean payroll setup with tokens only",
+        "expect": null,
+        "clean": true,
+        "judgement": false,
+        "caught_by_rules": false,
+        "caught_by_model": false,
+        "false_alarm": false,
+        "raised": [
+          "compensation_coverage"
+        ]
+      },
+      {
+        "id": "C04",
+        "title": "Revocation aligned with the agreed last day",
+        "expect": null,
+        "clean": true,
+        "judgement": false,
+        "caught_by_rules": false,
+        "caught_by_model": false,
+        "false_alarm": false,
+        "raised": []
+      }
+    ]
+  }
+}
