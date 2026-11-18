@@ -393,6 +393,15 @@ class Orchestrator:
                            packet={"summary": str(exc), "conflict": type(exc).__name__, "clauses": _clauses(ctx)},
                            roles=["hr_business_partner"], status="refused")
             return
+        except Exception as exc:  # noqa: BLE001 - a buggy skill must fail safe, never crash the kernel
+            self._charge(run, step, ctx)
+            self.k.audit.append(AuditEntry(actor=agent.label, action=f"skill.{spec.name}", kind="step", outcome="failed",
+                                           run_id=run["id"], step_id=step.id, detail={"error": repr(exc)}))
+            self._to_human(run, step, kind="failure", title=f"Skill error · {spec.name}",
+                           question=f"{spec.name} raised an error ({type(exc).__name__}: {exc}). Retry after a fix, or mark the step done by hand?",
+                           packet={"summary": repr(exc), "clauses": _clauses(ctx), "options": ["retry", "mark_done"]},
+                           roles=["hr_business_partner"], status="failed")
+            return
 
         problems = spec.validate_output(outputs)
         if problems:
@@ -428,9 +437,13 @@ class Orchestrator:
 
     def _run_connector(self, run: dict[str, Any], wf: WorkflowDef, step: StepDef, sr: dict[str, Any], scope: dict[str, Any]) -> None:
         connector = self.k.registry.connectors[step.connector]
+        now = self.k.clock.now()
+        if step.raw.get("foreach"):
+            if sr["status"] == "running" and sr["scheduled_for"] and parse_ts(sr["scheduled_for"]) > now:
+                return  # retry backoff
+            return self._run_fanout(run, wf, step, sr, scope, connector)
         args = render(step.args, scope)
         key = render(step.idempotency_key, scope) if step.idempotency_key else None
-        now = self.k.clock.now()
 
         # Scheduled steps wait for their time; the governing date is re-checked every tick.
         if step.schedule_at:
@@ -455,9 +468,6 @@ class Orchestrator:
                     return
         if sr["status"] == "running" and sr["scheduled_for"] and parse_ts(sr["scheduled_for"]) > now:
             return  # retry backoff
-        if step.raw.get("foreach"):
-            return self._run_fanout(run, wf, step, sr, scope, connector)
-
         agent = self.agent_for(run, wf)
         spec = connector.manifest.actions[step.action]
 
