@@ -3,7 +3,6 @@
 import pytest
 
 from core.queue import QueueError
-from core.registry import Registry
 from core.reserved import parse_registry
 from core.types import Principal, ProposedAction
 from core.workflows import WorkflowLoadError, parse_workflow, validate_workflow

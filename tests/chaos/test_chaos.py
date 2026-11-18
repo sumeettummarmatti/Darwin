@@ -45,7 +45,7 @@ def test_outage_opens_breaker_then_drains(kernel):
 
 def test_process_kill_mid_run_resumes_without_duplicates(kernel, tmp_path):
     kernel.mocks.set_chaos("assets", "error_500", 2)
-    run_id = kernel.orchestrator.start("onboarding", subject_id="EMP-6005", inputs={}, principal=kernel.principal("USR-103"))
+    kernel.orchestrator.start("onboarding", subject_id="EMP-6005", inputs={}, principal=kernel.principal("USR-103"))
     # "Kill" the process: drop this kernel, build a new one on the same databases.
     kernel.store.close()
     revived = Kernel(tmp_path / "setu.db", tmp_path / "mocks.db")
