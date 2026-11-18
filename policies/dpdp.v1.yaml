@@ -1,0 +1,57 @@
+# DPDP Act 2023 — field classification, purpose tags and retention.
+# The PII proxy reads `class` to decide what may reach a model; the vault reads
+# `purposes` to refuse cross-purpose reads; the retention sweep reads the clock
+# and the statutory hold.
+#
+# Retention periods and holds below are ILLUSTRATIVE for the demo. The
+# mechanism is the deliverable; counsel supplies the real figures.
+pack: dpdp
+jurisdiction: IN
+version: 1
+effective_from: 2026-01-01
+owner: dpo
+
+rules:
+  - id: DP-001
+    when: "field in ['display_name', 'full_name', 'name']"
+    then: { class: "'identifier'", purposes: "['employment', 'payroll', 'statutory', 'onboarding_logistics', 'exit_communication']", retention_days_after_exit: 2920, statutory_hold_rule: "'DP-H1 statutory employment records (illustrative 8y)'" }
+  - id: DP-002
+    when: "field == 'pan' or field == 'pan_token'"
+    then: { class: "'secret'", purposes: "['payroll', 'statutory']", retention_days_after_exit: 2920, statutory_hold_rule: "'DP-H2 tax records retention (illustrative 8y)'" }
+  - id: DP-003
+    when: "field == 'bank_account' or field == 'bank_account_token'"
+    then: { class: "'secret'", purposes: "['payroll']", retention_days_after_exit: 180, statutory_hold_rule: "None" }
+  - id: DP-004
+    when: "field == 'aadhaar' or field == 'aadhaar_token'"
+    then: { class: "'secret'", purposes: "['statutory']", retention_days_after_exit: 30, statutory_hold_rule: "None" }
+  - id: DP-005
+    when: "field == 'uan' or field == 'uan_token'"
+    then: { class: "'secret'", purposes: "['statutory', 'payroll']", retention_days_after_exit: 2920, statutory_hold_rule: "'DP-H3 EPF scheme records (illustrative)'" }
+  - id: DP-006
+    when: "field in ['personal_email', 'phone', 'personal_email_token', 'phone_token']"
+    then: { class: "'contact'", purposes: "['onboarding_logistics', 'exit_communication']", retention_days_after_exit: 90, statutory_hold_rule: "None" }
+  - id: DP-007
+    when: "field in ['home_address', 'home_address_token']"
+    then: { class: "'secret'", purposes: "['onboarding_logistics', 'statutory']", retention_days_after_exit: 365, statutory_hold_rule: "None" }
+  - id: DP-008
+    when: "field in ['date_of_birth', 'date_of_birth_token', 'emergency_contact', 'emergency_contact_token']"
+    then: { class: "'secret'", purposes: "['statutory', 'safety']", retention_days_after_exit: 30, statutory_hold_rule: "None" }
+  - id: DP-011
+    when: "field in ['identity_key', 'identity_key_token']"
+    then: { class: "'secret'", purposes: "['onboarding_logistics', 'payroll', 'identity_linkage']", retention_days_after_exit: 2920, statutory_hold_rule: "'DP-H1 statutory employment records (illustrative 8y)'" }
+  - id: DP-009
+    when: "endswith(field, '_token')"
+    then: { class: "'secret'", purposes: "[]", retention_days_after_exit: 0, statutory_hold_rule: "None" }
+  - id: DP-010
+    when: "field == 'text' or endswith(field, '_text') or field == 'message'"
+    then: { class: "'free_text'", purposes: "['helpdesk']", retention_days_after_exit: 90, statutory_hold_rule: "None" }
+  - id: DP-099
+    then: { class: "'attribute'", purposes: "[]", retention_days_after_exit: 0, statutory_hold_rule: "None" }
+
+tests:
+  - { given: { field: pan }, expect: { class: secret } }
+  - { given: { field: pan_token }, expect: { class: secret }, name: "tokens are never sent either" }
+  - { given: { field: display_name }, expect: { class: identifier } }
+  - { given: { field: bank_account }, expect: { purposes: [payroll] }, name: "bank account is payroll-only" }
+  - { given: { field: grade }, expect: { class: attribute } }
+  - { given: { field: date_of_birth }, expect: { class: secret }, name: "DOB never reaches a model (age is a prohibited criterion)" }

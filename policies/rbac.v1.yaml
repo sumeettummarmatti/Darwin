@@ -1,0 +1,33 @@
+# Role → domain permissions. An agent inherits these from the human it acts for,
+# intersected with its capability allow-list and its workflow step's scope.
+pack: rbac
+version: 1
+effective_from: 2026-01-01
+owner: hr_head
+description: Which roles may cause actions in which systems.
+
+tables:
+  role_domains:
+    hr_business_partner: [it, admin, directory, payroll, mail, calendar, esign, onboarding, exit, leave, helpdesk, hr_record]
+    hr_head:             [it, admin, directory, payroll, mail, calendar, esign, onboarding, exit, leave, helpdesk, sourcing, hr_record]
+    finance_controller:  [payroll]
+    hiring_manager:      [sourcing, mail, calendar]
+    talent_acquisition_lead: [sourcing, mail, calendar, hr_record]
+    reporting_manager:   [calendar, leave]
+    employee:            [leave, helpdesk, calendar, hr_record]
+    it_lead:             [it]
+    legal:               []
+    dpo:                 []
+    ethics_officer:      []
+    posh_committee:      []
+
+derive:
+  - id: RBAC-001
+    name: allowed
+    expr: "domain in lookup('role_domains', role, [])"
+
+tests:
+  - { given: { role: hr_business_partner, domain: it }, expect: { allowed: true } }
+  - { given: { role: hiring_manager, domain: payroll }, expect: { allowed: false } }
+  - { given: { role: employee, domain: it }, expect: { allowed: false }, name: "an employee cannot provision IT assets" }
+  - { given: { role: unknown_role, domain: it }, expect: { allowed: false }, name: "unknown roles get nothing" }

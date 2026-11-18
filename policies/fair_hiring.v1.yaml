@@ -1,0 +1,49 @@
+# Fair hiring. `prohibited_criteria` are stripped by the PII proxy before any
+# model sees them and make any pack that references them fail validation.
+# `proxy_phrases` power Prativaad gate D — phrases that smuggle a prohibited
+# criterion back in through prose.
+pack: fair_hiring
+version: 1
+effective_from: 2026-01-01
+owner: hr_head
+
+tables:
+  prohibited_criteria:
+    age: protected
+    date_of_birth: protected
+    gender: protected
+    caste: protected
+    religion: protected
+    marital_status: protected
+    pregnancy_or_family_status: protected
+    disability: protected
+    name_origin: protected
+    college_tier: "socioeconomic proxy"
+    employment_gap: "caregiving / health proxy"
+    photograph: protected
+  proxy_phrases:
+    top-tier institute: college_tier
+    tier-1 college: college_tier
+    premier institute: college_tier
+    iit: college_tier
+    ivy league: college_tier
+    career break: employment_gap
+    gap in employment: employment_gap
+    young and energetic: age
+    digital native: age
+    recent graduate only: age
+    culture fit: "unexplained subjective criterion"
+    family commitments: pregnancy_or_family_status
+    native speaker: name_origin
+    manpower: "gender-coded language"
+    rockstar: "gender-coded language"
+
+derive:
+  - id: FH-001
+    name: is_prohibited
+    expr: "in_table('prohibited_criteria', criterion)"
+
+tests:
+  - { given: { criterion: college_tier }, expect: { is_prohibited: true } }
+  - { given: { criterion: years_in_distributed_systems }, expect: { is_prohibited: false } }
+  - { given: { criterion: employment_gap }, expect: { is_prohibited: true } }

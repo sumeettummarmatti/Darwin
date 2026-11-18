@@ -1,0 +1,27 @@
+# Cost model inputs that are NOT measured — every one is an assumption and is
+# shown on the dashboard tile next to the number it produces.
+
+hosting:
+  # Single small VM running app + SQLite/Postgres + worker. Assumption.
+  monthly_inr: 6500
+  # Completed workflow runs per month the hosting is amortised over.
+  # Derived from the volume assumptions below (sum of monthly runs).
+  amortise_over: from_volumes
+
+# Placeholder volumes until TBO shares real figures (PROGRESS.md Q2).
+# Basis: ~2,500 employees (public workforce estimate), ~18% annual attrition,
+# helpdesk ≈ 1.5 queries / employee / month. ALL ASSUMPTIONS.
+volumes_per_month:
+  onboarding: 40
+  exit: 38
+  leave: 900
+  helpdesk: 3750
+
+# Loaded cost of HR operations time, for "cost vs human minutes replaced". Assumption.
+human_minutes:
+  inr_per_minute: 12
+  minutes_replaced_per_step:
+    onboarding: 6
+    exit: 7
+    leave: 3
+    helpdesk: 4

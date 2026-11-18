@@ -1,0 +1,31 @@
+# Model routing — swapping provider is a change to this file, never to a skill.
+#
+# Two simulated profiles ship by default so the demo, the tests and `make bench`
+# run offline, reproducibly, with no real data leaving the machine. Their rupee
+# rates are a DECLARED RATE CARD (assumption), chosen to be in the range of
+# hosted open-weight small / mid / frontier models. Replace them with your
+# provider's invoice rates; every ₹ figure in the dashboard recomputes.
+#
+# To use a real endpoint: set active_profile: openai_compatible (or export
+# SETU_MODEL_PROFILE=openai_compatible) and the SETU_TIER*_ env vars.
+
+active_profile: sim
+max_tier_per_workflow: 2          # tier 3 needs an explicit per-skill opt-in (tier3_opt_in)
+
+profiles:
+  sim:
+    tier1: { adapter: sim, model: sim-small-8b,  region: "in-process (no egress)", inr_per_m_in: 8,   inr_per_m_out: 16,   hosting_note: "stand-in for a small open-weight model (Apache-2.0 class) on a hosted endpoint" }
+    tier2: { adapter: sim, model: sim-mid-70b,   region: "in-process (no egress)", inr_per_m_in: 55,  inr_per_m_out: 160,  hosting_note: "stand-in for a mid open-weight model" }
+    tier3: { adapter: sim, model: sim-frontier,  region: "in-process (no egress)", inr_per_m_in: 260, inr_per_m_out: 1050, hosting_note: "exception path only" }
+
+  # A second simulated vendor with different model IDs and rates — used for the
+  # live provider-swap demo: flip the profile, re-run the golden suite, still green.
+  sim_alt:
+    tier1: { adapter: sim, model: alt-small-9b,  region: "in-process (no egress)", inr_per_m_in: 6,   inr_per_m_out: 14 }
+    tier2: { adapter: sim, model: alt-mid-72b,   region: "in-process (no egress)", inr_per_m_in: 48,  inr_per_m_out: 150 }
+    tier3: { adapter: sim, model: alt-frontier,  region: "in-process (no egress)", inr_per_m_in: 240, inr_per_m_out: 980 }
+
+  openai_compatible:
+    tier1: { adapter: openai_compatible, base_url: "${SETU_TIER1_BASE_URL}", model: "${SETU_TIER1_MODEL}", api_key_env: SETU_TIER1_API_KEY, region: ap-south-1, inr_per_m_in: 8,   inr_per_m_out: 16 }
+    tier2: { adapter: openai_compatible, base_url: "${SETU_TIER2_BASE_URL}", model: "${SETU_TIER2_MODEL}", api_key_env: SETU_TIER2_API_KEY, region: ap-south-1, inr_per_m_in: 55,  inr_per_m_out: 160 }
+    tier3: { adapter: openai_compatible, base_url: "${SETU_TIER3_BASE_URL}", model: "${SETU_TIER3_MODEL}", api_key_env: SETU_TIER3_API_KEY, region: ap-south-1, inr_per_m_in: 260, inr_per_m_out: 1050 }

@@ -1,0 +1,29 @@
+# Automatic circuit breaker on escalation rate. If a workflow's share of runs
+# needing a human (excluding reserved decisions, which are by design) crosses
+# its threshold over the window, the kernel pauses that workflow itself.
+pack: circuit_breakers
+version: 1
+effective_from: 2026-01-01
+owner: hr_head
+
+tables:
+  window: { runs: 10 }
+  min_runs: { default: 4 }
+  threshold: { leave: 0.30, onboarding: 0.50, exit: 0.60, default: 0.50 }
+
+derive:
+  - id: CB-001
+    name: threshold
+    expr: "lookup('threshold', workflow)"
+  - id: CB-002
+    name: rate
+    expr: "escalated_runs / runs if runs > 0 else 0"
+  - id: CB-003
+    name: trip
+    expr: "runs >= lookup('min_runs', workflow) and rate > threshold"
+
+tests:
+  - { given: { workflow: leave, runs: 10, escalated_runs: 4 }, expect: { trip: true } }
+  - { given: { workflow: leave, runs: 10, escalated_runs: 2 }, expect: { trip: false } }
+  - { given: { workflow: leave, runs: 2, escalated_runs: 2 }, expect: { trip: false }, name: "too few runs to judge" }
+  - { given: { workflow: onboarding, runs: 10, escalated_runs: 5 }, expect: { trip: false }, name: "exactly at threshold does not trip" }
