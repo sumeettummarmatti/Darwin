@@ -1,0 +1,49 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  kernel:
+    name: tests · compliance CI · governance lint · bench
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -e '.[dev]'
+      - name: Policy packs, governance, workflows, chaos, property and contract tests
+        run: python -m pytest
+      - name: hrx validate (schema, invariants, governance lint)
+        run: python -m tools.hrx validate
+      - name: hrx test (replay under an injected retry storm)
+        run: python -m tools.hrx test --runs 4
+      - name: Bench (every published number)
+        run: python -m bench.run
+      - name: Licence audit
+        run: python tools/ci/licenses.py
+      - uses: actions/upload-artifact@v4
+        with: { name: bench-results, path: bench/results/ }
+
+  console:
+    name: web console builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - run: cd apps/web && npm ci && npm run build
+
+  core-freeze:
+    name: core/ freeze for service-line PRs
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - run: tools/ci/core_freeze.sh
+        env:
+          BASE: origin/${{ github.base_ref }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
