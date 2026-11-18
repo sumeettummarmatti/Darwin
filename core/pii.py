@@ -151,7 +151,8 @@ class PiiProxy:
             return {"class": "attribute", "purposes": []}
         return decision.outputs
 
-    def minimise(self, source: dict[str, Any], declared: list[str], subject: dict[str, Any] | None = None) -> MinimisedPayload:
+    def minimise(self, source: dict[str, Any], declared: list[str], subject: dict[str, Any] | None = None,
+                 extra_names: list[str] | None = None) -> MinimisedPayload:
         if subject and subject.get("processing_mode") in ("pointer_only", "suppressed"):
             raise PointerOnlyViolation(
                 f"{subject.get('id')} is {subject.get('processing_mode')}: no lawful basis to send anything about this person to a model"
@@ -194,18 +195,33 @@ class PiiProxy:
             else:
                 result.payload[key] = value
 
-        # Second pass: scrub free text of identifiers and known names.
+        # Names the caller knows will appear in free text (e.g. candidates in résumés).
+        for name in extra_names or []:
+            if name and name not in known_names:
+                known_names[name] = token("PERSON", name)
+
+        # Second pass: scrub free text — including nested lists and objects — of
+        # identifiers and known names.
+        def scrub(value: Any) -> Any:
+            if isinstance(value, str):
+                return value if value.startswith("«") else self.scrub_text(value, known_names, token)
+            if isinstance(value, dict):
+                return {k: (None if k in prohibited else scrub(v)) for k, v in value.items() if k not in prohibited}
+            if isinstance(value, list):
+                return [scrub(v) for v in value]
+            return value
+
         for key, value in list(result.payload.items()):
-            if isinstance(value, str) and not value.startswith("«"):
-                result.payload[key] = self.scrub_text(value, known_names, token)
+            result.payload[key] = scrub(value)
         return result
 
     def scrub_text(self, text: str, known_names: dict[str, str], token: Callable[[str, str], str]) -> str:
+        # Structured identifiers first (an email containing a name must go whole), then names.
+        for kind, pattern in _TEXT_PATTERNS:
+            text = pattern.sub(lambda m, k=kind: token(k, m.group(0)), text)
         for name, tok in sorted(known_names.items(), key=lambda kv: -len(kv[0])):
             text = re.sub(re.escape(name), tok, text, flags=re.IGNORECASE)
             for part in name.split(" "):
                 if len(part) > 2:
                     text = re.sub(rf"\b{re.escape(part)}\b", tok, text, flags=re.IGNORECASE)
-        for kind, pattern in _TEXT_PATTERNS:
-            text = pattern.sub(lambda m, k=kind: token(k, m.group(0)), text)
         return text

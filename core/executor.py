@@ -75,7 +75,9 @@ class GovernedExecutor:
         if spec.side_effect and not proposal.idem_key:
             # Invariant 4 at runtime as well as load time.
             return ActionResult("refused", 400, "side-effecting action without an idempotency key")
-        key = proposal.idem_key or f"read:{proposal.action}"
+        if not spec.side_effect:
+            return self._read(connector, proposal, base, authz)
+        key = proposal.idem_key
 
         # 3. Outbox: commit the intent before touching the outside world.
         row = self.store.one("SELECT * FROM outbox WHERE idem_key=?", (key,))
@@ -153,6 +155,23 @@ class GovernedExecutor:
         ))
         return ActionResult("retrying", 202, "acknowledged but not verified; will retry with the same key", None,
                             authz.rule_ids, authz.policy_versions, seq)
+
+    def _read(self, connector: Any, proposal: ProposedAction, base: dict[str, Any], authz: Any) -> ActionResult:
+        """Read-only actions: no outbox (a cached read would go stale), still authorised and audited."""
+        if not self.breaker.allows(connector.name):
+            return ActionResult("waiting", 503, f"circuit breaker open for {connector.name}")
+        try:
+            data = connector.execute(proposal.connector_action, proposal.args, proposal.idem_key or "")
+        except TransportError as exc:
+            self.breaker.record_failure(connector.name)
+            seq = self.audit.append(AuditEntry(**base, action=proposal.action, kind="connector", outcome="retried",
+                                               inputs={"args": _redact(proposal.args)}, detail={"error": str(exc), "read_only": True}))
+            return ActionResult("retrying", exc.status, str(exc), None, authz.rule_ids, authz.policy_versions, seq)
+        self.breaker.record_success(connector.name)
+        seq = self.audit.append(AuditEntry(**base, action=proposal.action, kind="connector", outcome="ok",
+                                           inputs={"args": _redact(proposal.args)}, policy_versions=authz.policy_versions,
+                                           detail={"read_only": True, "records": len(data.get("records", [])) if isinstance(data, dict) else None}))
+        return ActionResult("executed", 200, "read", {"data": data}, authz.rule_ids, authz.policy_versions, seq)
 
     def compensate(self, proposal: ProposedAction, principal: Principal, original_key: str) -> ActionResult:
         """Run a step's declared compensation with a derived, stable key."""

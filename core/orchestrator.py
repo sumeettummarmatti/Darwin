@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, Any
 
 from core.audit import AuditEntry
 from core.clock import new_id, parse_ts
+from core.connectors_sdk import TransportError
 from core.db import dumps, loads
 from core.pii import PointerOnlyViolation, PurposeViolation, UndeclaredInput
 from core.prativaad import Objection
@@ -114,12 +115,12 @@ class SkillContext:
 
     # ── model (metered, minimised) ────────────────────────────────────────────
 
-    def ask_model(self, extra: dict[str, Any] | None = None) -> dict[str, Any]:
+    def ask_model(self, extra: dict[str, Any] | None = None, names: list[str] | None = None) -> dict[str, Any]:
         if self._spec.kind != "model" or self._step.deterministic:
             raise DeterministicViolation(f"{self._spec.name} in step '{self._step.id}' is deterministic: no model call permitted")
         subject = self._scope.get("subject")
         source = {**self._source, **(extra or {})}
-        minimised = self._kernel.proxy.minimise(source, self._spec.inputs, subject)
+        minimised = self._kernel.proxy.minimise(source, self._spec.inputs, subject, extra_names=names)
         budget = self._run.get("budget_inr")
         remaining = None if budget is None else max(budget - float(self._run.get("cost_inr") or 0) - self.cost_inr, 0)
         ctx = CallContext(run_id=self._run["id"], step_id=self._step.id, actor=self._agent.label,
@@ -155,6 +156,16 @@ class SkillContext:
 
     def needs_human(self, question: str, packet: dict[str, Any], kind: str = "low_confidence", title: str | None = None) -> None:
         raise NeedsHuman(question, packet, kind, title)
+
+    # ── read-only governance hooks (no egress, no writes) ─────────────────────
+
+    def challenge_rationales(self, rationales: dict[str, str]) -> list[dict[str, Any]]:
+        """Prativaad gate D. Flags proxy phrases for the human reviewer; never rewrites a ranking."""
+        return self._kernel.prativaad.gate_d(rationales, run_id=self._run["id"])
+
+    def is_suppressed(self, public_url: str) -> bool:
+        """Has this person objected to contact? Checked before anything else touches them."""
+        return self._kernel.dpdp.is_suppressed(public_url)
 
 
 class Orchestrator:
@@ -441,6 +452,8 @@ class Orchestrator:
                     return
         if sr["status"] == "running" and sr["scheduled_for"] and parse_ts(sr["scheduled_for"]) > now:
             return  # retry backoff
+        if step.raw.get("foreach"):
+            return self._run_fanout(run, wf, step, sr, scope, connector)
 
         agent = self.agent_for(run, wf)
         spec = connector.manifest.actions[step.action]
@@ -448,14 +461,21 @@ class Orchestrator:
         # Prativaad gate A — once per step, before an irreversible action.
         if spec.irreversible and not sr["gate"]:
             raw_pii = self.k.vault.raw_values_for(run["subject"]) if run["subject"] else set()
-            gate = self.k.prativaad.gate_a(run=run, wf=wf, step=step, connector=connector, args=args, idem_key=key or "",
-                                           scope=scope, raw_pii=raw_pii, model_review=self.k.prativaad_model_review(run, step, agent))
+            try:
+                gate = self.k.prativaad.gate_a(run=run, wf=wf, step=step, connector=connector, args=args, idem_key=key or "",
+                                               scope=scope, raw_pii=raw_pii, model_review=self.k.prativaad_model_review(run, step, agent))
+                blocking = gate.blocking
+                unresolved = self._auto_resolve(connector, step, args, key or "", blocking) if blocking else []
+            except TransportError as exc:
+                # A gate that cannot verify must not wave the action through: wait and re-check.
+                self.k.breaker.record_failure(connector.name)
+                retry_at = datetime.fromtimestamp(now.timestamp() + RETRY_BACKOFF_S, tz=now.tzinfo).isoformat()
+                return self._set_step(run["id"], step.id, status="running", attempts=sr["attempts"] + 1, scheduled_for=retry_at,
+                                      note=f"Prativaad could not read {connector.name} to check for duplicates ({exc}); waiting")
             if gate.cost_inr:
                 self._add_cost(run["id"], step.id, gate.cost_inr, tier=1)
-            blocking = gate.blocking
             ids = self.k.prativaad.latest_objection_ids(run["id"], step.id)
             if blocking:
-                unresolved = self._auto_resolve(connector, step, args, key or "", blocking)
                 if unresolved:
                     return self._to_human(
                         run, step, kind="objection", title=f"Prativaad objects · {step.title or step.id}",
@@ -466,7 +486,7 @@ class Orchestrator:
                                 "clauses": [], "options": ["proceed", "skip_step"]},
                         roles=["hr_business_partner"])
                 for oid in ids:
-                    self.k.prativaad.resolve(oid, "auto-verified by kernel: " + "; ".join(o.claim for o in blocking if o.cls != "duplicate_side_effect") or "prior effect verified closed", True)
+                    self.k.prativaad.resolve(oid, "verified by kernel read-back: " + "; ".join(o.claim for o in blocking), True)
             advisory = len(gate.objections) - len(blocking)
             if blocking:
                 note = "Prativaad: objection verified by read-back and released"
@@ -506,6 +526,49 @@ class Orchestrator:
                               packet={"summary": result.reason, "computed": {"args": args, "idempotency_key": key, "attempts": attempts},
                                       "clauses": [], "options": ["retry", "compensate", "mark_done"]},
                               roles=["hr_business_partner"], status="failed")
+
+    def _run_fanout(self, run: dict[str, Any], wf: WorkflowDef, step: StepDef, sr: dict[str, Any], scope: dict[str, Any],
+                    connector: Any) -> None:
+        """``foreach:`` — one keyed action per item (e.g. one notice per approved recipient).
+
+        Re-entrant by construction: on a retry, items that already landed are
+        deduplicated by the outbox under their own keys, so only the remainder runs.
+        Each item passes through the full governed executor and gets its own audit entry.
+        """
+        items = render(step.raw["foreach"], scope) or []
+        agent = self.agent_for(run, wf)
+        now = self.k.clock.now()
+        self._set_step(run["id"], step.id, status="running", attempts=sr["attempts"] + 1,
+                       started_at=sr["started_at"] or self.k.clock.now_iso())
+        results, waiting, failed = [], False, []
+        for index, item in enumerate(items):
+            item_scope = {**scope, "item": item, "index": index}
+            args = render(step.args, item_scope)
+            key = render(step.idempotency_key, item_scope) if step.idempotency_key else None
+            proposal = ProposedAction(action=f"{connector.name}.{step.action}", args=args, idem_key=key, connector=connector.name,
+                                      connector_action=step.action, run_id=run["id"], step_id=step.id,
+                                      subject_id=run["subject"], workflow=wf.name)
+            res = self.k.executor.submit(proposal, agent, scope.get("subject") or None)
+            results.append({"index": index, "key": key, "outcome": res.outcome, "status": res.status,
+                            "reason": "" if res.done else res.reason, "record_id": (res.result or {}).get("record_id")})
+            if res.outcome in ("retrying", "waiting"):
+                waiting = True
+            elif res.outcome in ("failed", "paused"):
+                failed.append(results[-1])
+        if failed:
+            return self._to_human(run, step, kind="failure", title=f"Fan-out failed · {step.title or step.id}",
+                                  question=f"{len(failed)} of {len(items)} item(s) failed in {connector.name}.{step.action}. Retry the failed items with the same keys, or mark the step done by hand?",
+                                  packet={"summary": failed[0]["reason"], "computed": {"items": results}, "clauses": [],
+                                          "options": ["retry", "mark_done"]},
+                                  roles=["hr_business_partner"], status="failed")
+        if waiting:
+            retry_at = datetime.fromtimestamp(now.timestamp() + RETRY_BACKOFF_S, tz=now.tzinfo).isoformat()
+            return self._set_step(run["id"], step.id, status="running", scheduled_for=retry_at,
+                                  note=f"{sum(r['outcome'] in ('executed', 'deduplicated') for r in results)}/{len(items)} done; retrying the rest with the same keys")
+        executed = sum(r["outcome"] in ("executed", "deduplicated") for r in results)
+        refused = sum(r["outcome"] == "refused" for r in results)
+        self._add_cost(run["id"], step.id, connector.manifest.cost_inr_per_call * executed, tier=0)
+        self._finish_step(run, step, {"items": results, "executed": executed, "refused": refused, "total": len(items)})
 
     def _auto_resolve(self, connector: Any, step: StepDef, args: dict[str, Any], key: str, blocking: list[Objection]) -> list[Objection]:
         """The kernel resolves what it can by *reading* (never by acting). The rest goes to a human."""

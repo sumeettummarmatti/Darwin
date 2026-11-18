@@ -217,7 +217,7 @@ def validate_workflow(wf: WorkflowDef, *, skills: dict[str, SkillSpec], connecto
         for need in step.needs:
             if need not in ids:
                 raise WorkflowLoadError(f"{where}: step '{step.id}' needs unknown step '{need}'")
-        for expr in template_expressions([step.args, step.idempotency_key, step.schedule_at, step.question]):
+        for expr in template_expressions([step.args, step.idempotency_key, step.schedule_at, step.question, step.raw.get("foreach")]):
             try:
                 Expression(expr)
             except ExpressionError as exc:
@@ -245,6 +245,8 @@ def validate_workflow(wf: WorkflowDef, *, skills: dict[str, SkillSpec], connecto
             if verb or full_action in registry.entries:
                 # Invariant 3: an agent-run step can never carry a reserved verb.
                 raise WorkflowLoadError(f"{where}: step '{step.id}' runs '{full_action}' as an agent — reserved verb '{verb or full_action}' cannot be granted")
+            if step.raw.get("foreach") and spec.side_effect and "item" not in (step.idempotency_key or ""):
+                raise WorkflowLoadError(f"{where}: foreach step '{step.id}' needs an idempotency_key that references the item")
             if spec.side_effect:
                 key = step.idempotency_key
                 if not key:
