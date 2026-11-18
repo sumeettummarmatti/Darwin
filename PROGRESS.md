@@ -20,7 +20,7 @@ Running log. Newest session at the top. Update at the end of every working sessi
 
 | Gate | What it proves | State |
 |---|---|---|
-| 0 | Round 1 submitted, no unprovable claims | ⬜ open — documents exist (DESIGN, docs/*); 6-pager and video not produced |
+| 0 | Round 1 submitted, no unprovable claims | 🟨 `docs/ARCHITECTURE_6PAGE.md` drafted from built and measured work; video not recorded (beat sheet in docs/DEMO_SCRIPT.md); not submitted |
 | 1 | Vertical slice: one step through all 7 governed-flow steps | ✅ every connector step: Prativaad → authorize → outbox → connector → read-back → audit → ₹ |
 | 2 | Onboarding end to end, real ₹/run and automation rate | ✅ on the simulated provider (rates are a declared card, see COST.md) |
 | 3 | Reserved-decision drill clean | ✅ `/api/drill`, `tests/test_governance.py` |
@@ -126,7 +126,9 @@ Only the ones that could change what we do this week. Full list in `DESIGN.md` �
 **Open**
 1. Run the bench and fault corpus against a real tier-1 model (`openai_compatible`), then decide on Prativaad's model layer (PLAN §10 trigger: < 20% added ⇒ shrink).
 2. One more cold rehearsal of the live extension test (leave encashment and probation confirmation done; probation's first rule had a window bug that its workflow test caught).
-3. Round 1 6-pager and video (`docs/DEMO_SCRIPT.md` has the beat sheet).
+3. Round 1: review and submit `docs/ARCHITECTURE_6PAGE.md` (check it prints to six pages); record the video from `docs/DEMO_SCRIPT.md`.
+6. `Dockerfile` is unverified: the build could not pull base images from Docker Hub in this environment. `make setup && make up` from a fresh clone is verified.
+7. The console has no authentication (demo "acting as" switcher); policy activation and reserved-list editing are therefore open to anyone who can reach :8000. Fine for a local demo, not for a shared deployment.
 4. Threshold calibration curve needs a real model — not claimed.
 5. Slack/Teams adapters: the chat surface uses the intent API, but no Bolt adapter is wired (no real workspace allowed).
 
