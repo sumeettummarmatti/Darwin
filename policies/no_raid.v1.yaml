@@ -1,0 +1,38 @@
+# The no-raid guard checks TBO's obligations, not the candidate's freedom.
+# Post-employment non-competes are void in India (Indian Contract Act s.27);
+# non-solicitation clauses binding TBO under client and partner agreements are
+# not. A block names the clause so the recruiter sees a reason, not a mystery.
+# Owned by Legal; an exception is sourcing.restricted_exception (reserved).
+# Employer names are SYNTHETIC.
+pack: no_raid
+version: 1
+effective_from: 2026-01-01
+owner: legal
+
+defaults:
+  current_employer: null
+  is_current_tbo_employee: false
+
+tables:
+  restricted_employers:
+    "Northwind Channel Partners": partner_agreement_9b
+    "Acme Client Corp": msa_clause_14
+  restriction_expires:
+    "Northwind Channel Partners": null
+    "Acme Client Corp": "2027-06-30"
+
+rules:
+  - id: NR-001
+    when: "is_current_tbo_employee == True"
+    then: { verdict: "'route_internal'", clause: "None", reason: "'current TBO employee — route to internal mobility, not sourcing'" }
+  - id: NR-002
+    when: "current_employer != None and in_table('restricted_employers', current_employer)"
+    then: { verdict: "'block'", clause: "lookup('restricted_employers', current_employer)", reason: "'TBO has a non-solicit obligation towards this employer'" }
+  - id: NR-099
+    then: { verdict: "'clear'", clause: "None", reason: "'no restriction found'" }
+
+tests:
+  - { given: { current_employer: "Northwind Channel Partners" }, expect: { verdict: block, clause: partner_agreement_9b } }
+  - { given: { current_employer: "Lumen Labs" }, expect: { verdict: clear } }
+  - { given: { current_employer: null }, expect: { verdict: clear } }
+  - { given: { is_current_tbo_employee: true, current_employer: "TBO" }, expect: { verdict: route_internal } }

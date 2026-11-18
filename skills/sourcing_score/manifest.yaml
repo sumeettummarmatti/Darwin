@@ -1,0 +1,8 @@
+skill: sourcing.score
+version: 1
+kind: deterministic
+description: Deterministic ICP scoring over span-backed claims. Ranks and explains; never rejects — rejection is reserved to the hiring manager.
+inputs: [args.applicants, args.claims, args.rationales]
+outputs: { ranking: array, below_must_haves: array }
+capabilities: [compute, recommend]
+policy_tags: [tier0, parakh, fair_hiring]

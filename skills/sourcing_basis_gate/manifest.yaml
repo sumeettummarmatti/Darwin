@@ -1,0 +1,8 @@
+skill: sourcing.basis_gate
+version: 1
+kind: deterministic
+description: Classifies every sourced record by lawful basis (sourcing_basis pack). People with no basis become pointers; suppressed identities are dropped before anything else.
+inputs: [args.signals, args.applicants]
+outputs: { pointers: array, eligible: array, refused: array, suppressed: integer, decisions: array }
+capabilities: [compute]
+policy_tags: [tier0, dpdp, parakh]

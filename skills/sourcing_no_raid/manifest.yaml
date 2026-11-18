@@ -1,0 +1,8 @@
+skill: sourcing.no_raid
+version: 1
+kind: deterministic
+description: Checks TBO's own non-solicit obligations (no_raid pack) before anyone enters a campaign or a ranking. A block always names its clause.
+inputs: [args.pointers, args.applicants]
+outputs: { cleared_pointers: array, cleared_applicants: array, blocked: array }
+capabilities: [compute]
+policy_tags: [tier0, parakh]

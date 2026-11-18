@@ -1,0 +1,32 @@
+# PARAKH — a reply to a notice-first message. Interest supplies the basis that
+# was missing (consent artefact, record upgrades). An objection is permanent
+# suppression and the pointer is deleted in the same step.
+workflow: sourcing_reply
+version: 1
+service_line: talent
+description: Handle a reply to outreach. Interest ⇒ consent and upgrade; objection ⇒ suppress and delete the pointer.
+principal: agent:sourcing
+inputs:
+  person_id: { type: string }
+  reply: { type: string, default: interest }
+  campaign: { type: string, default: REQ-PLAT-07 }
+metrics:
+  budget_inr_per_run: 0.05
+  target_automation_rate: 1.0
+
+steps:
+  - id: upgrade_on_interest
+    title: Record consent and upgrade the record
+    connector: hr.record
+    action: upgrade_pointer
+    when: "inputs.reply == 'interest'"
+    args: { person_id: "{{subject.id}}", campaign: "{{inputs.campaign}}", notice_version: notice-first-v1, purpose: "recruitment:talent_pool" }
+    idempotency_key: "reply:{{subject.id}}:upgrade:v1"
+
+  - id: suppress_on_objection
+    title: Suppress permanently and delete the pointer
+    connector: hr.record
+    action: suppress_and_delete
+    when: "inputs.reply == 'objection'"
+    args: { person_id: "{{subject.id}}", public_url: "{{subject.public_url}}" }
+    idempotency_key: "reply:{{subject.id}}:suppress:v1"

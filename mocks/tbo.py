@@ -79,6 +79,8 @@ class TboMocks:
             ("payroll", "deactivate"): self._payroll_deactivate,
             ("mail", "send"): self._send_mail,
             ("calendar", "create_event"): self._create_event,
+            ("sourcing", "signals"): self._signals,
+            ("sourcing", "applicants"): self._applicants,
             ("esign", "send_envelope"): self._send_envelope,
         }
 
@@ -311,6 +313,26 @@ class TboMocks:
     def _send_mail(self, p: dict[str, Any]) -> dict[str, Any]:
         rec = self._insert("mail", "message", {k: p.get(k) for k in ("to", "subject", "body", "campaign")}, p.get("reference"), status="captured")
         return {"message_id": rec["id"], "status": "captured"}
+
+    # ── sourcing (synthetic public signals + ATS applicants) ──────────────────
+
+    def seed_sourcing(self, signals: list[dict[str, Any]], applicants: list[dict[str, Any]]) -> None:
+        for s in signals:
+            self._insert("sourcing", "signal", s, None, status="public")
+        for a in applicants:
+            self._insert("sourcing", "applicant", a, None, status="applied")
+
+    def _signals(self, p: dict[str, Any]) -> dict[str, Any]:
+        # Public signals come back pointer-shaped only: the platform never fetches a profile
+        # of someone who has not given us a basis to hold one.
+        rows = [r["data"] for r in self._rows("SELECT * FROM records WHERE system='sourcing' AND kind='signal'")
+                if r["data"].get("role_hint") == p.get("role")]
+        return {"records": rows}
+
+    def _applicants(self, p: dict[str, Any]) -> dict[str, Any]:
+        rows = [r["data"] for r in self._rows("SELECT * FROM records WHERE system='sourcing' AND kind='applicant'")
+                if r["data"].get("applied_role") == p.get("role")]
+        return {"records": rows}
 
     def _create_event(self, p: dict[str, Any]) -> dict[str, Any]:
         rec = self._insert("calendar", "event", dict(p), p.get("reference"))

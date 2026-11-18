@@ -1,0 +1,18 @@
+# PARAKH — "assess one person". Exists to show the refusal: for a pointer_only
+# subject the PII proxy refuses the model call before anything is sent.
+workflow: sourcing_assess
+version: 1
+service_line: talent
+description: Ask the extractor about a single sourced person. Refused for anyone with no lawful basis.
+principal: agent:sourcing
+inputs:
+  person_id: { type: string }
+metrics:
+  budget_inr_per_run: 0.05
+
+steps:
+  - id: extract
+    title: Extract claims about this person
+    skill: sourcing.extract_claims
+    args:
+      candidates: [{ id: "{{subject.id}}", display_name: "{{subject.display_name}}", resume_text: "{{subject.public_url}}" }]

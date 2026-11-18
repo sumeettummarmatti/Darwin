@@ -1,0 +1,53 @@
+# Lawful-basis gate for every externally sourced record (DPDP Act 2023).
+# DPDP offers consent or a narrow list of legitimate uses — no GDPR-style
+# "legitimate interests". A person who never gave TBO anything has no basis, so
+# they are a POINTER: a public link and nothing derived. No profile, no score,
+# no rank, no enrichment, and the PII proxy refuses any model call about them.
+# Not legal advice: the basis for any NEW source is a reserved decision for
+# Legal and the DPO (sourcing.add_source).
+pack: sourcing_basis
+jurisdiction: IN
+version: 1
+effective_from: 2026-01-01
+owner: dpo
+
+tables:
+  pointer_store_fields: { public_url: keep, source_id: keep, collected_at: keep, role_hypothesis: keep, org_hint: keep, public_contact: keep }
+  pointer_expiry_days: { default: 30 }
+
+rules:
+  - id: SB-001
+    when: "source == 'ats_applicant'"
+    then: { basis: "'voluntary_provision'", mode: "'full'", may: "['profile', 'score', 'rank', 'contact']", note: "'DPDP s.7(a): provided for the role applied to'" }
+  - id: SB-002
+    when: "source == 'internal_mobility'"
+    then: { basis: "'employment'", mode: "'full'", may: "['profile', 'score', 'rank', 'contact']", note: "'DPDP s.7(i): employment purposes'" }
+  - id: SB-003
+    when: "source == 'talent_pool' and consent_on_record == True"
+    then: { basis: "'itemised_consent'", mode: "'full'", may: "['profile', 'score', 'rank', 'contact']", note: "'explicit, itemised consent for future roles'" }
+  - id: SB-004
+    when: "source == 'talent_pool'"
+    then: { basis: "'none'", mode: "'pointer_only'", may: "['notice_first_contact']", note: "'talent pool without consent on record'" }
+  - id: SB-005
+    when: "source in ['patent_inventor', 'oss_contributor', 'publication_author']"
+    then: { basis: "'none'", mode: "'pointer_only'", may: "['notice_first_contact']", note: "'public record; no basis to profile'" }
+  - id: SB-099
+    then: { basis: "'none'", mode: "'refuse'", may: "[]", note: "'unknown source — adding a source is a reserved decision (sourcing.add_source)'" }
+
+derive:
+  - id: SB-010
+    name: may_score
+    expr: "'score' in may"
+  - id: SB-011
+    name: expire_after_days
+    expr: "lookup('pointer_expiry_days', 'default') if mode == 'pointer_only' else None"
+
+defaults:
+  consent_on_record: false
+
+tests:
+  - { given: { source: ats_applicant }, expect: { mode: full, may_score: true } }
+  - { given: { source: patent_inventor }, expect: { mode: pointer_only, may_score: false, expire_after_days: 30 } }
+  - { given: { source: talent_pool }, expect: { mode: pointer_only }, name: "a talent pool needs itemised consent" }
+  - { given: { source: talent_pool, consent_on_record: true }, expect: { mode: full } }
+  - { given: { source: scraped_social_profiles }, expect: { mode: refuse }, name: "an unknown source is refused, not guessed" }

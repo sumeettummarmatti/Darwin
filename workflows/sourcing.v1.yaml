@@ -1,0 +1,109 @@
+# PARAKH — talent intelligence for one requisition. A differently-shaped line:
+# external data, outbound contact, no employee record yet. Built from
+# extension points only (this file, three policy packs, skills, the sourcing
+# mock connector and reserved-registry v3).
+workflow: sourcing
+version: 1
+service_line: talent
+description: Gather signals, gate on lawful basis, guard TBO's non-solicit obligations, rank applicants by deterministic ICP score, and send notice-first contact only inside a human-approved campaign.
+principal: agent:sourcing
+trigger:
+  intents: []
+inputs:
+  role: { type: string, default: senior_platform_engineer }
+  requisition_id: { type: string, default: REQ-PLAT-07 }
+  notice_version: { type: string, default: notice-first-v1 }
+metrics:
+  budget_inr_per_run: 1.00
+  target_automation_rate: 0.80
+
+steps:
+  - id: gather_signals
+    title: Gather public signals (pointer-shaped)
+    connector: sourcing
+    action: signals
+    args: { role: "{{inputs.role}}" }
+
+  - id: fetch_applicants
+    title: Fetch applicants from the ATS
+    connector: sourcing
+    action: applicants
+    args: { role: "{{inputs.role}}" }
+
+  - id: basis_gate
+    title: Lawful-basis gate
+    skill: sourcing.basis_gate
+    deterministic: true
+    needs: [gather_signals, fetch_applicants]
+    args: { signals: "{{steps.gather_signals.data.records}}", applicants: "{{steps.fetch_applicants.data.records}}" }
+
+  - id: store_pointers
+    title: Store pointers — link only, nothing derived
+    connector: hr.record
+    action: register_pointer
+    needs: [basis_gate]
+    foreach: "{{steps.basis_gate.pointers}}"
+    args: { pointer: "{{item.pointer}}", public_url: "{{item.pointer.public_url}}", store_fields: "{{item.store_fields}}" }
+    idempotency_key: "src:{{item.pointer.source_id}}:pointer:v1"
+
+  - id: store_applicants
+    title: Record applicants with their basis
+    connector: hr.record
+    action: register_applicant
+    needs: [basis_gate]
+    foreach: "{{steps.basis_gate.eligible}}"
+    args:
+      candidate_id: "{{item.candidate_id}}"
+      display_name: "{{item.display_name}}"
+      basis: "{{item.basis}}"
+      attrs: { applied_role: "{{item.applied_role}}", current_employer: "{{item.current_employer}}", requisition: "{{inputs.requisition_id}}" }
+    idempotency_key: "src:{{item.candidate_id}}:applicant:v1"
+
+  - id: no_raid
+    title: No-raid guard (TBO's obligations)
+    skill: sourcing.no_raid
+    deterministic: true
+    needs: [basis_gate]
+    args: { pointers: "{{steps.basis_gate.pointers}}", applicants: "{{steps.basis_gate.eligible}}" }
+
+  - id: extract_claims
+    title: Extract claims with evidence spans
+    skill: sourcing.extract_claims
+    needs: [no_raid]
+    args:
+      candidates: "{{steps.no_raid.cleared_applicants}}"
+
+  - id: score
+    title: Score by ICP rule (no model)
+    skill: sourcing.score
+    deterministic: true
+    needs: [extract_claims, store_applicants]
+    args: { applicants: "{{steps.no_raid.cleared_applicants}}", claims: "{{steps.extract_claims.claims}}", rationales: "{{steps.extract_claims.rationales}}" }
+
+  - id: bias_challenge
+    title: Prativaad gate D — proxy-bias challenge
+    skill: sourcing.bias_challenge
+    deterministic: true
+    needs: [score]
+    args: { ranking: "{{steps.score.ranking}}" }
+
+  - id: campaign_approval
+    title: Approve outreach campaign
+    reserved: true
+    action: sourcing.campaign_approve
+    needs: [bias_challenge, store_pointers]
+    question: "Approve a notice-first campaign to {{len(steps.no_raid.cleared_pointers)}} people found in public sources, using template {{inputs.notice_version}}, under the lawful-basis attestation in this packet?"
+    packet_from: [basis_gate, no_raid, score, bias_challenge]
+
+  - id: send_notices
+    title: Send notice-first contact (within the approval)
+    connector: mail
+    action: send
+    needs: [campaign_approval]
+    foreach: "{{steps.no_raid.cleared_pointers}}"
+    args:
+      to: "{{item.pointer.public_contact}}"
+      campaign: "{{inputs.requisition_id}}"
+      subject: "TBO — a note about your public work"
+      body: "Hello. This is the talent team at TBO. We found your public work at {{item.pointer.public_url}} ({{item.pointer.source_id}}). We hold only that link, where we found it and the date. If you would like to hear about a platform engineering role, reply 'interested'. If not, reply 'stop' and we will delete the link and never contact you again. ({{inputs.notice_version}})"
+    idempotency_key: "outreach:{{inputs.requisition_id}}:{{item.pointer.source_id}}:v1"

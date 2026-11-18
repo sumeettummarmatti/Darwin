@@ -1,0 +1,17 @@
+skill: sourcing.extract_claims
+version: 1
+kind: model
+description: >
+  Reads applicants' résumé text and returns claims, each with the exact quote it rests on. The handler
+  discards any claim whose quote is not found verbatim in the source — the cheapest defence against an
+  invented qualification. Names reach the model as placeholders. The model never scores.
+inputs: [args.candidates]
+outputs: { claims: array, rationales: object, confidence: number }
+model_tier: 1
+escalate_to_tier: 2
+escalate_when: "confidence < 0.6"
+capabilities: [compute, draft]
+prompt_version: 1
+policy_tags: [parakh, fair_hiring]
+needs_human_title: "Claim extraction unsure"
+needs_human_question: "The extractor was not confident about these résumés. Review the extracted claims before they are scored?"

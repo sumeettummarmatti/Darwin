@@ -10,4 +10,6 @@ actions:
   mark_exited:       { side_effect: true, irreversible: false, capability: record }
   upgrade_pointer:   { side_effect: true, irreversible: false, capability: record }
   suppress_and_delete: { side_effect: true, irreversible: true, capability: record }
+  register_pointer:  { side_effect: true, irreversible: false, capability: record }
+  register_applicant: { side_effect: true, irreversible: false, capability: record }
 cost_inr_per_call: 0.0
