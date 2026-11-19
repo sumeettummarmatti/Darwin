@@ -127,7 +127,7 @@ Only the ones that could change what we do this week. Full list in `DESIGN.md` �
 1. Run the bench and fault corpus against a real tier-1 model (`openai_compatible`), then decide on Prativaad's model layer (PLAN §10 trigger: < 20% added ⇒ shrink).
 2. One more cold rehearsal of the live extension test (leave encashment and probation confirmation done; probation's first rule had a window bug that its workflow test caught).
 3. Round 1: review and submit `docs/ARCHITECTURE_6PAGE.md` (check it prints to six pages); record the video from `docs/DEMO_SCRIPT.md`.
-6. `Dockerfile` is unverified: the build could not pull base images from Docker Hub in this environment. `make setup && make up` from a fresh clone is verified.
+6. ~~Dockerfile unverified~~ — verified 2026-11-19: `docker build -t setu .` succeeds; the container serves the console on :8000, seeds on first start, runs onboarding and the reserved drill.
 7. The console has no authentication (demo "acting as" switcher); policy activation and reserved-list editing are therefore open to anyone who can reach :8000. Fine for a local demo, not for a shared deployment.
 4. Threshold calibration curve needs a real model — not claimed.
 5. Slack/Teams adapters: the chat surface uses the intent API, but no Bolt adapter is wired (no real workspace allowed).
