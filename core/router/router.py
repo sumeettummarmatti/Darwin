@@ -56,11 +56,30 @@ class ModelResult:
     reason: str = ""
 
 
+def parse_json_object(text: str) -> Any:
+    """Real models sometimes wrap JSON in prose or ``` fences. Take the outermost object;
+    anything else is a schema violation, handled by the retry-then-escalate path."""
+    text = (text or "").strip()
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        start, end = text.find("{"), text.rfind("}")
+        if start >= 0 and end > start:
+            return json.loads(text[start:end + 1])
+        raise
+
+
 class RoutingConfig:
     def __init__(self, path: Path):
         self.path = path
         self.raw = yaml.safe_load(path.read_text())
-        self.active_profile = os.environ.get("SETU_MODEL_PROFILE", self.raw.get("active_profile", "sim"))
+        self.active_profile = os.environ.get("SETU_MODEL_PROFILE") or self._default_profile()
+
+    def _default_profile(self) -> str:
+        """A Groq key in the environment (or .env) selects the groq profile; otherwise the simulator."""
+        if os.environ.get("GROQ_API_KEY") and "groq" in self.raw["profiles"]:
+            return "groq"
+        return self.raw.get("active_profile", "sim")
 
     def set_profile(self, name: str) -> None:
         if name not in self.raw["profiles"]:
@@ -118,7 +137,7 @@ class Router:
             totals["inr"] += inr
             totals["calls"] += 1
             try:
-                output = json.loads(raw.text)
+                output = parse_json_object(raw.text)
             except json.JSONDecodeError:
                 output = None
             problems = skill.validate_output(output) if output is not None else ["response is not JSON"]

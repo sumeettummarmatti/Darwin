@@ -79,18 +79,22 @@ class OpenAICompatibleAdapter:
         import httpx
 
         key = os.environ.get(self.config.api_key_env or "", "")
+        if self.config.api_key_env and not key:
+            raise RuntimeError(f"{self.config.api_key_env} is not set — add it to .env or switch to the sim profile")
         started = time.perf_counter()
-        resp = httpx.post(
-            f"{(self.config.base_url or '').rstrip('/')}/chat/completions",
-            headers={"Authorization": f"Bearer {key}"} if key else {},
-            json={
-                "model": self.config.model,
-                "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-                "response_format": {"type": "json_object"},
-                "temperature": 0,
-            },
-            timeout=30,
-        )
+        request = {
+            "model": self.config.model,
+            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+            "response_format": {"type": "json_object"},
+            "temperature": 0,
+        }
+        url = f"{(self.config.base_url or '').rstrip('/')}/chat/completions"
+        headers = {"Authorization": f"Bearer {key}"} if key else {}
+        resp = httpx.post(url, headers=headers, json=request, timeout=30)
+        if resp.status_code == 400 and "response_format" in resp.text:
+            # Some models do not support JSON mode; the router still validates the schema.
+            request.pop("response_format")
+            resp = httpx.post(url, headers=headers, json=request, timeout=30)
         resp.raise_for_status()
         body = resp.json()
         usage = body.get("usage") or {}

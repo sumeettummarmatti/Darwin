@@ -114,7 +114,13 @@ class Kernel:
             minimised = self.proxy.minimise(source, spec.inputs, None)
             ctx = CallContext(run_id=run["id"], step_id=step.id, actor="prativaad", on_behalf_of=agent.label,
                               budget_remaining_inr=budget_left, max_tier=1, source_record=source)
-            result = self.router.complete(spec, minimised, ctx)
+            try:
+                result = self.router.complete(spec, minimised, ctx)
+            except Exception as exc:  # noqa: BLE001 - a provider outage degrades Prativaad to rules-only
+                self.audit.append(AuditEntry(actor="prativaad", action="model.prativaad.review", kind="model", outcome="failed",
+                                             run_id=run["id"], step_id=step.id,
+                                             detail={"error": repr(exc), "degraded_to": "deterministic checks only"}))
+                return [], 0.0
             objections = []
             for o in (result.output or {}).get("objections", []) if not result.needs_human else []:
                 objections.append(Objection(o.get("class", "reserved_leakage"), o.get("severity", "medium"),
