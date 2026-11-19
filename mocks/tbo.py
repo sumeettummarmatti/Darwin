@@ -100,11 +100,12 @@ class TboMocks:
                 out.append(d)
             return out
 
-    def _insert(self, system: str, kind: str, data: dict[str, Any], reference: str | None, status: str = "open") -> dict[str, Any]:
+    def _insert(self, system: str, kind: str, data: dict[str, Any], reference: str | None, status: str = "open",
+                created_at: str | None = None) -> dict[str, Any]:
         rid = f"{system[:3].upper()}-{secrets.token_hex(3).upper()}"
         self._exec(
             "INSERT INTO records(id, system, kind, reference, data, status, created_at) VALUES (?,?,?,?,?,?,?)",
-            (rid, system, kind, reference, json.dumps(data), status, _now()),
+            (rid, system, kind, reference, json.dumps(data), status, created_at or _now()),
         )
         return {"id": rid, "kind": kind, "reference": reference, "status": status, "data": data}
 
@@ -203,7 +204,8 @@ class TboMocks:
                 for n in range(count):
                     self._conn.execute("INSERT INTO inventory VALUES (?,?,?)", (f"LT-{cls}{n:03d}", cls, "in_stock"))
         for prior in prior_allocations or []:
-            alloc = self._insert("assets", "allocation", prior["allocation"], prior.get("reference"), status="open")
+            alloc = self._insert("assets", "allocation", prior["allocation"], prior.get("reference"), status="open",
+                                 created_at=prior.get("allocated_on"))
             if prior.get("returned_on"):
                 self._insert("assets", "return", {"allocation_id": alloc["id"], "returned_on": prior["returned_on"],
                                                   "holder_token": prior["allocation"]["holder_token"]}, None, status="closed")

@@ -104,7 +104,7 @@ def seed(kernel: "Kernel", *, joiners: int = 8, leavers: int = 6) -> dict[str, A
     kernel.mocks.seed(prior_allocations=[{
         "allocation": {"serial": "LT-B907", "asset_class": "B", "holder_token": kernel.vault.token_of("identity_key", "IK-SYNPA4821K"),
                        "holder_ref": "CAND-1182"},
-        "reference": "contract:CAND-1182:asset", "returned_on": "2024-09-14"}])
+        "reference": "contract:CAND-1182:asset", "allocated_on": "2024-03-04T09:00:00+00:00", "returned_on": "2024-09-14"}])
 
     from tools.seed_parakh import seed_parakh  # the sourcing line seeds its own synthetic signals
     parakh = seed_parakh(kernel)
