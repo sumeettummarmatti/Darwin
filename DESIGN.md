@@ -9,6 +9,65 @@
 
 ---
 
+## As built — 19 Nov 2026
+
+This document is the design. What follows is what the repository actually does today, checked against the master story (§4.3), so nobody presents a beat that does not exist. Live at `https://setu.139-84-220-87.sslip.io` (see DEPLOY.md).
+
+### How it works, end to end
+
+1. **Something starts a workflow** — a console button, a chat message ("I want to resign"), or a demo-story beat. Chat goes through one intent API; intents are matched by rules (`policies/intents.v1.yaml`), not a model.
+2. **The orchestrator** (`core/orchestrator.py`) loads the workflow YAML and walks its steps in dependency order, saving every step's state in SQLite, so a crash resumes without repeating work.
+3. **Each step is one of four kinds.** *Skill*: an agent function — deterministic ones only evaluate policy packs; model ones go through the PII proxy and the router. *Connector*: a side effect in another system. *Reserved*: a decision only a named human can make. *Route-only*: POSH / grievance / whistleblower, handed off untouched.
+4. **Every side effect walks the governed path**: kill switch → Prativaad gate A (irreversible actions) → authorisation (reserved verbs, RBAC ∩ capability ∩ step scope, DPDP purpose) → outbox → connector with the same idempotency key on every retry → read-back verification → audit entry with ₹.
+5. **Humans decide in the Decisions inbox.** Each item is a context packet with one question; approving binds to a hash of the packet and produces a receipt. Agents attempting a decision get 403.
+6. **Everything is measured** from the same database: ₹ per run, automation, escalations, refusals, Prativaad precision — the Overview page and `make bench`.
+
+### Story coverage (§4.3)
+
+| Beat | Status | Notes |
+|---|---|---|
+| ICP pack with prohibited criteria | **Built** | `policies/icp.senior_platform_engineer.v2.yaml`; rules reading a prohibited field fail to load |
+| Patent / OSS signals → pointers | **Built** | Synthetic signals only (`tools/seed_parakh.py`) |
+| Kavya stored as a pointer, model call refused | **Built** | Talent → *Ask the model about them* |
+| Restricted employer blocked with clause ID | **Built** | `policies/no_raid.v1.yaml` |
+| Campaign approval reserved; notice-first sends; objection ⇒ suppress + delete; interest ⇒ consent + upgrade | **Built** | Replies are simulated from the Talent page; mail is captured by a mock, never sent |
+| Deterministic scoring with evidence spans; invented claim discarded | **Built** | |
+| College-tier flag (gate D) | **Built** | Shown as a hearing on Talent |
+| Auto-rejection refused (403) | **Built** | |
+| Hiring decision + offer approval with receipts (Wednesday) | **Not built as a workflow** | The reserved actions exist in the registry and receipts work everywhere; there is no offer workflow |
+| Meera's onboarding, entitlements by rule | **Built** | |
+| Duplicate-laptop objection, verified by read-back | **Built** | |
+| Tokenised payroll payload + payload viewer | **Built** | Personal data page |
+| IT outage, retries, breaker, exactly one laptop | **Built** | Guardrails → *Break a TBO system*; chaos tests |
+| Helpdesk answer citing the clause | **Built** | Chat |
+| Tier 1 → tier 2 escalation, logged | **Built** | Measured trigger; seen live on Groq (gpt-oss-20b → 120b) |
+| Faint ID scan → human with context packet | **Built** | |
+| Policy edit blocked by gate B, test proposed | **Built** | Policy packs → *Draft a change* |
+| Broken rule fails compliance CI | **Built** | GitHub Actions runs every pack's tests |
+| Policy simulator: replay open exits under v5 | **Not built** | §16.2 |
+| Exit prepared, not accepted; buyout reserved | **Built** | |
+| Card revocation rescheduled after buyout (date_ordering) | **Built** | |
+| Gratuity by rule while the model's prose is wrong | **Built (simulator)** | The wrong prose is scripted in the simulator; with Groq the model writes what it writes and the rule still decides |
+| Retention clocks + statutory hold; access request | **Built** | |
+| Grievance line → route and stop | **Built** | |
+| Leave workflow self-pauses (circuit breaker) | **Built** | Breaker is tested; not a demo-story button |
+| Nikhil's cold extension with `hrx` | **Built** | Rehearsed twice: leave encashment, probation confirmation |
+| Dashboard, drillable | **Built** | |
+| Provider swap, suite green | **Built** | sim / sim_alt / Groq; the key is entered on the website |
+| Slack / Teams approvals | **Partial** | A Slack-style chat page over the intent API; no real Slack or Teams adapter |
+| Agent self-chasing at the SLA (onboarding day −7) | **Not built** | |
+| Shadow mode for new agents (§16.3) | **Not built** | |
+| Consent withdrawal mid-workflow (§8) | **Not built** | Consent is recorded; no withdrawal flow |
+| Routing-threshold calibration curve (§11.2) | **Not built** | Needs many real-model runs |
+
+### Where the build differs from the design
+
+- **State machine on SQLite, not Temporal/Postgres** (PROGRESS.md D14) — zero-setup and resumable; the schema ports to Postgres.
+- **Models:** an offline simulator by default; Groq (`openai/gpt-oss-20b`, escalating to `-120b`, Apache-2.0) when a key is added on the website. Rupee figures use a declared rate card.
+- **TBO's mock APIs were not available**; `mocks/tbo.py` stands in, deliberately not idempotent.
+- **Prativaad's model layer** reviews the plan once per run (it measured 46% of run cost when run on every step). On the simulator it adds nothing over the rules (88% catch, 0 false alarms on the fault corpus); on Groq it raised a real objection — re-measure before claiming a number.
+- **Exit and PARAKH needed kernel changes first** (fan-out steps, our own record as a connector, sourced-person records), made in separate `core:` commits before the lines; the lines themselves touch no `core/` file.
+
 ## 0. How to read this document
 
 | Section | For |
