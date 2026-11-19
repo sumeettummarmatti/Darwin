@@ -8,7 +8,7 @@ SETU runs as **one Docker container** (FastAPI kernel + built React console + SQ
 
 | Thing | Value |
 |---|---|
-| Code | `/opt/setu/app` (git clone of `main`) |
+| Code | `/opt/setu/app` (git clone of the **`deploy`** branch) |
 | Persistent data | `/opt/setu/var` (SQLite: record, workflow state, audit chain, mocks) |
 | Secrets | `/opt/setu/.env` (mode 600, holds `GROQ_API_KEY` if used) |
 | Container | `setu`, image `setu:latest`, restart `unless-stopped` |
@@ -21,7 +21,7 @@ SETU runs as **one Docker container** (FastAPI kernel + built React console + SQ
 ```bash
 ssh root@139.84.220.87
 sudo mkdir -p /opt/setu/var && sudo chown -R $USER:$USER /opt/setu
-git clone https://github.com/sumeettummarmatti/Darwin.git /opt/setu/app
+git clone -b deploy https://github.com/sumeettummarmatti/Darwin.git /opt/setu/app
 touch /opt/setu/.env && chmod 600 /opt/setu/.env      # add GROQ_API_KEY=… here, or paste it in the console later
 ```
 
@@ -104,6 +104,14 @@ caddy validate --config /etc/caddy/Caddyfile && systemctl reload caddy    # relo
 DNS: none needed — `sslip.io` resolves `setu.139-84-220-87.sslip.io` to `139.84.220.87`, and Caddy obtains the certificate automatically.
 
 ## 4. Update
+
+The server only ever runs the `deploy` branch. Ship a release by fast-forwarding it from `main` on your machine:
+
+```bash
+git checkout deploy && git merge --ff-only main && git push origin deploy && git checkout main
+```
+
+Then on the server:
 
 ```bash
 cd /opt/setu/app && git pull
