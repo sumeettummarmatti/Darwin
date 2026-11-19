@@ -16,6 +16,7 @@ Step kinds:
 
 from __future__ import annotations
 
+import threading
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
@@ -174,6 +175,15 @@ class SkillContext:
 class Orchestrator:
     def __init__(self, kernel: "Kernel"):
         self.k = kernel
+        # One advancer per run: the background worker and an API request must never execute
+        # the same step at the same time (found live: model calls ran twice, connectors were
+        # saved only by their idempotency keys).
+        self._run_locks: dict[str, threading.Lock] = {}
+        self._locks_guard = threading.Lock()
+
+    def _lock_for(self, run_id: str) -> threading.Lock:
+        with self._locks_guard:
+            return self._run_locks.setdefault(run_id, threading.Lock())
 
     # ── run lifecycle ─────────────────────────────────────────────────────────
 
@@ -241,6 +251,15 @@ class Orchestrator:
         return moved
 
     def advance(self, run_id: str) -> int:
+        lock = self._lock_for(run_id)
+        if not lock.acquire(timeout=30):
+            return 0
+        try:
+            return self._advance(run_id)
+        finally:
+            lock.release()
+
+    def _advance(self, run_id: str) -> int:
         moved = 0
         for _ in range(200):  # bounded: a run can never spin the worker
             run = self.run(run_id)

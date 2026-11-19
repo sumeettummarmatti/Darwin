@@ -76,3 +76,18 @@ def test_clock_skew_does_not_fire_scheduled_steps_early(kernel):
     settle(kernel)
     assert kernel.orchestrator.steps(run_id)["revoke_access_card"]["status"] == "scheduled"
     assert not kernel.mocks.records("access", "revocation")
+
+
+def test_concurrent_advancers_do_not_repeat_a_model_call(kernel):
+    import threading
+    run_id = kernel.orchestrator.start("exit", subject_id="EMP-3310", inputs={}, principal=kernel.principal("USR-101"))
+    # Re-open the packet step and race two advancers over it.
+    with kernel.store.tx() as conn:
+        conn.execute("UPDATE step_runs SET status='pending' WHERE run_id=? AND step_id IN ('prepare_packet','accept_resignation')", (run_id,))
+        conn.execute("DELETE FROM human_queue WHERE run_id=?", (run_id,))
+    before = kernel.store.one("SELECT COUNT(*) n FROM model_calls WHERE run_id=?", (run_id,))["n"]
+    threads = [threading.Thread(target=kernel.orchestrator.advance, args=(run_id,)) for _ in range(4)]
+    [t.start() for t in threads]
+    [t.join() for t in threads]
+    after = kernel.store.one("SELECT COUNT(*) n FROM model_calls WHERE run_id=?", (run_id,))["n"]
+    assert after - before == 1
