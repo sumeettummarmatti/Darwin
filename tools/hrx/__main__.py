@@ -256,6 +256,7 @@ def test(workflow: str | None, runs: int) -> int:
     tmp = Path(tempfile.mkdtemp())
     os.environ["SETU_VAR"] = str(tmp)
     k = Kernel(tmp / "setu.db", tmp / "mocks.db")
+    k.routing.set_profile("sim")          # replay is about governance, not model quality: stay offline
     seed(k)
     targets = [workflow] if workflow else [w.name for w in k.registry.latest_workflows()
                                            if w.name in ("onboarding", "exit", "leave") or (config.ROOT / "tests" / "workflows" / f"{w.name}.spec.yaml").exists()]

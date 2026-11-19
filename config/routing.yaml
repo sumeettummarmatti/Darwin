@@ -6,8 +6,9 @@
 # hosted open-weight small / mid / frontier models. Replace them with your
 # provider's invoice rates; every ₹ figure in the dashboard recomputes.
 #
-# To use a real endpoint: set active_profile: openai_compatible (or export
-# SETU_MODEL_PROFILE=openai_compatible) and the SETU_TIER*_ env vars.
+# Real models, one step: put GROQ_API_KEY in .env (see .env.example) — the groq profile
+# is then selected automatically. SETU_MODEL_PROFILE overrides the choice explicitly.
+# Any other OpenAI-compatible endpoint: the openai_compatible profile + SETU_TIER*_ vars.
 
 active_profile: sim
 max_tier_per_workflow: 2          # tier 3 needs an explicit per-skill opt-in (tier3_opt_in)
@@ -24,6 +25,14 @@ profiles:
     tier1: { adapter: sim, model: alt-small-9b,  region: "in-process (no egress)", inr_per_m_in: 6,   inr_per_m_out: 14 }
     tier2: { adapter: sim, model: alt-mid-72b,   region: "in-process (no egress)", inr_per_m_in: 48,  inr_per_m_out: 150 }
     tier3: { adapter: sim, model: alt-frontier,  region: "in-process (no egress)", inr_per_m_in: 240, inr_per_m_out: 980 }
+
+  # Groq (OpenAI-compatible). Put GROQ_API_KEY in .env and this profile is chosen automatically.
+  # Both models are Apache-2.0 (commercial use). Rates: approximate USD list prices converted
+  # at ₹88/$ — an ASSUMPTION; check groq.com/pricing and update before quoting a number.
+  groq:
+    tier1: { adapter: openai_compatible, base_url: "https://api.groq.com/openai/v1", model: "openai/gpt-oss-20b",  api_key_env: GROQ_API_KEY, region: "Groq cloud (US)", inr_per_m_in: 6.6,  inr_per_m_out: 26.4, hosting_note: "hosted inference; only tokenised synthetic payloads are sent" }
+    tier2: { adapter: openai_compatible, base_url: "https://api.groq.com/openai/v1", model: "openai/gpt-oss-120b", api_key_env: GROQ_API_KEY, region: "Groq cloud (US)", inr_per_m_in: 13.2, inr_per_m_out: 52.8 }
+    tier3: { adapter: openai_compatible, base_url: "https://api.groq.com/openai/v1", model: "openai/gpt-oss-120b", api_key_env: GROQ_API_KEY, region: "Groq cloud (US)", inr_per_m_in: 13.2, inr_per_m_out: 52.8 }
 
   openai_compatible:
     tier1: { adapter: openai_compatible, base_url: "${SETU_TIER1_BASE_URL}", model: "${SETU_TIER1_MODEL}", api_key_env: SETU_TIER1_API_KEY, region: ap-south-1, inr_per_m_in: 8,   inr_per_m_out: 16 }

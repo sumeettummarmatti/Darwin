@@ -8,6 +8,12 @@ from core.kernel import Kernel
 from tools.seed import seed
 
 
+@pytest.fixture(autouse=True)
+def _offline_models(monkeypatch):
+    """Tests never call a real provider, even if a GROQ_API_KEY sits in .env."""
+    monkeypatch.setenv("SETU_MODEL_PROFILE", "sim")
+
+
 @pytest.fixture
 def kernel(tmp_path, monkeypatch):
     monkeypatch.setenv("SETU_VAR", str(tmp_path))
