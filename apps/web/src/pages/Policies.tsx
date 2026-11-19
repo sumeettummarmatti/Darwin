@@ -3,6 +3,7 @@ import { api } from "../api";
 import { useApp } from "../context";
 import { usePoll } from "../hooks";
 import { Hearing } from "../components/Hearing";
+import { sentence } from "../components/Pretty";
 
 export default function Policies({ arg }: { arg: string | null }) {
   const { go } = useApp();
@@ -136,7 +137,7 @@ function Review({ review, onAdd }: { review: any; onAdd: () => void }) {
             <Hearing key={i} c={{
               gate: "B", class: `property ${f.property} broken`, severity: "high", layer: "rules",
               claim: `“${f.claim}” — the draft lets this case through.`,
-              evidence: [`given ${JSON.stringify(f.given)}`, `draft returns ${JSON.stringify(f.got)}`, `rules ${f.rule_ids.join(", ")}`],
+              evidence: [`case: ${sentence(f.given)}`, `draft returns: ${sentence(f.got)}`, `rules ${f.rule_ids.join(", ")}`],
               resolution: "None from the draft. Prativaad proposes a regression test so this case can never pass silently again.",
               verdict_override: { label: "Blocks activation", tone: "seal" },
             }} />
@@ -152,8 +153,9 @@ function Review({ review, onAdd }: { review: any; onAdd: () => void }) {
         <details>
           <summary className="small">What changes against the active version ({review.changed_count})</summary>
           <table className="t small">
+            <thead><tr><th>Case</th><th>Active version</th><th>Draft</th></tr></thead>
             <tbody>{review.changed.slice(0, 12).map((c: any, i: number) => (
-              <tr key={i}><td className="mono">{JSON.stringify(c.given)}</td><td className="mono">{JSON.stringify(c.before)}</td><td className="mono">{JSON.stringify(c.after)}</td></tr>
+              <tr key={i}><td>{sentence(c.given)}</td><td>{typeof c.before === "string" ? c.before : sentence(c.before)}</td><td>{typeof c.after === "string" ? c.after : sentence(c.after)}</td></tr>
             ))}</tbody>
           </table>
         </details>

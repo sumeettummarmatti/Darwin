@@ -2,8 +2,10 @@ import { useState } from "react";
 import { api, short } from "../api";
 import { useApp } from "../context";
 import { Hearing } from "./Hearing";
+import { Pretty, humanize } from "./Pretty";
 
 function Value({ v }: { v: any }) {
+  if (v !== null && typeof v === "object") return <Pretty v={v} />;
   if (v === null || v === undefined) return <span className="muted">—</span>;
   if (typeof v === "boolean") return <span className={`tag ${v ? "ok" : "warn"}`}>{v ? "yes" : "no"}</span>;
   if (typeof v === "number") return <span style={{ fontVariantNumeric: "tabular-nums" }}>{v.toLocaleString("en-IN")}</span>;
@@ -35,7 +37,7 @@ export function ComputedTable({ computed }: { computed: Record<string, any> }) {
 }
 
 function Pair({ k, v }: { k: string; v: any }) {
-  return (<><div className="k">{k}</div><div><Value v={v} /></div></>);
+  return (<><div className="k">{humanize(k)}</div><div><Value v={v} /></div></>);
 }
 
 const OPTIONS: Record<string, { label: string; decision: string; kind?: string }[]> = {

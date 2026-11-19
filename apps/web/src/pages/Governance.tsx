@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api, fmtTime } from "../api";
 import { useApp } from "../context";
 import { usePoll } from "../hooks";
+import { ProviderKey } from "../components/ProviderKey";
 
 export default function Governance() {
   return (
@@ -17,6 +18,7 @@ export default function Governance() {
           <Chaos />
         </div>
         <Registry />
+        <ProviderKey />
         <Provider />
       </div>
     </>
@@ -221,12 +223,12 @@ function Provider() {
   return (
     <section className="panel panel-pad row">
       <div>
-        <h2>Model provider</h2>
+        <h2>Switch profile</h2>
         <p className="sub" style={{ margin: 0 }}>Changing vendor is configuration. Swap the profile, then re-run the suite: the skills, prompts and rules do not change.</p>
       </div>
       <span className="spacer" />
       {boot.profiles.map((p: string) => (
-        <button key={p} className={`btn ${boot.profile === p ? "primary" : ""}`} disabled={p === "openai_compatible"} onClick={() => swap(p)} title={p === "openai_compatible" ? "Needs SETU_TIER*_ env vars" : ""}>{p}</button>
+        <button key={p} className={`btn ${boot.profile === p ? "primary" : ""}`} disabled={p === "openai_compatible" || (p === "groq" && !boot.groq_ready)} onClick={() => swap(p)} title={p === "openai_compatible" ? "Needs SETU_TIER*_ env vars" : ""}>{p}</button>
       ))}
     </section>
   );

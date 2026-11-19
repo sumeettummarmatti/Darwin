@@ -13,6 +13,7 @@ import Policies from "./pages/Policies";
 import Privacy from "./pages/Privacy";
 import Audit from "./pages/Audit";
 import Talent from "./pages/Talent";
+import { ProviderKey } from "./components/ProviderKey";
 
 const PAGES: { id: string; label: string; icon: any; group?: string }[] = [
   { id: "overview", label: "Overview", icon: Gauge },
@@ -97,7 +98,7 @@ export default function App() {
             );
           })}
           <div className="foot">
-            Synthetic data only. Model provider: <b style={{ color: "#fff" }}>{boot.profile}</b> (simulated, in-process, no egress).
+            Synthetic data only. Model provider: <b style={{ color: "#fff" }}>{boot.profile === "groq" ? "Groq (gpt-oss)" : boot.profile}</b>{boot.profile === "groq" ? " — tokenised payloads only." : " (simulated, in-process, no egress)."}
           </div>
         </nav>
         <div className="main">
@@ -115,6 +116,7 @@ export default function App() {
             <button className="btn small ghost" onClick={reset} title="Reseed the synthetic dataset"><RotateCcw size={14} /> Reset</button>
           </header>
           <main className="content">
+            <div style={{ marginBottom: 16 }}><ProviderKey compact onlyRejected={!["overview", "story"].includes(page)} /></div>
             <Page arg={arg} />
           </main>
         </div>

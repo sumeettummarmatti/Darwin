@@ -1,13 +1,10 @@
 import { useState } from "react";
 import { api, fmtInr, fmtTime } from "../api";
 import { usePoll } from "../hooks";
+import { Pretty } from "../components/Pretty";
 
 function Val({ v }: { v: any }) {
-  if (v !== null && typeof v === "object") {
-    // Nested payloads (retrieved clauses, candidate lists) scroll inside their cell.
-    const text = JSON.stringify(v, null, 1);
-    return <pre>{text.split(/(«[^»]+»)/g).map((part, i) => part.startsWith("«") ? <span key={i} className="tok">{part}</span> : part)}</pre>;
-  }
+  if (v !== null && typeof v === "object") return <Pretty v={v} />;
   const s = typeof v === "string" ? v : JSON.stringify(v);
   if (s && s.includes("«")) {
     return <span>{s.split(/(«[^»]+»)/g).map((part, i) => part.startsWith("«") ? <span key={i} className="tok">{part}</span> : part)}</span>;
@@ -73,7 +70,7 @@ export default function Privacy({ arg }: { arg: string | null }) {
             </div>
             <div>
               <h2>Model response</h2>
-              <pre className="code" style={{ maxHeight: 220 }}>{JSON.stringify(sel.response, null, 2)}</pre>
+              <div className="panel" style={{ padding: 12, background: "#fafbfc" }}><Pretty v={sel.response} /></div>
             </div>
           </section>
         ) : <div className="panel empty">Select a call.</div>}
@@ -118,7 +115,7 @@ function Dpdp() {
             <input value={person} onChange={(e) => setPerson(e.target.value)} aria-label="Person ID" />
             <button className="btn" onClick={async () => setBundle(await api.get(`/api/dpdp/access/${person}`))}>Answer the request</button>
           </div>
-          {bundle && <pre className="code" style={{ marginTop: 10, maxHeight: 260 }}>{JSON.stringify(bundle, null, 2)}</pre>}
+          {bundle && <div className="panel" style={{ marginTop: 10, padding: 12, maxHeight: 360, overflow: "auto" }}><Pretty v={bundle} /></div>}
         </div>
         <div>
           <h2>Purpose limitation</h2>

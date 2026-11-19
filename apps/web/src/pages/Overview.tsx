@@ -3,6 +3,7 @@ import { ShieldCheck } from "lucide-react";
 import { api, fmtDur, fmtInr, fmtPct, short } from "../api";
 import { useApp } from "../context";
 import { usePoll } from "../hooks";
+import { Pretty } from "../components/Pretty";
 
 const TIER_COLORS = ["var(--agent)", "#7fb0c8", "var(--rule)", "var(--seal)"];
 
@@ -167,7 +168,7 @@ function DrillTable({ rows, onRun }: { rows: any[]; onRun: (id: string) => void 
         <tbody>
           {rows.slice(0, 60).map((r, i) => (
             <tr key={i} className={r.run_id ? "click" : ""} onClick={() => r.run_id && onRun(r.run_id)}>
-              {cols.map((c) => <td key={c} className={c.endsWith("id") ? "mono" : ""}>{typeof r[c] === "number" ? (c.includes("inr") ? fmtInr(r[c], 4) : r[c]) : String(r[c] ?? "—")}</td>)}
+              {cols.map((c) => <td key={c} className={c.endsWith("id") ? "mono" : ""}>{typeof r[c] === "number" ? (c.includes("inr") ? fmtInr(r[c], 4) : r[c]) : <Pretty v={r[c]} />}</td>)}
               {r.detail && <td className="small">{r.detail.reason}</td>}
             </tr>
           ))}

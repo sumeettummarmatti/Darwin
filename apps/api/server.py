@@ -102,6 +102,7 @@ def bootstrap() -> dict[str, Any]:
         "clock": k.clock.now_iso(),
         "profile": k.routing.active_profile,
         "profiles": list(k.routing.profiles().keys()),
+        "groq_ready": bool(os.environ.get("GROQ_API_KEY")) and k.routing.key_status["state"] != "rejected",
         "kill_switches": k.killswitch.active(),
     }
 
@@ -506,7 +507,9 @@ def provider_key(body: dict[str, Any] = Body(...)) -> dict[str, Any]:
     key = str(body.get("key", "")).strip()
     ok, message = check_key("https://api.groq.com/openai/v1", key)
     if not ok:
-        k.routing.key_status = {"state": "rejected", "message": message}
+        # A bad paste does not condemn the key already in use; only report it.
+        if not os.environ.get("GROQ_API_KEY"):
+            k.routing.key_status = {"state": "missing", "message": message}
         return {"ok": False, "message": message, "create_url": "https://console.groq.com/keys"}
     env_path = config.ROOT / ".env"
     lines = [l for l in (env_path.read_text().splitlines() if env_path.exists() else []) if not l.startswith("GROQ_API_KEY=")]

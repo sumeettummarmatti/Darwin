@@ -23,3 +23,33 @@ def test_without_a_key_the_simulator_is_used(monkeypatch):
     monkeypatch.delenv("SETU_MODEL_PROFILE", raising=False)
     monkeypatch.delenv("GROQ_API_KEY", raising=False)
     assert RoutingConfig(config.CONFIG_DIR / "routing.yaml").active_profile == "sim"
+
+
+def test_a_rejected_key_falls_back_to_the_simulator_and_says_so(monkeypatch, kernel):
+    from core.router.adapters import OpenAICompatibleAdapter, ProviderAuthError
+
+    def reject(self, system, user, simulate=None):
+        raise ProviderAuthError("GROQ_API_KEY was rejected by the provider (401)")
+
+    monkeypatch.setattr(OpenAICompatibleAdapter, "complete", reject)
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_expired")
+    kernel.routing.set_profile("groq")
+    run_id = kernel.orchestrator.start("helpdesk", subject_id="EMP-4821", principal=kernel.principal("USR-4821"),
+                                       inputs={"question": "What do I need to bring on day one?"})
+    assert kernel.orchestrator.run(run_id)["status"] == "completed"          # the run still finished
+    assert kernel.routing.key_status["state"] == "rejected" and kernel.routing.active_profile == "sim"
+
+
+def test_a_rejected_key_falls_back_to_the_simulator_and_says_so(monkeypatch, kernel):
+    from core.router.adapters import OpenAICompatibleAdapter, ProviderAuthError
+
+    def reject(self, system, user, simulate=None):
+        raise ProviderAuthError("GROQ_API_KEY was rejected by the provider (401)")
+
+    monkeypatch.setattr(OpenAICompatibleAdapter, "complete", reject)
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_expired")
+    kernel.routing.set_profile("groq")
+    run_id = kernel.orchestrator.start("helpdesk", subject_id="EMP-4821", principal=kernel.principal("USR-4821"),
+                                       inputs={"question": "What do I need to bring on day one?"})
+    assert kernel.orchestrator.run(run_id)["status"] == "completed"
+    assert kernel.routing.key_status["state"] == "rejected" and kernel.routing.active_profile == "sim"
