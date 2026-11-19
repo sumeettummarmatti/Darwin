@@ -90,7 +90,7 @@ Append **one new block** (existing SixthSense blocks untouched):
 
 ```caddy
 setu.139-84-220-87.sslip.io {
-    basic_auth {
+    basicauth {                       # Caddy 2.6 on this server; 2.8+ also accepts basic_auth
         judge «bcrypt-hash-from-caddy-hash-password»
     }
     reverse_proxy 127.0.0.1:8100
@@ -161,3 +161,20 @@ ss -ltn | grep -E ':8100\b' || echo "8100 free"
 ufw status | head -20
 systemctl is-active sixthsense-core sixthsense-insight sixthsense-worker caddy
 ```
+
+## Deployment log
+
+### 2026-11-19 — first deployment ✅
+
+| Check | Result |
+|---|---|
+| Pre-flight (read-only) | Ubuntu 24.04.5 · 8 vCPU · 15 GB RAM (~10 GB available) · 113 GB disk free · Docker 29.1.3 · port 8100 free · ufw 22/80/443 · SixthSense units and Caddy active |
+| Code | `/opt/setu/app` on branch `deploy` |
+| Container | `setu` on `127.0.0.1:8100`, 512 MB / 1 CPU cap, `restart unless-stopped`, volumes `/opt/setu/var` and `/opt/setu/.env` |
+| Caddy | backup `Caddyfile.bak.<timestamp>`; one block appended for `setu.139-84-220-87.sslip.io` with `basicauth` (user `judge`); validated; **reloaded** |
+| Live | `https://setu.139-84-220-87.sslip.io` → 401 without credentials, 200 with; console and `/api/health` OK; audit chain intact |
+| SixthSense after | `api.` and `insight.` `/docs` both 200; `sixthsense-core`, `sixthsense-insight`, `caddy` active |
+
+**Incident, no impact:** the first Caddy block used `basic_auth`, which Caddy **2.6.2** does not recognise. `caddy validate` failed and `systemctl reload` was refused, so Caddy kept serving its previous config — SixthSense never went down. The directive was corrected to `basicauth`, validated and reloaded. Lesson kept in the snippet above: always `caddy validate` before `reload`, and check `caddy version`.
+
+The demo password was generated during deployment and given to the team lead directly; it is not stored in this repository (only its bcrypt hash exists, in the server's Caddyfile).
