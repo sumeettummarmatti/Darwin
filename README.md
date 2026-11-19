@@ -19,11 +19,11 @@ or `make docker`. No API keys, no external services: the model provider defaults
 
 Open **Demo story** in the console and press the buttons in order — it plays one week at TBO on the real screens.
 
-**Use real models (optional, one step):** `cp .env.example .env`, paste a Groq key into `GROQ_API_KEY`, restart. SETU then runs every model step — including Prativaad's reviewer — on Groq (`openai/gpt-oss-20b`, escalating to `openai/gpt-oss-120b` on a measured trigger; both Apache-2.0). Only tokenised synthetic payloads leave the machine; the Personal data page shows each one. Tests and `make bench` stay on the offline simulator unless you pass `python -m bench.run --profile groq`. The scripted behaviours listed in [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) belong to the simulator; with Groq the model behaves as it will.
+**Use real models (optional, one step):** paste a Groq key into **Guardrails → Model provider** on the website (it is checked with Groq first, kept only in the git-ignored `.env`, and never shown again), or put it in `.env` yourself (`cp .env.example .env`). If the key later expires or is revoked, the site asks for a new one and keeps running on the simulator meanwhile. SETU then runs every model step — including Prativaad's reviewer — on Groq (`openai/gpt-oss-20b`, escalating to `openai/gpt-oss-120b` on a measured trigger; both Apache-2.0). Only tokenised synthetic payloads leave the machine; the Personal data page shows each one. Tests and `make bench` stay on the offline simulator unless you pass `python -m bench.run --profile groq`. The scripted behaviours listed in [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) belong to the simulator; with Groq the model behaves as it will.
 
 | Command | What it does |
 |---|---|
-| `make test` | 82 tests: policy packs, governance, golden runs, chaos, Hypothesis idempotency property, API contract, fault corpus |
+| `make test` | 88 tests: policy packs, governance, golden runs, chaos, Hypothesis idempotency property, API contract, fault corpus |
 | `./hrx validate` | Schema, load-time invariants and the governance lint (Prativaad gate C) |
 | `./hrx test` | Replays synthetic runs under an injected retry storm; fails on any duplicate side effect |
 | `make bench` | Every number in this README comes from here → [`bench/results/latest.md`](bench/results/latest.md) |

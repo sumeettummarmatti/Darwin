@@ -110,6 +110,15 @@ Only the ones that could change what we do this week. Full list in `DESIGN.md` �
 
 ## Session log
 
+### 2026-11-19 (morning) — Docker verified, Groq live, hearings
+
+- `docker build` succeeds and the container serves, seeds and runs governed flows (the night's failure was a stalled Docker Hub pull).
+- Groq profile (gpt-oss-20b → gpt-oss-120b, Apache-2.0); the key is asked for on the website, validated with Groq, kept in the git-ignored `.env`. Rejected key ⇒ banner asking for a new one, platform continues on the simulator.
+- **Found only by running a real provider**: rate limits (429), JSON-mode validation failures (400), a schema miss in claim extraction (prompt v2 fixes it), and a race where the worker and an API call advanced the same run so every model call ran twice. All fixed, each in its own commit with a test.
+- Live on Groq: Meera's faint ID escalated 20b → 120b on the measured trigger and stopped for a human; the exit packet, welcome draft, helpdesk (ONB-C1) and Prativaad's reviewer all ran once each. Prativaad's model reviewer raised a real objection of its own on the first live run. **Re-run the fault corpus on Groq** to measure what it adds (open item 1).
+- Console: Prativaad objections read as hearings (charge, evidence, defence, verdict); raw JSON replaced by readable fields everywhere.
+
+
 ### 2026-11-19 (night) — the platform, built
 
 **Shipped** (all pushed to `main`, scoped commits, `core/` changes separate from service lines)
