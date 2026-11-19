@@ -19,6 +19,8 @@ or `make docker`. No API keys, no external services: the model provider defaults
 
 Open **Demo story** in the console and press the buttons in order — it plays one week at TBO on the real screens.
 
+**Use real models (optional, one step):** `cp .env.example .env`, paste a Groq key into `GROQ_API_KEY`, restart. SETU then runs every model step — including Prativaad's reviewer — on Groq (`openai/gpt-oss-20b`, escalating to `openai/gpt-oss-120b` on a measured trigger; both Apache-2.0). Only tokenised synthetic payloads leave the machine; the Personal data page shows each one. Tests and `make bench` stay on the offline simulator unless you pass `python -m bench.run --profile groq`. The scripted behaviours listed in [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) belong to the simulator; with Groq the model behaves as it will.
+
 | Command | What it does |
 |---|---|
 | `make test` | 82 tests: policy packs, governance, golden runs, chaos, Hypothesis idempotency property, API contract, fault corpus |

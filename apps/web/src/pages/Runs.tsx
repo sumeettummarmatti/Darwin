@@ -5,6 +5,7 @@ import { useApp } from "../context";
 import { usePoll } from "../hooks";
 import { Rail, RailLegend, Step } from "../components/Rail";
 import { ComputedTable, Packet } from "../components/Packet";
+import { Hearing } from "../components/Hearing";
 
 const STATUS_TAG: Record<string, string> = { completed: "ok", waiting: "seal", running: "agent", paused: "warn", closed: "", cancelled: "", compensated: "warn" };
 
@@ -153,13 +154,11 @@ function StepDetail({ step, d }: { step: Step; d: any }) {
         {step.attempts ? ` · ${step.attempts} attempt(s)` : ""}{step.scheduled_for ? ` · scheduled ${fmtTime(step.scheduled_for)}` : ""}
         {step.note ? ` · ${step.note}` : ""}
       </div>
-      {objections.map((o: any) => (
-        <div key={o.id} className="objection" style={{ marginBottom: 8 }}>
-          <b>Prativaad gate {o.gate} · {o.class.replace(/_/g, " ")}</b> <span className="tag">{o.severity}</span> <span className="tag">{o.layer} layer</span><br />
-          {o.claim}
-          {o.resolution && <div className="small" style={{ marginTop: 4 }}><b>{o.upheld ? "Upheld" : "Overruled"}:</b> {o.resolution}</div>}
+      {objections.length > 0 && (
+        <div className="hearings" style={{ marginBottom: 12 }}>
+          {objections.map((o: any) => <Hearing key={o.id} c={o} />)}
         </div>
-      ))}
+      )}
       {outputs && Object.keys(outputs).length > 0 && <ComputedTable computed={{ outputs }} />}
       {calls.map((c: any) => (
         <div key={c.id} className="notice small" style={{ marginTop: 8 }}>

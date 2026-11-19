@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api, short } from "../api";
 import { useApp } from "../context";
+import { Hearing } from "./Hearing";
 
 function Value({ v }: { v: any }) {
   if (v === null || v === undefined) return <span className="muted">—</span>;
@@ -105,11 +106,9 @@ export function Packet({ item, onDecided }: { item: any; onDecided?: (result: an
         </div>
       )}
 
-      {p.objections?.map((o: any, i: number) => (
-        <div key={i} className="objection">
-          <b>Prativaad · {o.class.replace(/_/g, " ")}</b> <span className="tag">{o.severity}</span><br />{o.claim}
-        </div>
-      ))}
+      {p.objections?.length > 0 && (
+        <div className="hearings">{p.objections.map((o: any, i: number) => <Hearing key={i} c={{ ...o, gate: "A" }} />)}</div>
+      )}
 
       {p.recommendation && (
         <div className="notice">

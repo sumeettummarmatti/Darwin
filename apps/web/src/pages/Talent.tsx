@@ -3,6 +3,7 @@ import { Link2, Search } from "lucide-react";
 import { api } from "../api";
 import { useApp } from "../context";
 import { usePoll } from "../hooks";
+import { Hearing } from "../components/Hearing";
 
 export default function Talent() {
   const { go, setUser, toast } = useApp();
@@ -141,7 +142,13 @@ export default function Talent() {
                         {r.breakdown.map((b: any, i: number) => (
                           <div key={i}><span className="tag rule">{b.criterion}</span> “{b.evidence}” <span className="muted mono">[{b.span.join("–")}]</span></div>
                         ))}
-                        {flag && <div className="objection" style={{ marginTop: 6 }}><b>Prativaad gate D:</b> {flag.claim} — in the rationale “{r.rationale}”. Flagged for the reviewer; the ranking was not changed.</div>}
+                        {flag && <div style={{ marginTop: 8 }}><Hearing c={{
+                          gate: "D", class: "proxy bias", severity: "medium", layer: "rules",
+                          claim: `The rationale says “${flag.phrase}”, which can stand in for ${flag.proxy_for.replace(/_/g, " ")} — a prohibited criterion.`,
+                          evidence: [`rationale: “${r.rationale}”`, `characters ${flag.span.join("–")}`],
+                          resolution: "The score does not use it (icp@v2 cannot read prohibited criteria). The phrase is flagged so the reviewer discounts it.",
+                          verdict_override: { label: "Flagged for the reviewer", tone: "rule" },
+                        }} /></div>}
                       </td>
                     </tr>
                   );

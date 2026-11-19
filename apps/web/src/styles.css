@@ -233,3 +233,23 @@ select, input[type="text"], input[type="date"], input:not([type]) { border: 1px 
   .topbar { padding: var(--s-3) var(--s-4); flex-wrap: wrap; }
   .g2 { grid-template-columns: 1fr; }
 }
+
+/* ── Prativaad hearing: charge, evidence, defence, verdict ─────────────── */
+.hearing { border: 1px solid var(--line); border-left: 4px solid var(--rule); border-radius: var(--r-md); background: var(--surface); overflow: hidden; }
+.hearing.tone-seal { border-left-color: var(--seal); }
+.hearing.tone-agent { border-left-color: var(--agent); }
+.hearing.tone-ok { border-left-color: var(--ok); }
+.hearing-head { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: #fafbfc; border-bottom: 1px solid var(--line-2); text-transform: capitalize; flex-wrap: wrap; }
+.hearing-head .small { text-transform: none; }
+.hearing-body { padding: 4px 14px 10px; }
+.hearing-row { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding: 8px 0; border-bottom: 1px dashed var(--line-2); align-items: baseline; }
+.hearing-row:last-child { border-bottom: 0; }
+.hearing-row p { margin: 0; font-size: 14px; line-height: 1.55; }
+.hearing-label { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.verdict-stamp { display: inline-block; font-weight: 800; font-size: 13px; letter-spacing: 0.04em; padding: 3px 12px; border: 2px solid currentColor; border-radius: 6px; transform: rotate(-3deg); }
+.verdict-stamp.tone-seal { color: var(--seal); }
+.verdict-stamp.tone-agent { color: var(--agent); }
+.verdict-stamp.tone-rule { color: #8a6410; border-style: dashed; }
+.verdict-stamp.tone-ok { color: var(--ok); }
+.hearings { display: flex; flex-direction: column; gap: 10px; }
+@media (max-width: 760px) { .hearing-row { grid-template-columns: 1fr; gap: 2px; } }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api";
 import { useApp } from "../context";
 import { usePoll } from "../hooks";
+import { Hearing } from "../components/Hearing";
 
 export default function Policies({ arg }: { arg: string | null }) {
   const { go } = useApp();
@@ -129,12 +130,20 @@ function Review({ review, onAdd }: { review: any; onAdd: () => void }) {
         {" "}{review.changed_count} case(s) resolve differently from the active version.
       </div>
       {review.failing_tests?.map((t: any) => <div key={t.name} className="refusal small">Pack test fails: {t.name} — {t.reason}</div>)}
-      {review.findings.slice(0, 2).map((f: any, i: number) => (
-        <div key={i} className="objection small">
-          <b>{f.property}: {f.claim}</b><br />
-          given <span className="mono">{JSON.stringify(f.given)}</span> → <span className="mono">{JSON.stringify(f.got)}</span> (rules {f.rule_ids.join(", ")})
+      {review.findings.length > 0 && (
+        <div className="hearings">
+          {review.findings.slice(0, 2).map((f: any, i: number) => (
+            <Hearing key={i} c={{
+              gate: "B", class: `property ${f.property} broken`, severity: "high", layer: "rules",
+              claim: `“${f.claim}” — the draft lets this case through.`,
+              evidence: [`given ${JSON.stringify(f.given)}`, `draft returns ${JSON.stringify(f.got)}`, `rules ${f.rule_ids.join(", ")}`],
+              resolution: "None from the draft. Prativaad proposes a regression test so this case can never pass silently again.",
+              verdict_override: { label: "Blocks activation", tone: "seal" },
+            }} />
+          ))}
+          {review.finding_count > 2 && <div className="small muted">…and {review.finding_count - 2} more cases breaking the same property.</div>}
         </div>
-      ))}
+      )}
       {review.proposed_tests?.length > 0 && (
         <div className="row"><span className="small">Prativaad proposes {review.proposed_tests.length} regression test(s) for the pack.</span>
           <button className="btn small" onClick={onAdd}>Add them to tests:</button></div>
