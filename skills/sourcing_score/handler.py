@@ -8,6 +8,9 @@ WEIGHTS = {"production_scale": "w_production_scale", "oss_or_patent": "w_oss_or_
 def run(ctx):
     claims = ctx.input("args.claims") or []
     rationales = ctx.input("args.rationales") or {}
+    if not isinstance(rationales, dict):          # real models sometimes return a list of {candidate, text}
+        rationales = {r.get("candidate") or r.get("id"): r.get("rationale") or r.get("text", "")
+                      for r in rationales if isinstance(r, dict)}
     ranking, below = [], []
     for a in ctx.input("args.applicants") or []:
         mine = [c for c in claims if c["candidate"] == a["candidate_id"]]
@@ -18,7 +21,7 @@ def run(ctx):
                       "span": c["span"], "source": c["source"]} for c in mine]
         entry = {"candidate_id": a["candidate_id"], "display_name": a["display_name"], "score": d.outputs["score"],
                  "must_have_met": d.outputs["must_have_met"], "breakdown": breakdown, "rules": d.rule_ids,
-                 "rationale": rationales.get(a["candidate_id"], "")}
+                 "rationale": str(rationales.get(a["candidate_id"]) or "")}
         ranking.append(entry)
         if not d.outputs["must_have_met"]:
             below.append(a["candidate_id"])

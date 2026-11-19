@@ -10,9 +10,11 @@ def run(ctx):
     out = ctx.ask_model({"args.candidates": [{"id": c["id"], "resume_text": c["resume_text"]} for c in candidates]},
                         names=[c["display_name"] for c in candidates if c.get("display_name")])
     kept, discarded = [], []
-    for claim in out.get("claims", []):
+    for claim in out.get("claims", []) if isinstance(out.get("claims"), list) else []:
+        if not isinstance(claim, dict):
+            continue
         text = texts.get(claim.get("candidate"), "")
-        quote = claim.get("quote") or ""
+        quote = str(claim.get("quote") or "")
         start = text.find(quote) if quote else -1
         if start < 0:
             discarded.append({**claim, "reason": "quote not found verbatim in the source — discarded"})

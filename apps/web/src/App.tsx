@@ -14,6 +14,7 @@ import Privacy from "./pages/Privacy";
 import Audit from "./pages/Audit";
 import Talent from "./pages/Talent";
 import { ProviderKey } from "./components/ProviderKey";
+import { PageBoundary } from "./components/PageBoundary";
 
 const PAGES: { id: string; label: string; icon: any; group?: string }[] = [
   { id: "overview", label: "Overview", icon: Gauge },
@@ -117,7 +118,7 @@ export default function App() {
           </header>
           <main className="content">
             <div style={{ marginBottom: 16 }}><ProviderKey compact onlyRejected={!["overview", "story"].includes(page)} /></div>
-            <Page arg={arg} />
+            <PageBoundary page={page}><Page arg={arg} /></PageBoundary>
           </main>
         </div>
       </div>

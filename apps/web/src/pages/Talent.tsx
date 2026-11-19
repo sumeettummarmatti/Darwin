@@ -33,11 +33,13 @@ export default function Talent() {
     reloadPointers();
   }
 
-  const blocked = out("no_raid").blocked || [];
-  const ranking = out("score").ranking || [];
-  const flags = out("bias_challenge").flags || [];
-  const discarded = out("extract_claims").discarded || [];
-  const proposals = out("score")._proposals || [];
+  // Real models do not always return the shapes the simulator does: read everything defensively.
+  const list = (v: any) => (Array.isArray(v) ? v : []);
+  const blocked = list(out("no_raid").blocked);
+  const ranking = list(out("score").ranking);
+  const flags = list(out("bias_challenge").flags);
+  const discarded = list(out("extract_claims").discarded);
+  const proposals = list(out("score")._proposals);
   const campaign = steps["campaign_approval"];
 
   return (
@@ -63,7 +65,7 @@ export default function Talent() {
               <h2>Pointers · no lawful basis</h2>
               <p className="sub">Stored: public link, source, date, role hypothesis, the organisation on the public record, its public contact. Nothing else, ever. They expire in 30 days without a reply.</p>
               <div className="stack">
-                {(pointers || []).map((p) => {
+                {list(pointers).filter((p: any) => p?.attrs?.public_url).map((p: any) => {
                   const block = blocked.find((b: any) => b.public_url === p.attrs.public_url);
                   return (
                     <div key={p.id} style={{ borderBottom: "1px solid var(--line-2)", paddingBottom: 10 }}>
@@ -114,7 +116,7 @@ export default function Talent() {
                 <div>
                   <h2>Claims thrown away</h2>
                   <p className="sub">The model returned these without a verbatim quote in the source. They never reached the scorer.</p>
-                  {discarded.map((d: any, i: number) => <div key={i} className="objection small"><b>{d.candidate}</b> · {d.criterion}: “{d.quote}” — {d.reason}</div>)}
+                  {discarded.map((d: any, i: number) => <div key={i} className="objection small"><b>{String(d.candidate ?? "")}</b> · {String(d.criterion ?? "").replace(/_/g, " ")}: “{String(d.quote ?? "")}” — {String(d.reason ?? "")}</div>)}
                 </div>
               )}
             </section>
@@ -135,17 +137,17 @@ export default function Talent() {
                     <tr key={r.candidate_id}>
                       <td><b>{r.position}</b></td>
                       <td><b>{r.display_name}</b><div className="small muted mono">{r.candidate_id}</div></td>
-                      <td><b>{r.score.toFixed(3)}</b></td>
+                      <td><b>{typeof r.score === "number" ? r.score.toFixed(3) : "—"}</b></td>
                       <td>{r.must_have_met ? <span className="tag ok">met</span> : <span className="tag warn">not met</span>}
                         {proposal ? <div className="small" style={{ marginTop: 6, color: "var(--seal)" }}>Agent proposed rejection → 403 RESERVED. A hiring manager decides.</div> : null}</td>
                       <td className="small">
-                        {r.breakdown.map((b: any, i: number) => (
-                          <div key={i}><span className="tag rule">{b.criterion}</span> “{b.evidence}” <span className="muted mono">[{b.span.join("–")}]</span></div>
+                        {list(r.breakdown).map((b: any, i: number) => (
+                          <div key={i}><span className="tag rule">{String(b.criterion || "").replace(/_/g, " ")}</span> “{String(b.evidence ?? "")}” {Array.isArray(b.span) && <span className="muted mono">[{b.span.join("–")}]</span>}</div>
                         ))}
                         {flag && <div style={{ marginTop: 8 }}><Hearing c={{
                           gate: "D", class: "proxy bias", severity: "medium", layer: "rules",
-                          claim: `The rationale says “${flag.phrase}”, which can stand in for ${flag.proxy_for.replace(/_/g, " ")} — a prohibited criterion.`,
-                          evidence: [`rationale: “${r.rationale}”`, `characters ${flag.span.join("–")}`],
+                          claim: `The rationale says “${flag.phrase}”, which can stand in for ${String(flag.proxy_for || "").replace(/_/g, " ")} — a prohibited criterion.`,
+                          evidence: [`rationale: “${String(r.rationale ?? "")}”`, ...(Array.isArray(flag.span) ? [`characters ${flag.span.join("–")}`] : [])],
                           resolution: "The score does not use it (icp@v2 cannot read prohibited criteria). The phrase is flagged so the reviewer discounts it.",
                           verdict_override: { label: "Flagged for the reviewer", tone: "rule" },
                         }} /></div>}
