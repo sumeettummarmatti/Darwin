@@ -487,6 +487,39 @@ def get_drill(tile: str, workflow: str | None = None) -> list[dict[str, Any]]:
     return metrics.drill(K(), tile, workflow)
 
 
+@app.get("/api/provider")
+def provider_status() -> dict[str, Any]:
+    """What the console needs to ask for (or re-ask for) a model-provider key. Never returns the key."""
+    k = K()
+    key = os.environ.get("GROQ_API_KEY", "")
+    return {"profile": k.routing.active_profile, "profiles": list(k.routing.profiles().keys()),
+            "groq": {**k.routing.key_status, "configured": bool(key), "hint": f"…{key[-4:]}" if key else None,
+                     "create_url": "https://console.groq.com/keys"}}
+
+
+@app.post("/api/provider/key")
+def provider_key(body: dict[str, Any] = Body(...)) -> dict[str, Any]:
+    """Validate a Groq key with the provider, then keep it in the git-ignored .env and switch to Groq."""
+    from core.router.adapters import check_key
+
+    k = K()
+    key = str(body.get("key", "")).strip()
+    ok, message = check_key("https://api.groq.com/openai/v1", key)
+    if not ok:
+        k.routing.key_status = {"state": "rejected", "message": message}
+        return {"ok": False, "message": message, "create_url": "https://console.groq.com/keys"}
+    env_path = config.ROOT / ".env"
+    lines = [l for l in (env_path.read_text().splitlines() if env_path.exists() else []) if not l.startswith("GROQ_API_KEY=")]
+    env_path.write_text("\n".join(lines + [f"GROQ_API_KEY={key}"]) + "\n")
+    os.environ["GROQ_API_KEY"] = key
+    k.routing.set_profile("groq")
+    k.routing.key_status = {"state": "ok", "message": "Key accepted by Groq."}
+    from core.audit import AuditEntry
+    k.audit.append(AuditEntry(actor=f"human:{body.get('user_id', 'USR-103')}", action="router.provider.key_set", kind="system",
+                              outcome="ok", detail={"provider": "groq", "key_hint": f"…{key[-4:]}"}))
+    return {"ok": True, "message": "Key accepted. Model steps now run on Groq.", "profile": "groq"}
+
+
 @app.post("/api/provider")
 def provider(body: dict[str, Any] = Body(...)) -> dict[str, Any]:
     k = K()

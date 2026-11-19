@@ -80,7 +80,7 @@ class OpenAICompatibleAdapter:
 
         key = os.environ.get(self.config.api_key_env or "", "")
         if self.config.api_key_env and not key:
-            raise RuntimeError(f"{self.config.api_key_env} is not set — add it to .env or switch to the sim profile")
+            raise ProviderAuthError(f"{self.config.api_key_env} is not set")
         started = time.perf_counter()
         request = {
             "model": self.config.model,
@@ -91,10 +91,26 @@ class OpenAICompatibleAdapter:
         url = f"{(self.config.base_url or '').rstrip('/')}/chat/completions"
         headers = {"Authorization": f"Bearer {key}"} if key else {}
         resp = httpx.post(url, headers=headers, json=request, timeout=30)
-        if resp.status_code == 400 and "response_format" in resp.text:
-            # Some models do not support JSON mode; the router still validates the schema.
+        for _ in range(3):
+            # Rate limits and transient 5xx: wait as the provider asks (capped), then retry once more.
+            if resp.status_code != 429 and resp.status_code < 500:
+                break
+            time.sleep(min(float(resp.headers.get("retry-after", 2) or 2), 6))
+            resp = httpx.post(url, headers=headers, json=request, timeout=30)
+        if resp.status_code == 400 and ("response_format" in resp.text or "json_validate_failed" in resp.text):
+            # JSON mode unsupported, or the model's JSON failed the provider's own check:
+            # ask again without JSON mode; the router still validates the schema.
             request.pop("response_format")
             resp = httpx.post(url, headers=headers, json=request, timeout=30)
+        if resp.status_code == 400:
+            # Still unusable: hand back an empty answer so the router's schema path
+            # (retry once, escalate a tier, then a human) deals with it — never a crash.
+            return RawCompletion(text="", tokens_in=estimate_tokens(system + user), tokens_out=0,
+                                 latency_ms=int((time.perf_counter() - started) * 1000))
+        if resp.status_code == 429 or resp.status_code >= 500:
+            raise ProviderBusyError(f"provider answered {resp.status_code} after retries")
+        if resp.status_code in (401, 403):
+            raise ProviderAuthError(f"{self.config.api_key_env} was rejected by the provider ({resp.status_code})")
         resp.raise_for_status()
         body = resp.json()
         usage = body.get("usage") or {}
@@ -114,3 +130,28 @@ def build_adapter(config: ProviderConfig):
     if config.adapter not in ADAPTERS:
         raise ValueError(f"unknown adapter '{config.adapter}'")
     return ADAPTERS[config.adapter](config)
+
+
+class ProviderBusyError(RuntimeError):
+    """Rate-limited or failing (429 / 5xx) after retries."""
+
+
+class ProviderAuthError(RuntimeError):
+    """The provider rejected the key (missing, expired or revoked)."""
+
+
+def check_key(base_url: str, key: str) -> tuple[bool, str]:
+    """Ask the provider whether a key works, without spending tokens (GET /models)."""
+    import httpx
+
+    if not key:
+        return False, "No key entered."
+    try:
+        resp = httpx.get(f"{base_url.rstrip('/')}/models", headers={"Authorization": f"Bearer {key}"}, timeout=15)
+    except httpx.HTTPError as exc:
+        return False, f"Could not reach the provider ({type(exc).__name__}). Check the connection and try again."
+    if resp.status_code in (401, 403):
+        return False, "The provider rejected this key — it may be expired, revoked or mistyped. Create a new one."
+    if resp.status_code >= 400:
+        return False, f"The provider answered {resp.status_code}. Try again in a moment."
+    return True, "Key accepted."

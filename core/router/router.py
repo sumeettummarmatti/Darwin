@@ -27,7 +27,7 @@ from core.audit import AuditChain, AuditEntry
 from core.clock import Clock, new_id
 from core.db import Store, dumps
 from core.pii import MinimisedPayload
-from core.router.adapters import ProviderConfig, build_adapter
+from core.router.adapters import ProviderAuthError, ProviderBusyError, ProviderConfig, build_adapter
 from core.skills import SkillSpec
 
 
@@ -74,6 +74,18 @@ class RoutingConfig:
         self.path = path
         self.raw = yaml.safe_load(path.read_text())
         self.active_profile = os.environ.get("SETU_MODEL_PROFILE") or self._default_profile()
+        # What the console shows about the real-provider key: ok | missing | rejected | unchecked.
+        self.key_status = {"state": "unchecked" if os.environ.get("GROQ_API_KEY") else "missing", "message": ""}
+
+    def fallback(self, tier: int) -> ProviderConfig:
+        """The simulator's provider for a tier — used when the real provider is busy."""
+        return ProviderConfig(tier=tier, **self.raw["profiles"]["sim"][f"tier{tier}"])
+
+    def key_rejected(self, message: str) -> None:
+        """A rejected key never stops the platform: record it, fall back to the simulator."""
+        self.key_status = {"state": "rejected", "message": message}
+        if self.active_profile != "sim":
+            self.active_profile = "sim"
 
     def _default_profile(self) -> str:
         """A Groq key in the environment (or .env) selects the groq profile; otherwise the simulator."""
@@ -130,7 +142,22 @@ class Router:
                 return self._finish(skill, {}, tier, provider, totals, escalations, True, "budget exhausted — handed to a human")
 
             adapter = build_adapter(provider)
-            raw = adapter.complete(system, user, skill.simulate)
+            try:
+                raw = adapter.complete(system, user, skill.simulate)
+            except ProviderBusyError as exc:
+                # Rate-limited: answer this one call from the simulator so the run keeps moving; log why.
+                self.config.key_status = {**self.config.key_status, "message": f"Groq is rate-limiting ({exc}); some calls fell back to the simulator."}
+                provider = self.config.fallback(tier)
+                adapter = build_adapter(provider)
+                raw = adapter.complete(system, user, skill.simulate)
+                reason_for_this_call = f"provider busy ({exc}); answered by the simulator"
+            except ProviderAuthError as exc:
+                # Expired or revoked key: say so in the console, keep the run going on the simulator.
+                self.config.key_rejected(str(exc))
+                reason_for_this_call = f"provider key rejected ({exc}); fell back to the simulator"
+                continue
+            if provider.adapter != "sim" and self.config.key_status["state"] != "ok":
+                self.config.key_status = {"state": "ok", "message": "Last call succeeded."}
             inr = raw.tokens_in / 1e6 * provider.inr_per_m_in + raw.tokens_out / 1e6 * provider.inr_per_m_out
             totals["in"] += raw.tokens_in
             totals["out"] += raw.tokens_out
