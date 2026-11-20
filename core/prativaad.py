@@ -93,9 +93,8 @@ class Prativaad:
         for prior in connector.prior_effects(step.action or "", args, idem_key):
             objections.append(Objection(
                 "duplicate_side_effect", "high",
-                f"An open {prior.get('kind', 'record')} {prior.get('id')} already exists for this holder "
-                f"(reference {prior.get('reference') or 'none'}), created {str(prior.get('created_at', ''))[:10]}; "
-                f"executing {connector.name}.{step.action} again risks a duplicate.",
+                f"This person already has an open {prior.get('kind', 'record')} ({prior.get('id')}) "
+                f"from {str(prior.get('created_at', ''))[:10]}. Doing this again could create a duplicate.",
                 [f"{connector.manifest.system}:{prior.get('id')}"], "verify_prior_effect_closed"))
 
         # pii_overreach — raw personal data must never travel in a connector payload; tokens only.
@@ -103,7 +102,7 @@ class Prativaad:
         leaked = sorted(v for v in raw_pii if len(v) >= 6 and v in flat)
         if leaked:
             objections.append(Objection("pii_overreach", "high",
-                                        f"{len(leaked)} raw PII value(s) found in the outbound payload; only vault tokens may leave the kernel.",
+                                        f"{len(leaked)} piece(s) of real personal data were about to be sent out. Only hidden placeholders may leave SETU.",
                                         ["payload"], "replace_with_tokens"))
 
         # entitlement_mismatch — step-declared invariants (YAML, not Python).
@@ -126,15 +125,14 @@ class Prativaad:
             upstream_reserved = [a for a in wf.ancestors(step.id) if wf.step(a).kind == "reserved"]
             if not upstream_reserved:
                 objections.append(Objection("reserved_leakage", "high",
-                                            f"Step uses reserved fact(s) {sorted(touched)} but no reserved decision precedes it.",
+                                            f"This step relies on something only a person can decide ({', '.join(sorted(touched))}), but no person has decided it yet.",
                                             [f"step:{step.id}"], "add_reserved_gate"))
 
         # compensation_coverage — irreversible with no declared undo.
         spec = connector.manifest.actions.get(step.action or "")
         if spec and spec.irreversible and not step.compensation:
             objections.append(Objection("compensation_coverage", "low",
-                                        f"{connector.name}.{step.action} is irreversible and declares no compensation; "
-                                        "a later failure cannot undo it automatically.", [f"step:{step.id}"], "declare_compensation"))
+                                        "This can't be undone, and there is no automatic undo if a later step fails.", [f"step:{step.id}"], "declare_compensation"))
 
         # policy_version_staleness — was the plan built on a superseded pack?
         for ref in run.get("policy_versions") or []:
@@ -146,7 +144,7 @@ class Prativaad:
                 continue
             if version.isdigit() and current.version > int(version):
                 objections.append(Objection("policy_version_staleness", "medium",
-                                            f"Run computed with {ref} but {current.ref} is now in force.",
+                                            f"This was worked out with old rules ({ref}). Newer rules ({current.ref}) now apply.",
                                             [ref, current.ref], "recompute_under_current_pack"))
 
         # Model residue — judgement-shaped questions only, inside the 8% budget.
@@ -174,8 +172,8 @@ class Prativaad:
         if scheduled_for[:16] == should_be[:16]:
             return None
         objection = Objection("date_ordering", "high",
-                              f"Step is scheduled for {scheduled_for[:16]} but its governing date now resolves to "
-                              f"{should_be[:16]}; executing as scheduled would act on a superseded date.",
+                              f"This is scheduled for {scheduled_for[:16].replace('T', ' ')}, but the date it depends on is now "
+                              f"{should_be[:16].replace('T', ' ')}. Running it as planned would use the old date.",
                               [f"step:{step_id}", "facts.last_working_day"], "reschedule_to_governing_date")
         self._log(run_id, step_id, "A", GateResult("OBJECT", [objection], ["date_ordering"]))
         return objection

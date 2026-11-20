@@ -91,3 +91,32 @@ def test_concurrent_advancers_do_not_repeat_a_model_call(kernel):
     [t.join() for t in threads]
     after = kernel.store.one("SELECT COUNT(*) n FROM model_calls WHERE run_id=?", (run_id,))["n"]
     assert after - before == 1
+
+
+def test_outage_tells_a_person_with_context_and_closes_itself_on_recovery(kernel):
+    kernel.mocks.set_chaos("assets", "down")
+    run_id = kernel.orchestrator.start("onboarding", subject_id="EMP-6005", inputs={}, principal=kernel.principal("USR-103"))
+    _advance_retries(kernel, 8)
+    notices = [q for q in kernel.queue.list("open") if q["run_id"] == run_id and q["kind"] == "system_down"]
+    assert len(notices) == 1, "a person must be told, once"
+    computed = notices[0]["packet"]["computed"]
+    assert computed["system"] and computed["idempotency_key"] and computed["attempts"] >= 1
+    assert kernel.orchestrator.steps(run_id)["allocate_laptop"]["status"] == "running"   # still held, still retrying
+    assert _laptops(kernel, "EMP-6005") == []
+    kernel.mocks.clear_chaos("assets")
+    kernel.clock.advance(30)
+    _advance_retries(kernel, 6)
+    assert len(_laptops(kernel, "EMP-6005")) == 1
+    assert kernel.queue.get(notices[0]["id"])["status"] == "resolved"
+
+
+def test_keep_waiting_is_asked_once_per_outage(kernel):
+    kernel.mocks.set_chaos("assets", "down")
+    run_id = kernel.orchestrator.start("onboarding", subject_id="EMP-6006", inputs={}, principal=kernel.principal("USR-103"))
+    _advance_retries(kernel, 8)
+    item = next(q for q in kernel.queue.list("open") if q["run_id"] == run_id and q["kind"] == "system_down")
+    decided = kernel.queue.decide(item["id"], kernel.principal("USR-101"), "acknowledge", context_hash_seen=item["context_hash"])
+    kernel.orchestrator.on_decision(decided)
+    _advance_retries(kernel, 8)
+    again = [q for q in kernel.queue.list("open") if q["run_id"] == run_id and q["kind"] == "system_down"]
+    assert again == []

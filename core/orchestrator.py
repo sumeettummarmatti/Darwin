@@ -37,6 +37,9 @@ if TYPE_CHECKING:
 
 TERMINAL = ("done", "skipped", "rejected", "cancelled", "compensated")
 RETRY_BACKOFF_S = 2
+SYSTEM_NAMES = {"assets": "laptop", "tickets": "IT ticketing", "access": "access card", "directory": "email directory",
+                "payroll": "payroll", "mail": "mail", "calendar": "calendar"}   # display names only
+SYSTEM_NOTICE_AFTER = 3   # failed attempts before a person is told a system is down (an open breaker tells them at once)
 
 
 class NeedsHuman(Exception):
@@ -140,10 +143,10 @@ class SkillContext:
             # Low confidence is treated like a reserved decision: stop and ask one plain question.
             template = self._spec.raw.get("needs_human_question") or "The agent was not confident enough to rely on its draft. Is the draft correct?"
             question = render(template, self._scope)
-            tiers = f"tier {self._spec.model_tier}" + (f" → tier {result.tier}" if result.tier != self._spec.model_tier else "")
+            tried_bigger = " even after trying the bigger model" if result.tier != self._spec.model_tier else ""
             raise NeedsHuman(
                 question,
-                {"summary": f"{self._spec.description} The model ({tiers}) stayed below its confidence threshold, so the platform stopped instead of guessing.",
+                {"summary": f"The AI wasn't sure enough{tried_bigger}, so SETU stopped instead of guessing.",
                  "draft": output, "reason": result.reason, "escalations": result.escalations, "model": result.model},
                 kind="low_confidence", title=self._spec.raw.get("needs_human_title") or f"Low confidence · {self._spec.name}")
         return output
@@ -505,8 +508,10 @@ class Orchestrator:
                 # A gate that cannot verify must not wave the action through: wait and re-check.
                 self.k.breaker.record_failure(connector.name)
                 retry_at = datetime.fromtimestamp(now.timestamp() + RETRY_BACKOFF_S, tz=now.tzinfo).isoformat()
+                if sr["attempts"] + 1 >= SYSTEM_NOTICE_AFTER:
+                    self._notify_system_down(run, step, connector, key or "", sr["attempts"] + 1, str(exc))
                 return self._set_step(run["id"], step.id, status="running", attempts=sr["attempts"] + 1, scheduled_for=retry_at,
-                                      note=f"Prativaad could not read {connector.name} to check for duplicates ({exc}); waiting")
+                                      note=f"The checker could not read {connector.manifest.system} to check for duplicates, so it is waiting")
             if gate.cost_inr:
                 # Prativaad's review is metered to the run but does not change where the step itself ran.
                 self._add_cost(run["id"], step.id, gate.cost_inr, tier=0)
@@ -514,9 +519,9 @@ class Orchestrator:
             if blocking:
                 if unresolved:
                     return self._to_human(
-                        run, step, kind="objection", title=f"Prativaad objects · {step.title or step.id}",
-                        question=f"Prativaad raised {len(unresolved)} objection(s) before {connector.name}.{step.action}. "
-                                 "Proceed anyway (objection overruled), or skip this action?",
+                        run, step, kind="objection", title=f"The checker has a concern · {step.title or step.id}",
+                        question=f"The checker raised {len(unresolved)} concern(s) before this step. "
+                                 "Go ahead anyway, or skip it?",
                         packet={"summary": unresolved[0].claim, "objections": [o.as_dict() for o in unresolved],
                                 "objection_ids": ids, "computed": {"args": args, "idempotency_key": key},
                                 "clauses": [], "options": ["proceed", "skip_step"]},
@@ -525,9 +530,9 @@ class Orchestrator:
                     self.k.prativaad.resolve(oid, "verified by kernel read-back: " + "; ".join(o.claim for o in blocking), True)
             advisory = len(gate.objections) - len(blocking)
             if blocking:
-                note = "Prativaad: objection verified by read-back and released"
+                note = "The checker raised a concern. SETU checked the other system and it was fine."
             elif advisory:
-                note = f"Prativaad: {advisory} advisory objection(s) logged, none blocking"
+                note = f"The checker noted {advisory} minor point(s). Nothing serious."
             else:
                 note = "Prativaad: clear"
             self._set_step(run["id"], step.id, gate=("verified" if blocking else "advisory" if advisory else "clear"), note=note)
@@ -539,10 +544,13 @@ class Orchestrator:
         self._set_step(run["id"], step.id, status="running", attempts=attempts, started_at=sr["started_at"] or self.k.clock.now_iso())
         result = self.k.executor.submit(proposal, agent, scope.get("subject") or None)
         if result.done:
+            self._close_system_notice(run, step.id, "the system came back and SETU finished the step automatically")
             self._add_cost(run["id"], step.id, connector.manifest.cost_inr_per_call, tier=0)
             outputs = {**(result.result or {}), "idempotency_key": key, "outcome": result.outcome}
             return self._finish_step(run, step, outputs)
         if result.outcome in ("retrying", "waiting"):
+            if result.outcome == "waiting" or attempts >= SYSTEM_NOTICE_AFTER:
+                self._notify_system_down(run, step, connector, key, attempts, result.reason)
             retry_at = (self.k.clock.now().timestamp() + RETRY_BACKOFF_S)
             self._set_step(run["id"], step.id, status="running", note=result.reason,
                            scheduled_for=datetime.fromtimestamp(retry_at, tz=now.tzinfo).isoformat())
@@ -630,7 +638,7 @@ class Orchestrator:
         role = self.k.registry.reserved.route_only[step.reserved_action]
         source_ref = render(step.args.get("source_ref", "{{run.id}}"), scope) if step.args else run["id"]
         packet = {
-            "summary": "Route-only matter. The platform has not read, classified, scored or summarised it — a summary would itself be a finding.",
+            "summary": "Passed straight to you. SETU didn't read, judge or summarise it.",
             "source_ref": source_ref,
             "route": {"action": step.reserved_action, "to_role": role},
             "platform_did": ["detected a route-only trigger with a deterministic lexicon rule", "stopped", "handed off"],
@@ -720,6 +728,11 @@ class Orchestrator:
                 for oid in ids:
                     self.k.prativaad.resolve(oid, "upheld by human: action skipped", True)
                 self._set_step(run["id"], step_id, status="skipped", human_touch=1, note="skipped on Prativaad objection (upheld)")
+        elif kind == "system_down":
+            if decision == "compensate":
+                self.compensate(run["id"], reason=f"human chose to undo while {step_id} waited for a system that was down")
+                return
+            # "Keep waiting": nothing to change; the step is still retrying with the same key.
         elif kind in ("failure",):
             if decision == "retry":
                 key = (item["packet"].get("computed") or {}).get("idempotency_key")
@@ -815,12 +828,43 @@ class Orchestrator:
 
     def _to_human(self, run: dict[str, Any], step: StepDef, *, kind: str, title: str, question: str, packet: dict[str, Any],
                   roles: list[str], action: str | None = None, status: str = "awaiting_human") -> None:
+        self._close_system_notice(run, step.id, "replaced by a decision item")
         if self.k.queue.open_for_step(run["id"], step.id) is None:
             self.k.queue.create(kind=kind, run_id=run["id"], step_id=step.id, title=title, question=question,
                                 packet={**packet, "workflow": packet.get("workflow") or run["workflow"],
                                         "subject_id": run["subject"]}, approver_roles=roles, action=action)
         self._set_step(run["id"], step.id, status=status, human_touch=1, note=title)
         self.k.check_workflow_breaker(run["workflow"])
+
+    def _notify_system_down(self, run: dict[str, Any], step: StepDef, connector: Any, key: str, attempts: int, reason: str) -> None:
+        """Tell a person a system is down, with context, while the intent stays held in the outbox.
+        The step keeps retrying with the same key, so it still finishes by itself, exactly once, when the system returns."""
+        if self.k.queue.open_for_step(run["id"], step.id) is not None:
+            return
+        already = self.k.store.one("SELECT 1 AS x FROM human_queue WHERE run_id=? AND step_id=? AND kind='system_down' AND status!='resolved'",
+                                   (run["id"], step.id))
+        if already:     # told once per outage; "keep waiting" is not asked again on every retry
+            return
+        system = SYSTEM_NAMES.get(connector.manifest.system, connector.manifest.system)
+        self.k.queue.create(
+            kind="system_down", run_id=run["id"], step_id=step.id, title=f"System down · {step.title or step.id}",
+            question=f"The {system} system is not responding, so '{step.title or step.id}' is on hold. "
+                     "SETU will finish it automatically when the system is back. Keep waiting, or undo this process?",
+            packet={"summary": f"SETU tried {attempts} time(s) and is holding the request safely. Nothing has been done twice.",
+                    "computed": {"system": system, "step": step.title or step.id, "attempts": attempts,
+                                 "last_error": reason, "idempotency_key": key},
+                    "workflow": run["workflow"], "subject_id": run["subject"], "clauses": [],
+                    "options": ["acknowledge", "compensate"]},
+            approver_roles=["hr_business_partner", "it_lead"])
+
+    def _close_system_notice(self, run: dict[str, Any], step_id: str, why: str) -> None:
+        item = self.k.queue.open_for_step(run["id"], step_id)
+        if not item or item["kind"] != "system_down":
+            return
+        with self.k.store.tx() as conn:
+            conn.execute("UPDATE human_queue SET status='resolved' WHERE id=?", (item["id"],))
+        self.k.audit.append(AuditEntry(actor="kernel", action="queue.system_down.resolved", kind="human", outcome="ok",
+                                       run_id=run["id"], step_id=step_id, detail={"queue_id": item["id"], "reason": why}))
 
     def _park_step(self, run: dict[str, Any], step: StepDef, reason: str) -> None:
         self._to_human(run, step, kind="failure", title=f"Parked · {step.title or step.id}",
