@@ -1,4 +1,4 @@
-// Thin client for the SETU API. The console can only ask; the kernel decides.
+// Thin client for the HR Autopilot API. The console can only ask; the kernel decides.
 export type Json = any;
 
 async function call<T = Json>(method: string, path: string, body?: unknown): Promise<T> {

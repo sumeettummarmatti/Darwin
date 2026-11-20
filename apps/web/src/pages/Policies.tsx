@@ -17,7 +17,7 @@ export default function Policies({ arg }: { arg: string | null }) {
     <>
       <div className="page-head">
         <h1>Rules</h1>
-        <p>HR rules like notice periods and leave. A change only goes live after the checker tries to break it.</p>
+        <p>HR rules like notice periods and leave. A change only goes live after the Devil's Advocate tries to break it.</p>
       </div>
       <div className="split">
         <section className="panel">
@@ -113,7 +113,7 @@ function PackDetail({ pack, versions }: { pack: any; versions: any[] }) {
           </section>
           <section className="panel panel-pad">
             <h2>The rule file</h2>
-            <p className="sub">This is what SETU follows. No rule is hidden in code or in the AI's instructions.</p>
+            <p className="sub">This is what HR Autopilot follows. No rule is hidden in code or in the AI's instructions.</p>
             <More label="Show the file">
               <pre className="code" style={{ margin: 0, borderRadius: 10, maxHeight: 560 }}>{src?.yaml || "…"}</pre>
             </More>
@@ -132,7 +132,7 @@ function Review({ review, onAdd }: { review: any; onAdd: () => void }) {
     <div className="stack">
       <div className={review.ok ? "notice" : "refusal"}>
         <b>{review.ok ? "No problems found." : `Blocked: ${review.finding_count} case${review.finding_count === 1 ? "" : "s"} break the rules.`}</b>
-        {" "}The checker tried {review.cases} test cases. {review.changed_count} would get a different answer than today.
+        {" "}The Devil's Advocate tried {review.cases} test cases. {review.changed_count} would get a different answer than today.
       </div>
       {review.failing_tests?.map((t: any) => <div key={t.name} className="refusal small">Test fails: {t.name}. {t.reason}</div>)}
       {review.findings.length > 0 && (
@@ -142,7 +142,7 @@ function Review({ review, onAdd }: { review: any; onAdd: () => void }) {
               gate: "B", class: `Ends up ${plainClaim(f.claim)}`, severity: "high",
               claim: `With your change, this case ends up ${plainClaim(f.claim)}.`,
               evidence: [`Case: ${sentence(f.given)}`, `Your change gives: ${sentence(f.got)}`],
-              resolution: "None. The checker wrote a test so this mistake can't slip through again.",
+              resolution: "None. The Devil's Advocate wrote a test so this mistake can't slip through again.",
               verdict_override: { label: "Can't go live", tone: "seal" },
             }} />
           ))}
@@ -150,7 +150,7 @@ function Review({ review, onAdd }: { review: any; onAdd: () => void }) {
         </div>
       )}
       {review.proposed_tests?.length > 0 && (
-        <div className="row"><span className="small">The checker wrote {review.proposed_tests.length === 1 ? "a test" : `${review.proposed_tests.length} tests`} that catch this.</span>
+        <div className="row"><span className="small">The Devil's Advocate wrote {review.proposed_tests.length === 1 ? "a test" : `${review.proposed_tests.length} tests`} that catch this.</span>
           <button className="btn small" onClick={onAdd}>Add to the tests</button></div>
       )}
       {review.changed?.length > 0 && (

@@ -60,7 +60,7 @@ export default function App() {
   const ctx = useMemo(() => ({ user, users, setUser, boot, reloadBoot, go, toast }), [user, users, boot, reloadBoot, go, toast]);
 
   if (!boot || !user) {
-    return <div className="empty" style={{ paddingTop: 120 }}>Loading SETU…</div>;
+    return <div className="empty" style={{ paddingTop: 120 }}>Loading HR Autopilot…</div>;
   }
 
   async function advance(days: number) {
@@ -83,7 +83,7 @@ export default function App() {
     <Ctx.Provider value={ctx}>
       <div className="shell">
         <nav className="nav" aria-label="Main">
-          <div className="brand"><span className="deva">सेतु</span><span className="latin">SETU</span></div>
+          <div className="brand"><span className="wordmark">HR Autopilot</span></div>
           {PAGES.map((p) => {
             const header = p.group && p.group !== lastGroup ? <div key={p.group} className="section">{p.group}</div> : null;
             if (p.group) lastGroup = p.group;

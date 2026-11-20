@@ -39,7 +39,7 @@ export function ProviderKey({ compact = false, onlyRejected = false }: { compact
             {status.profile === "groq" && g.state !== "rejected"
               ? <>Using <b>Groq</b>. A small model first, a bigger one only when needed. Names and personal details are hidden before anything is sent.</>
               : g.state === "rejected"
-                ? <>Groq didn't accept the key, so SETU is using the built-in simulator. Add a new key to use real AI again.</>
+                ? <>Groq didn't accept the key, so HR Autopilot is using the built-in simulator. Add a new key to use real AI again.</>
                 : <>Using the built-in simulator, which is free and works offline. Paste a Groq key to use real AI.</>}
           </p>
           {(needsKey || !compact) && (

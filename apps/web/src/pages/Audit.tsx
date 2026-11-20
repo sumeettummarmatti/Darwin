@@ -6,7 +6,7 @@ import { AuditList } from "./Runs";
 
 const KINDS: Record<string, string> = {
   reserved: "Approvals", human: "People's decisions", policy: "Rule checks", connector: "Other systems",
-  model: "AI use", prativaad: "Checker", governance: "Safety controls", step: "Steps", system: "System",
+  model: "AI use", devils_advocate: "Devil's Advocate", governance: "Safety controls", step: "Steps", system: "System",
 };
 
 export default function Audit() {
@@ -20,7 +20,7 @@ export default function Audit() {
     <>
       <div className="page-head">
         <h1>History log</h1>
-        <p>Everything SETU did, in order. Each entry is locked to the one before, so a secret edit gets caught.</p>
+        <p>Everything HR Autopilot did, in order. Each entry is locked to the one before, so a secret edit gets caught.</p>
       </div>
       <section className="panel panel-pad row" style={{ marginBottom: 16, gap: 16 }}>
         {verify?.ok ? <ShieldCheck size={34} color="var(--ok)" /> : <ShieldAlert size={34} color="var(--seal)" />}

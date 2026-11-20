@@ -1,4 +1,4 @@
-/* SETU console — tokens first. Blue is the agent; maroon is a human's seal; ochre is a rule. */
+/* HR Autopilot console — tokens first. Blue is the agent; maroon is a human's seal; ochre is a rule. */
 :root {
   --paper: #f4f6f8;
   --surface: #ffffff;
@@ -56,8 +56,7 @@ a { color: var(--agent); }
   position: sticky; top: 0; height: 100vh;
 }
 .brand { display: flex; align-items: baseline; gap: 10px; padding: 0 var(--s-3) var(--s-5); color: #fff; }
-.brand .deva { font-family: var(--deva); font-size: 26px; font-weight: 700; letter-spacing: 0.5px; }
-.brand .latin { font-size: 13px; color: #8f98b3; }
+.brand .wordmark { font-size: 21px; font-weight: 750; letter-spacing: -0.01em; }
 .nav button {
   display: flex; align-items: center; gap: 10px;
   background: none; border: 0; text-align: left;
@@ -234,7 +233,7 @@ select, input[type="text"], input[type="date"], input:not([type]) { border: 1px 
   .g2 { grid-template-columns: 1fr; }
 }
 
-/* ── Prativaad hearing: charge, evidence, defence, verdict ─────────────── */
+/* ── Devil's Advocate hearing: charge, evidence, defence, verdict ─────────────── */
 .hearing { border: 1px solid var(--line); border-left: 4px solid var(--rule); border-radius: var(--r-md); background: var(--surface); overflow: hidden; }
 .hearing.tone-seal { border-left-color: var(--seal); }
 .hearing.tone-agent { border-left-color: var(--agent); }

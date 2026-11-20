@@ -90,22 +90,22 @@ export function describeEvent(action: string): string {
     case "run": return second === "start" ? `Started ${words(rest.join(" "))}` : `Process ${tail}`;
     case "policy": return `Checked the ${last} rules`;
     case "step": return second === "skip" ? `Skipped ${last} (not needed)` : second === "complete" ? `Finished ${last}` : `Step ${tail}`;
-    case "model": return second === "prativaad" ? "The checker asked the AI for a second opinion" : `Asked the AI: ${last}`;
+    case "model": return second === "devils_advocate" ? "The Devil's Advocate asked the AI for a second opinion" : `Asked the AI: ${last}`;
     case "queue": return `Sent to a person: ${last}`;
-    case "prativaad": return "The checker reviewed it before acting";
+    case "devils_advocate": return "The Devil's Advocate reviewed it before acting";
     case "route_only": return `Passed to the right person without the AI reading it: ${last}`;
     case "dpdp": return `Privacy: ${last}`;
     default: return plainAction(action);
   }
 }
 
-/** "human:USR-101" → "Priya Sharma"; "agent:exit@v1" → "AI helper"; "kernel" → "SETU". */
+/** "human:USR-101" → "Priya Sharma"; "agent:exit@v1" → "AI helper"; "kernel" → "HR Autopilot". */
 export function describeActor(actor: string, users: { id: string; name: string }[] = []): string {
   if (actor.startsWith("human:")) return users.find((u) => u.id === actor.slice(6))?.name || "A person";
   if (actor.startsWith("agent:")) return "AI helper";
-  if (actor === "prativaad") return "Checker";
+  if (actor === "devils_advocate") return "Devil's Advocate";
   if (actor.startsWith("system:")) return "Setup";
-  return "SETU";
+  return "HR Autopilot";
 }
 
 /** Router and kernel reasons, in words: "escalate_when 'confidence < 0.8' fired {'confidence': 0.6}" → "the AI was only 60% sure (it needs 80%)". */
@@ -140,7 +140,7 @@ const STEP_TITLES: Record<string, string> = {
   "Extract claims with evidence spans": "Pull facts from CVs",
   "Extract claims about this person": "Pull facts about this person",
   "Score by ICP rule (no model)": "Score applicants",
-  "Prativaad gate D — proxy-bias challenge": "Check for bias",
+  "Devil's Advocate gate D — proxy-bias challenge": "Check for bias",
   "No-raid guard (TBO's obligations)": "Check no-hire agreements",
   "Send notice-first contact (within the approval)": "Send first message",
   "Record applicants with their basis": "Save applicants",

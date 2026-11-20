@@ -145,7 +145,7 @@ function Chaos() {
   return (
     <section className="panel panel-pad">
       <h2>Break a system (for testing)</h2>
-      <p className="sub">See SETU survive a crash without doing anything twice.</p>
+      <p className="sub">See HR Autopilot survive a crash without doing anything twice.</p>
       <div className="row">
         <select value={system} onChange={(e) => setSystem(e.target.value)} aria-label="System">
           {Object.keys(SYSTEM_LABEL).map((s) => <option key={s} value={s}>{SYSTEM_LABEL[s]}</option>)}
@@ -161,7 +161,7 @@ function Chaos() {
       </div>
       <div className="small" style={{ marginTop: 12 }}>
         {broken.map((c: any) => <span key={c.system} className="tag seal" style={{ marginRight: 6 }}>{SYSTEM_LABEL[c.system] || c.system} broken</span>)}
-        {tripped.map((b: any) => <span key={b.name} className="tag warn" style={{ marginRight: 6 }}>SETU stopped calling {SYSTEM_LABEL[b.name] || humanize(b.name)} for now</span>)}
+        {tripped.map((b: any) => <span key={b.name} className="tag warn" style={{ marginRight: 6 }}>HR Autopilot stopped calling {SYSTEM_LABEL[b.name] || humanize(b.name)} for now</span>)}
         {!broken.length && !tripped.length && <span className="muted">All systems working.</span>}
       </div>
       {(data?.calls || []).length > 0 && (

@@ -33,9 +33,9 @@ export default function Chat() {
     push({ from: "user", text: value, name: speaker.name });
     try {
       const r = await api.post("/api/intent", { user_id: speaker.id, text: value, channel: "slack" });
-      push({ from: "bot", text: r.reply, meta: r, name: "SETU" });
+      push({ from: "bot", text: r.reply, meta: r, name: "HR Autopilot" });
     } catch (err: any) {
-      push({ from: "bot", text: `Something went wrong: ${err.message}`, name: "SETU" });
+      push({ from: "bot", text: `Something went wrong: ${err.message}`, name: "HR Autopilot" });
     } finally { setBusy(false); }
   }
 
@@ -58,7 +58,7 @@ export default function Chat() {
           </div>
           {msgs.map((m, i) => (
             <div key={i} className={`msg ${m.from}`}>
-              <div className="av">{m.from === "bot" ? "से" : m.name.split(" ").map((x) => x[0]).join("")}</div>
+              <div className="av">{m.from === "bot" ? "HR" : m.name.split(" ").map((x) => x[0]).join("")}</div>
               <div>
                 <div className="who">{m.name}</div>
                 <div className="body">{m.text}</div>

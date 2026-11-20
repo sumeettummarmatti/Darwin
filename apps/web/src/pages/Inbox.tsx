@@ -18,7 +18,7 @@ export default function Inbox() {
     <>
       <div className="page-head">
         <h1>Approvals</h1>
-        <p>Things only a person can decide. Each one shows what SETU worked out and asks one question.</p>
+        <p>Things only a person can decide. Each one shows what HR Autopilot worked out and asks one question.</p>
       </div>
       <div className="row" style={{ marginBottom: 12 }}>
         <button className={`btn small ${tab === "mine" ? "primary" : ""}`} onClick={() => setTab("mine")}>For {user.name.split(" ")[0]}</button>

@@ -167,7 +167,7 @@ function StepDetail({ step, d }: { step: Step; d: any }) {
       ) : <ComputedTable computed={{ result: outputs }} />)}
       {calls.map((c: any) => (
         <div key={c.id} className="notice small" style={{ marginTop: 8 }}>
-          {String(c.skill).includes("prativaad") ? "The checker asked the AI for a second opinion" : c.tier >= 2 ? "Used the bigger AI model" : "Used AI"} ({fmtInr(c.inr)}).{c.tier >= 2 && c.escalation_reason ? ` ${plainReason(c.escalation_reason)}` : ""}
+          {String(c.skill).includes("devils_advocate") ? "The Devil's Advocate asked the AI for a second opinion" : c.tier >= 2 ? "Used the bigger AI model" : "Used AI"} ({fmtInr(c.inr)}).{c.tier >= 2 && c.escalation_reason ? ` ${plainReason(c.escalation_reason)}` : ""}
           {" "}<a href={`#/privacy/${c.id}`}>See exactly what the AI was sent</a>
         </div>
       ))}

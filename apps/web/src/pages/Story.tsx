@@ -9,7 +9,7 @@ const plusDays = (iso: string, n: number) => { const d = new Date(iso); d.setDat
 const BEATS: Beat[] = [
   {
     title: "Meera joins: onboarding starts",
-    body: "Her laptop, email and access card are worked out from the rules. SETU notices an old laptop under her name, checks it was returned, and only then orders a new one.",
+    body: "Her laptop, email and access card are worked out from the rules. HR Autopilot notices an old laptop under her name, checks it was returned, and only then orders a new one.",
     action: "Start onboarding",
     run: async ({ user, setUser, go }) => {
       if (!user.roles.includes("hr_business_partner")) setUser("USR-101");
@@ -25,7 +25,7 @@ const BEATS: Beat[] = [
   },
   {
     title: "The laptop system crashes",
-    body: "SETU keeps retrying safely. When the system comes back, there is still exactly one laptop, not two.",
+    body: "HR Autopilot keeps retrying safely. When the system comes back, there is still exactly one laptop, not two.",
     action: "Crash it and start a joiner",
     run: async ({ go, toast }) => {
       await api.post("/api/mocks/chaos", { system: "assets", mode: "down" });
@@ -42,13 +42,13 @@ const BEATS: Beat[] = [
   },
   {
     title: "Someone writes a bad rule change",
-    body: "The change quietly breaks the legal minimum notice. SETU's checker finds a case that proves it and blocks the change.",
+    body: "The change quietly breaks the legal minimum notice. the Devil's Advocate finds a case that proves it and blocks the change.",
     action: "See the bad change",
     run: ({ go }) => go("policies/notice_period"),
   },
   {
     title: "Rahul resigns",
-    body: "SETU works out his notice and final pay from the rules, but it can't accept the resignation. His complaint about his manager goes straight to the ethics officer. The AI never summarises it.",
+    body: "HR Autopilot works out his notice and final pay from the rules, but it can't accept the resignation. His complaint about his manager goes straight to the ethics officer. The AI never summarises it.",
     action: "Rahul resigns",
     run: async ({ boot, go }) => {
       const r = await api.post("/api/runs", {
@@ -61,7 +61,7 @@ const BEATS: Beat[] = [
   },
   {
     title: "His managers approve",
-    body: "First Rohan, then Priya, then Deepa for the early exit. When the last day moves, SETU moves the access-card cancellation too.",
+    body: "First Rohan, then Priya, then Deepa for the early exit. When the last day moves, HR Autopilot moves the access-card cancellation too.",
     action: "Decide as Rohan",
     run: ({ setUser, go }) => { setUser("USR-111"); go("inbox"); },
   },
@@ -85,7 +85,7 @@ const BEATS: Beat[] = [
   },
   {
     title: "Someone secretly edits the history",
-    body: "Change one old entry and SETU spots it straight away.",
+    body: "Change one old entry and HR Autopilot spots it straight away.",
     action: "Open the history log",
     run: ({ go }) => go("audit"),
   },

@@ -73,7 +73,7 @@ const OPTIONS: Record<string, { label: string; decision: string; kind?: string }
 
 export const KIND_LABEL: Record<string, string> = {
   reserved: "Needs approval", route_only: "Passed on to you", low_confidence: "The AI wasn't sure", policy_violation: "Rule problem",
-  schema: "The AI's answer was unclear", objection: "The checker objected", failure: "A system failed", refused: "Blocked", paused: "Paused", system_down: "A system is down",
+  schema: "The AI's answer was unclear", objection: "Devil's Advocate objected", failure: "A system failed", refused: "Blocked", paused: "Paused", system_down: "A system is down",
 };
 const role = (r: string) => humanize(r).toLowerCase().replace(/\bhr\b/g, "HR");
 
@@ -131,7 +131,7 @@ export function Packet({ item, onDecided }: { item: any; onDecided?: (result: an
       {p.matter_text && <div className="refusal"><b>In their own words</b><br />{p.matter_text}</div>}
       {p.platform_did_not && (
         <div className="notice small">
-          SETU only passed this on. It did <b>not</b> {p.platform_did_not.join(", ")}.
+          HR Autopilot only passed this on. It did <b>not</b> {p.platform_did_not.join(", ")}.
         </div>
       )}
 

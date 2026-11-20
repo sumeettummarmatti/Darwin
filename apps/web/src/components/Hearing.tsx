@@ -34,13 +34,13 @@ function verdict(c: Charge): { label: string; tone: "seal" | "agent" | "rule" | 
   return { label: "Awaiting a human", tone: "rule", note: "On hold until a person decides." };
 }
 
-/** One Prativaad objection, read as a short hearing: the charge, the evidence, the defence, the verdict. */
+/** One Devil's Advocate objection, read as a short hearing: the charge, the evidence, the defence, the verdict. */
 export function Hearing({ c }: { c: Charge }) {
   const v = verdict(c);
   const evidence = Array.isArray(c.evidence) ? c.evidence : c.evidence ? [c.evidence] : [];
   // The kernel's resolution repeats the charge before what it found; show only what it found.
   const defence = c.resolution?.includes("— kernel verified:")
-    ? "SETU checked the other system first: " + c.resolution.split("— kernel verified:").pop()!.trim()
+    ? "HR Autopilot checked the other system first: " + c.resolution.split("— kernel verified:").pop()!.trim()
     : c.resolution;
   return (
     <article className={`hearing tone-${v.tone}`}>

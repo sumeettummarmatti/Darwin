@@ -51,7 +51,7 @@ export default function Privacy({ arg }: { arg: string | null }) {
             {sel.tier >= 2 && <div className="small muted">Why the bigger AI: {plainReason(sel.escalation_reason)}</div>}
             <div className="grid g2">
               <div>
-                <h2>What SETU has</h2>
+                <h2>What HR Autopilot has</h2>
                 <div className="kv">
                   {Object.entries(sel.source_record || {}).filter(([k]) => k !== "…withheld").map(([k, v]) => <span key={k} style={{ display: "contents" }}><div className="k">{humanize(k)}</div><div><Val v={v} /></div></span>)}
                 </div>

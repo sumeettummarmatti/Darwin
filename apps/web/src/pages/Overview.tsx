@@ -26,7 +26,7 @@ export default function Overview() {
   const wfs = (Object.entries(m.workflows) as [string, any][]).filter(([n, w]) => w.runs > 0 || CORE_LINES.includes(n));
   const totalRuns = wfs.reduce((a, [, w]) => a + w.runs, 0);
   const g = m.governance;
-  const pv = m.prativaad;
+  const pv = m.devils_advocate;
 
   return (
     <>
@@ -62,7 +62,7 @@ export default function Overview() {
         </section>
 
         <section className="panel panel-pad">
-          <h2>Caught by the checker</h2>
+          <h2>Caught by the Devil's Advocate</h2>
           <p className="sub">Problems spotted before something permanent happened.</p>
           <button className="metric-btn" onClick={() => open("objections")}>
             <div className="figure"><span className="n">{pv.objections}</span><span className="l">objections · {pv.upheld} of {pv.resolved} were right</span></div>
@@ -128,7 +128,7 @@ export default function Overview() {
                   })}
                 </tbody>
               </table>
-              <p className="small muted">{m.models.escalations} times a bigger AI model was needed. The checker cost {fmtInr(pv.cost_inr, 2)} in total.</p>
+              <p className="small muted">{m.models.escalations} times a bigger AI model was needed. The Devil's Advocate cost {fmtInr(pv.cost_inr, 2)} in total.</p>
             </div>
             <div>
               <h2>Monthly estimate</h2>
