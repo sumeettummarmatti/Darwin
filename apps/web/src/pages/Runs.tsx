@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { Play } from "lucide-react";
-import { api, fmtInr, fmtTime, short } from "../api";
+import { api, fmtInr, fmtTime } from "../api";
 import { useApp } from "../context";
 import { usePoll } from "../hooks";
 import { Rail, RailLegend, Step } from "../components/Rail";
 import { ComputedTable, Packet } from "../components/Packet";
 import { Hearing } from "../components/Hearing";
+import { More, describeActor, describeEvent, humanize, plainReason, plainStatus, stepTitle } from "../components/Pretty";
 
 const STATUS_TAG: Record<string, string> = { completed: "ok", waiting: "seal", running: "agent", paused: "warn", closed: "", cancelled: "", compensated: "warn" };
+const nice = (w: string) => humanize(w);
 
 export default function Runs({ arg }: { arg: string | null }) {
   const { go } = useApp();
@@ -19,17 +21,17 @@ export default function Runs({ arg }: { arg: string | null }) {
   return (
     <>
       <div className="page-head">
-        <h1>Workflows</h1>
-        <p>Every run walks the same governed path: propose, Prativaad, policy, reserved check, keyed execution, read-back, audit.</p>
+        <h1>Processes</h1>
+        <p>Every joiner, leaver, leave request and question, step by step.</p>
       </div>
       <StartRun />
       <div className="split" style={{ marginTop: 16 }}>
         <section className="panel">
           <div className="row panel-pad" style={{ paddingBottom: 8 }}>
-            <h2 style={{ margin: 0 }}>Runs</h2><span className="spacer" />
-            <select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filter by workflow">
-              <option value="">All lines</option>
-              {["onboarding", "exit", "leave", "helpdesk", "sourcing", "sourcing_reply"].map((w) => <option key={w}>{w}</option>)}
+            <h2 style={{ margin: 0 }}>All processes</h2><span className="spacer" />
+            <select value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filter">
+              <option value="">Show all</option>
+              {["onboarding", "exit", "leave", "helpdesk", "sourcing", "sourcing_reply"].map((w) => <option key={w} value={w}>{nice(w)}</option>)}
             </select>
           </div>
           <table className="t">
@@ -37,19 +39,19 @@ export default function Runs({ arg }: { arg: string | null }) {
               {shown.map((r) => (
                 <tr key={r.id} className={`click ${selected === r.id ? "sel" : ""}`} onClick={() => go(`runs/${r.id}`)}>
                   <td>
-                    <div className="row"><b style={{ textTransform: "capitalize" }}>{r.workflow}</b><span className={`tag ${STATUS_TAG[r.status] || ""}`}>{r.status}</span></div>
-                    <div className="small muted">{r.subject_name || r.subject || "—"} · {r.channel} · {fmtTime(r.created_at)}</div>
+                    <div className="row"><b>{nice(r.workflow)}</b><span className={`tag ${STATUS_TAG[r.status] || ""}`}>{plainStatus(r.status)}</span></div>
+                    <div className="small muted">{r.subject_name || r.subject || "—"} · {fmtTime(r.created_at)}</div>
                   </td>
-                  <td className="small" style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                    {r.progress.done + r.progress.skipped}/{r.progress.total}<br /><span className="muted">{fmtInr(r.cost_inr, 4)}</span>
+                  <td className="small muted" style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                    {r.progress.done + r.progress.skipped} of {r.progress.total} steps
                   </td>
                 </tr>
               ))}
-              {!shown.length && <tr><td className="empty">No runs yet. Start one above or play the demo story.</td></tr>}
+              {!shown.length && <tr><td className="empty">Nothing yet. Start one above.</td></tr>}
             </tbody>
           </table>
         </section>
-        <div>{selected ? <RunDetail runId={selected} /> : <div className="panel empty">Pick a run to see its rail, its decisions and its audit narration.</div>}</div>
+        <div>{selected ? <RunDetail runId={selected} /> : <div className="panel empty">Pick one on the left to see its steps.</div>}</div>
       </div>
     </>
   );
@@ -66,20 +68,20 @@ function StartRun() {
   async function start() {
     try {
       const r = await api.post("/api/runs", { workflow, subject_id: subject, user_id: user.id, inputs: workflow === "helpdesk" ? { question: "What do I need to bring on day one?" } : {} });
-      toast(`Started ${workflow} for ${subject}`);
+      toast(`Started ${nice(workflow).toLowerCase()}`);
       go(`runs/${r.run_id}`);
     } catch (e: any) { toast(e.message); }
   }
   return (
     <section className="panel panel-pad row" style={{ gap: 12 }}>
-      <b>Start a run</b>
-      <select value={workflow} onChange={(e) => setWorkflow(e.target.value)} aria-label="Workflow">
-        {boot.workflows.filter((w: any) => !w.name.startsWith("sourcing")).map((w: any) => <option key={w.name} value={w.name}>{w.name} · {w.ref}</option>)}
+      <b>Start</b>
+      <select value={workflow} onChange={(e) => setWorkflow(e.target.value)} aria-label="Process">
+        {boot.workflows.filter((w: any) => !w.name.startsWith("sourcing")).map((w: any) => <option key={w.name} value={w.name}>{nice(w.name)}</option>)}
       </select>
-      <select value={subject} onChange={(e) => setSubject(e.target.value)} aria-label="Subject">
-        {choices.map((p) => <option key={p.id} value={p.id}>{p.display_name} · {p.id} · {p.attrs.org_unit}</option>)}
+      <span className="small muted">for</span>
+      <select value={subject} onChange={(e) => setSubject(e.target.value)} aria-label="Person">
+        {choices.map((p) => <option key={p.id} value={p.id}>{p.display_name} ({p.attrs.org_unit})</option>)}
       </select>
-      <span className="small muted">on behalf of {user.name}</span>
       <span className="spacer" />
       <button className="btn primary" onClick={start}><Play size={15} /> Start</button>
     </section>
@@ -87,10 +89,9 @@ function StartRun() {
 }
 
 function RunDetail({ runId }: { runId: string }) {
-  const { user } = useApp();
   const [d, reload] = usePoll<any>(`/api/runs/${runId}`, 2000);
   const [sel, setSel] = useState<string | null>(null);
-  if (!d) return <div className="panel empty">Loading run…</div>;
+  if (!d) return <div className="panel empty">Loading…</div>;
   const steps: Step[] = d.steps;
   const step = steps.find((s) => s.id === sel) || steps.find((s) => s.status === "awaiting_human") || null;
   const openItem = d.queue.find((q: any) => q.status === "open" && (!step || q.step_id === step.id));
@@ -102,15 +103,8 @@ function RunDetail({ runId }: { runId: string }) {
       <section className="panel panel-pad">
         <div className="row">
           <div>
-            <h2 style={{ fontSize: 20, textTransform: "capitalize" }}>{d.run.workflow} · {d.subject?.display_name || d.run.subject}</h2>
-            <div className="small muted">
-              {d.workflow.ref} · <span className="mono">{d.run.id}</span> · on behalf of {d.run.principal} via {d.run.channel}
-            </div>
-          </div>
-          <span className="spacer" />
-          <div className="figure" style={{ textAlign: "right" }}>
-            <span className="n" style={{ fontSize: 24 }}>{fmtInr(d.run.cost_inr, 4)}</span>
-            <span className="l">of {fmtInr(d.workflow.budget_inr_per_run, 2)} budget · {done ? Math.round(((done - human) / done) * 100) : 0}% no human touch</span>
+            <h2 style={{ fontSize: 20 }}>{nice(d.run.workflow)}: {d.subject?.display_name || d.run.subject || "—"}</h2>
+            <div className="small muted">{plainStatus(d.run.status)} · {done} of {steps.length} steps done · {done ? Math.round(((done - human) / done) * 100) : 0}% automatic · cost {fmtInr(d.run.cost_inr)}</div>
           </div>
         </div>
         <Rail steps={steps} selected={step?.id} onSelect={setSel} />
@@ -125,45 +119,56 @@ function RunDetail({ runId }: { runId: string }) {
 
       {step && <StepDetail step={step} d={d} />}
 
-      <section className="panel">
-        <div className="panel-pad" style={{ paddingBottom: 4 }}>
-          <h2>Audit narration</h2>
-          <p className="sub">Built from the hash-linked log, not from a model asked to remember. Every entry names the actor, the policy versions and the cost.</p>
-        </div>
-        <AuditList entries={d.audit} />
+      <section className="panel panel-pad">
+        <More label="Show the full history of this process">
+          <AuditList entries={d.audit} />
+        </More>
       </section>
     </div>
   );
 }
 
+function whatItDoes(step: Step): string {
+  if (step.kind === "reserved") return "Needs a person's approval. The AI can't do this.";
+  if (step.kind === "route_only") return "Passed straight to the right person. The AI doesn't read or judge it.";
+  if (step.kind === "connector") return "Updates another system.";
+  if (step.model) return "Uses AI.";
+  return "Worked out by rules. No AI.";
+}
+
 function StepDetail({ step, d }: { step: Step; d: any }) {
   const calls = d.model_calls.filter((c: any) => c.step_id === step.id);
-  const objections = d.objections.filter((o: any) => o.step_id === step.id);
+  // The AI reviewer often repeats a concern the rules already raised; show each kind of concern once.
+  const objections = d.objections.filter((o: any, i: number, all: any[]) =>
+    o.step_id === step.id && all.findIndex((x: any) => x.step_id === step.id && x.class === o.class) === i);
   const outputs = step.outputs && typeof step.outputs === "object" ? step.outputs : null;
   return (
     <section className="panel panel-pad">
       <div className="row">
-        <h2 style={{ margin: 0 }}>{step.title}</h2>
-        <span className="tag">{step.kind}</span>
-        <span className={`tag ${step.status === "done" ? "ok" : step.status === "awaiting_human" ? "seal" : ""}`}>{step.status.replace("_", " ")}</span>
-        {step.kind === "skill" && <span className={`tag ${step.model ? "agent" : "rule"}`}>{step.model ? `model · tier ${step.tier}` : "tier 0 · code"}</span>}
-        {step.cost_inr ? <span className="tag">{fmtInr(step.cost_inr, 5)}</span> : null}
+        <h2 style={{ margin: 0 }}>{stepTitle(step.title)}</h2>
+        <span className={`tag ${step.status === "done" ? "ok" : step.status === "awaiting_human" ? "seal" : ""}`}>{plainStatus(step.status)}</span>
       </div>
       <div className="small muted" style={{ margin: "6px 0 12px" }}>
-        {step.connector ? <>connector <b>{step.connector}.{step.action}</b></> : step.skill ? <>skill <b>{step.skill}</b></> : step.action ? <>action <b>{step.action}</b></> : null}
-        {step.attempts ? ` · ${step.attempts} attempt(s)` : ""}{step.scheduled_for ? ` · scheduled ${fmtTime(step.scheduled_for)}` : ""}
-        {step.note ? ` · ${step.note}` : ""}
+        {whatItDoes(step)}
+        {step.attempts && step.attempts > 1 ? ` Tried ${step.attempts} times.` : ""}
+        {step.scheduled_for ? ` Scheduled for ${fmtTime(step.scheduled_for)}.` : ""}
+        {step.note && step.kind !== "route_only" ? ` ${step.note}` : ""}
       </div>
       {objections.length > 0 && (
         <div className="hearings" style={{ marginBottom: 12 }}>
           {objections.map((o: any) => <Hearing key={o.id} c={o} />)}
         </div>
       )}
-      {outputs && Object.keys(outputs).length > 0 && <ComputedTable computed={{ outputs }} />}
+      {outputs && Object.keys(outputs).length > 0 && (step.kind === "connector" ? (
+        <>
+          {outputs.record_id && <div className="small">Done once, record <b>{String(outputs.record_id)}</b>{outputs.status ? ` (${humanize(String(outputs.status)).toLowerCase()})` : ""}.</div>}
+          <More label="What the other system sent back"><ComputedTable computed={{ result: outputs }} /></More>
+        </>
+      ) : <ComputedTable computed={{ result: outputs }} />)}
       {calls.map((c: any) => (
         <div key={c.id} className="notice small" style={{ marginTop: 8 }}>
-          Model call <span className="mono">{c.model}</span> tier {c.tier} · {c.tokens_in}+{c.tokens_out} tokens · {fmtInr(c.inr, 5)} — {c.escalation_reason}
-          {" "}<a href={`#/privacy/${c.id}`}>See the exact payload</a>
+          {String(c.skill).includes("prativaad") ? "The checker asked the AI for a second opinion" : c.tier >= 2 ? "Used the bigger AI model" : "Used AI"} ({fmtInr(c.inr)}).{c.tier >= 2 && c.escalation_reason ? ` ${plainReason(c.escalation_reason)}` : ""}
+          {" "}<a href={`#/privacy/${c.id}`}>See exactly what the AI was sent</a>
         </div>
       ))}
     </section>
@@ -171,30 +176,29 @@ function StepDetail({ step, d }: { step: Step; d: any }) {
 }
 
 export function AuditList({ entries }: { entries: any[] }) {
+  const { users } = useApp();
   return (
     <table className="t">
       <tbody>
-        {entries.map((e) => (
-          <tr key={e.seq}>
-            <td className="mono muted" style={{ width: 52 }}>#{e.seq}</td>
-            <td>
-              <div className="row">
-                <b className="mono" style={{ fontSize: 13 }}>{e.action}</b>
-                <span className={`tag ${e.outcome === "refused" || e.outcome === "failed" ? "seal" : e.outcome === "ok" || e.outcome === "cleared" ? "ok" : e.outcome === "objected" ? "rule" : ""}`}>{e.outcome}</span>
-                {e.policy_versions?.map((p: string) => <span key={p} className="tag rule">{p}</span>)}
-                {e.inr > 0 && <span className="tag">{fmtInr(e.inr, 5)}</span>}
-                {e.model_id && <span className="tag agent">{e.model_id}</span>}
-              </div>
-              <div className="small muted">
-                {e.actor}{e.on_behalf_of ? ` for ${e.on_behalf_of}` : ""} · {fmtTime(e.at)}
-                {e.rule_ids?.length ? ` · rules ${e.rule_ids.slice(0, 6).join(", ")}` : ""}
-                {e.detail?.reason ? ` · ${e.detail.reason}` : ""}{e.detail?.verified ? ` · ${e.detail.verified}` : ""}
-                {e.detail?.route_reason ? ` · ${e.detail.route_reason}` : ""}
-              </div>
-            </td>
-            <td className="mono muted small" style={{ whiteSpace: "nowrap" }}>{short(e.hash, 14)}</td>
-          </tr>
-        ))}
+        {entries.map((e) => {
+          const bad = e.outcome === "refused" || e.outcome === "failed";
+          const raw = e.detail?.reason || e.detail?.route_reason || e.detail?.verified;
+          const why = typeof raw === "string" && /read-back found exactly one/.test(raw) ? "checked afterwards: exactly one record" : raw;
+          return (
+            <tr key={e.seq}>
+              <td className="muted small" style={{ width: 44 }}>{e.seq}</td>
+              <td>
+                <div className="row">
+                  <span>{describeEvent(e.action)}</span>
+                  {e.outcome && e.outcome !== "ok" && <span className={`tag ${bad ? "seal" : e.outcome === "cleared" ? "ok" : e.outcome === "objected" ? "rule" : ""}`}>{plainStatus(e.outcome)}</span>}
+                </div>
+                <div className="small muted">
+                  {describeActor(e.actor, users)} · {fmtTime(e.at)}{e.inr > 0 ? ` · ${fmtInr(e.inr)}` : ""}{why ? ` · ${why}` : ""}
+                </div>
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );

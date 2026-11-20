@@ -17,21 +17,21 @@ import { ProviderKey } from "./components/ProviderKey";
 import { PageBoundary } from "./components/PageBoundary";
 
 const PAGES: { id: string; label: string; icon: any; group?: string }[] = [
-  { id: "overview", label: "Overview", icon: Gauge },
-  { id: "story", label: "Demo story", icon: BookOpenText },
-  { id: "runs", label: "Workflows", icon: LayoutList, group: "Work" },
-  { id: "inbox", label: "Decisions", icon: InboxIcon },
+  { id: "story", label: "Start here", icon: BookOpenText },
+  { id: "overview", label: "Dashboard", icon: Gauge },
+  { id: "runs", label: "Processes", icon: LayoutList, group: "Work" },
+  { id: "inbox", label: "Approvals", icon: InboxIcon },
   { id: "chat", label: "Chat", icon: MessagesSquare },
-  { id: "talent", label: "Talent", icon: Users },
-  { id: "governance", label: "Guardrails", icon: Landmark, group: "Governance" },
-  { id: "policies", label: "Policy packs", icon: FileCheck2 },
-  { id: "privacy", label: "Personal data", icon: ScanEye },
-  { id: "audit", label: "Audit chain", icon: ScrollText },
+  { id: "talent", label: "Hiring", icon: Users },
+  { id: "governance", label: "Safety controls", icon: Landmark, group: "Safety" },
+  { id: "policies", label: "Rules", icon: FileCheck2 },
+  { id: "privacy", label: "Privacy", icon: ScanEye },
+  { id: "audit", label: "History log", icon: ScrollText },
 ];
 
 function parseHash(): [string, string | null] {
   const [page, arg] = window.location.hash.replace(/^#\/?/, "").split("/");
-  return [page || "overview", arg || null];
+  return [page || "story", arg || null];
 }
 
 export default function App() {
@@ -60,23 +60,23 @@ export default function App() {
   const ctx = useMemo(() => ({ user, users, setUser, boot, reloadBoot, go, toast }), [user, users, boot, reloadBoot, go, toast]);
 
   if (!boot || !user) {
-    return <div className="empty" style={{ paddingTop: 120 }}>Connecting to the SETU kernel on :8000…</div>;
+    return <div className="empty" style={{ paddingTop: 120 }}>Loading SETU…</div>;
   }
 
   async function advance(days: number) {
     const r = await api.post("/api/clock/advance", { days });
     reloadBoot();
-    toast(`Demo clock moved to ${fmtTime(r.clock)}. Scheduled steps re-checked.`);
+    toast(`Date is now ${fmtTime(r.clock)}.`);
   }
   async function reset() {
     await api.post("/api/demo/reset");
     reloadBoot();
-    toast("Demo reset: fresh synthetic dataset, empty audit chain.");
-    go("overview");
+    toast("Demo reset. Everything is back to the start.");
+    go("story");
   }
 
   const Page = { overview: Overview, story: Story, runs: Runs, inbox: Inbox, chat: Chat, governance: Governance,
-    policies: Policies, privacy: Privacy, audit: Audit, talent: Talent }[page] || Overview;
+    policies: Policies, privacy: Privacy, audit: Audit, talent: Talent }[page] || Story;
 
   let lastGroup: string | undefined;
   return (
@@ -99,14 +99,14 @@ export default function App() {
             );
           })}
           <div className="foot">
-            Synthetic data only. Model provider: <b style={{ color: "#fff" }}>{boot.profile === "groq" ? "Groq (gpt-oss)" : boot.profile}</b>{boot.profile === "groq" ? " — tokenised payloads only." : " (simulated, in-process, no egress)."}
+            Demo data only.<br />AI: <b style={{ color: "#fff" }}>{boot.profile === "groq" ? "Groq" : "built-in simulator"}</b>
           </div>
         </nav>
         <div className="main">
           <header className="topbar">
             <label className="row small" style={{ gap: 8 }}>
-              <span className="muted">Acting as</span>
-              <select value={user.id} onChange={(e) => setUser(e.target.value)} aria-label="Acting as">
+              <span className="muted">You are</span>
+              <select value={user.id} onChange={(e) => setUser(e.target.value)} aria-label="You are">
                 {users.map((u) => <option key={u.id} value={u.id}>{u.name} — {u.title}</option>)}
               </select>
             </label>
@@ -114,10 +114,10 @@ export default function App() {
             <span className="clock"><Clock3 size={15} /> {fmtTime(boot.clock)}</span>
             <button className="btn small" onClick={() => advance(1)}>+1 day</button>
             <button className="btn small" onClick={() => advance(30)}>+30 days</button>
-            <button className="btn small ghost" onClick={reset} title="Reseed the synthetic dataset"><RotateCcw size={14} /> Reset</button>
+            <button className="btn small ghost" onClick={reset} title="Start the demo again from scratch"><RotateCcw size={14} /> Reset</button>
           </header>
           <main className="content">
-            <div style={{ marginBottom: 16 }}><ProviderKey compact onlyRejected={!["overview", "story"].includes(page)} /></div>
+            <div style={{ marginBottom: 16 }}><ProviderKey compact onlyRejected={!["story"].includes(page)} /></div>
             <PageBoundary page={page}><Page arg={arg} /></PageBoundary>
           </main>
         </div>

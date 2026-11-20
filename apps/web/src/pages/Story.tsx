@@ -8,8 +8,8 @@ const plusDays = (iso: string, n: number) => { const d = new Date(iso); d.setDat
 
 const BEATS: Beat[] = [
   {
-    title: "Meera's offer is accepted",
-    body: "Onboarding starts on its own. Entitlements resolve by rule. Before ordering a laptop, Prativaad notices an open allocation from Meera's contract stint two years ago; the kernel reads the return ledger, confirms it was returned, and only then allocates. No confidence score would have caught it, because the plan was never uncertain.",
+    title: "Meera joins: onboarding starts",
+    body: "Her laptop, email and access card are worked out from the rules. SETU notices an old laptop under her name, checks it was returned, and only then orders a new one.",
     action: "Start onboarding",
     run: async ({ user, setUser, go }) => {
       if (!user.roles.includes("hr_business_partner")) setUser("USR-101");
@@ -18,38 +18,38 @@ const BEATS: Beat[] = [
     },
   },
   {
-    title: "Her ID scan is too faint to read",
-    body: "The small model is unsure, so the router escalates one tier on the measured trigger. Still unsure, it stops: Priya gets a packet with the draft, the reason and one question. Thirty seconds of her time instead of a wrong PAN in payroll.",
-    action: "Open Priya's decisions",
+    title: "The AI isn't sure about her ID",
+    body: "When the AI isn't confident, it doesn't guess. It asks Priya one clear question.",
+    action: "Open Priya's approvals",
     run: ({ setUser, go }) => { setUser("USR-101"); go("inbox"); },
   },
   {
-    title: "The IT asset system goes down",
-    body: "Retries reuse the same idempotency key, the outbox holds the intent, and the circuit breaker opens. Bring the system back and the queue drains. Read-back finds exactly one laptop.",
-    action: "Break assets, start a joiner",
+    title: "The laptop system crashes",
+    body: "SETU keeps retrying safely. When the system comes back, there is still exactly one laptop, not two.",
+    action: "Crash it and start a joiner",
     run: async ({ go, toast }) => {
       await api.post("/api/mocks/chaos", { system: "assets", mode: "down" });
       const r = await api.post("/api/runs", { workflow: "onboarding", subject_id: "EMP-6000", user_id: "USR-103" });
-      toast("The asset system is down. Restore it from Guardrails → Break a TBO system.");
+      toast("The laptop system is down. Fix it from Safety controls, then Restore.");
       go(`runs/${r.run_id}`);
     },
   },
   {
-    title: "Meera asks what to bring on day one",
-    body: "In chat. The answer quotes clause ONB-C1 and the pack version. Then she asks about Form 16, which the clauses only partly cover: confidence falls under the threshold, the router moves up a tier and logs why.",
+    title: "Meera asks a question in chat",
+    body: "The answer comes with the rule it's based on. A harder question goes to a bigger AI model, and the reason is recorded.",
     action: "Open chat as Meera",
     run: ({ setUser, go }) => { setUser("USR-4821"); go("chat"); },
   },
   {
-    title: "A notice-period amendment is drafted",
-    body: "Priya's draft quietly drops the statutory-floor guard for fixed-term contracts. Prativaad generates adversarial cases, finds a Karnataka contract with ten days' notice resolving below the floor, blocks activation and proposes the regression test.",
-    action: "Review the draft",
+    title: "Someone writes a bad rule change",
+    body: "The change quietly breaks the legal minimum notice. SETU's checker finds a case that proves it and blocks the change.",
+    action: "See the bad change",
     run: ({ go }) => go("policies/notice_period"),
   },
   {
-    title: "Rahul resigns, and asks to leave early",
-    body: "The agent prepares: notice from the pack, settlement preview, gratuity by rule (four years two months is not eligible). It cannot accept. One line in his letter is a grievance about his manager; it is routed to the ethics officer untouched, with no summary.",
-    action: "Submit Rahul's resignation",
+    title: "Rahul resigns",
+    body: "SETU works out his notice and final pay from the rules, but it can't accept the resignation. His complaint about his manager goes straight to the ethics officer. The AI never summarises it.",
+    action: "Rahul resigns",
     run: async ({ boot, go }) => {
       const r = await api.post("/api/runs", {
         workflow: "exit", subject_id: "EMP-3310", user_id: "USR-101", channel: "slack",
@@ -60,38 +60,38 @@ const BEATS: Beat[] = [
     },
   },
   {
-    title: "Two approvals, then a buyout",
-    body: "Acceptance is sequential: his manager Rohan, then Priya. The early release is a second reserved decision for Deepa. Each produces a receipt holding a hash of exactly what was on screen. Then Prativaad objects again: the card revocation was scheduled for the old last day. Rescheduled, logged.",
+    title: "His managers approve",
+    body: "First Rohan, then Priya, then Deepa for the early exit. When the last day moves, SETU moves the access-card cancellation too.",
     action: "Decide as Rohan",
     run: ({ setUser, go }) => { setUser("USR-111"); go("inbox"); },
   },
   {
-    title: "Ask an agent to accept it anyway",
-    body: "The drill makes an agent attempt every reserved action, every forbidden verb and every route-only matter. The kernel refuses each with 403 and an audit entry. The UI has no button for it, and that is not the reason it fails.",
-    action: "Run the drill",
+    title: "Try to make the AI approve",
+    body: "The AI tries every action it isn't allowed to do. Every one is blocked, by the system itself rather than the screen.",
+    action: "Open Safety controls",
     run: ({ go }) => go("governance"),
   },
   {
-    title: "Payroll sign-off, then the last day",
-    body: "Vikram signs off the settlement. Move the clock past the last working day: the card is revoked at 18:00, email suspended rather than deleted, retention clocks start, and the statutory set is held back with its rule cited.",
+    title: "Payroll signs off, last day arrives",
+    body: "Vikram approves the final pay. Move the date forward: card cancelled, email suspended, and his data set to be deleted later.",
     action: "Decide as Vikram",
     run: ({ setUser, go }) => { setUser("USR-104"); go("inbox"); },
   },
   {
-    title: "Talent: the platform says no to profiling",
-    body: "A patent names an inventor who never gave TBO anything. Under DPDP there is no legitimate-interests basis, so she is stored as a pointer: a public link, nothing derived, no model call. A restricted employer is blocked with its clause ID, and campaign approval is reserved.",
-    action: "Open Talent",
+    title: "Hiring, done fairly",
+    body: "People who never applied are only saved as a link. Applicants are scored by plain maths. The AI can rank, but only a person can reject.",
+    action: "Open Hiring",
     run: ({ go }) => go("talent"),
   },
   {
-    title: "Someone edits the audit log",
-    body: "Change one historic row directly in the database. Verification breaks at that entry. Restore it and the chain is whole again.",
-    action: "Open the audit chain",
+    title: "Someone secretly edits the history",
+    body: "Change one old entry and SETU spots it straight away.",
+    action: "Open the history log",
     run: ({ go }) => go("audit"),
   },
   {
-    title: "The dashboard closes the week",
-    body: "₹ per completed run at p50 and p95, automation rate, escalations, refusals, Prativaad's precision and cost. Every figure drills to the rows behind it.",
+    title: "See the numbers",
+    body: "How much ran automatically, what it cost and what was blocked. Click any number to see what's behind it.",
     action: "Open the dashboard",
     run: ({ go }) => go("overview"),
   },
@@ -113,7 +113,7 @@ export default function Story() {
     <>
       <div className="page-head">
         <h1>One week at TBO</h1>
-        <p>Every feature in one story, in order. Each step opens the real screen; nothing here is a recording. Three of the most important moments are refusals.</p>
+        <p>Click the steps in order. Each one does the real thing and opens the screen where it happens.</p>
       </div>
       <section className="panel panel-pad">
         <div className="beats">

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api, fmtInr, fmtTime } from "../api";
 import { usePoll } from "../hooks";
-import { Pretty } from "../components/Pretty";
+import { More, Pretty, humanize, plainReason } from "../components/Pretty";
 
 function Val({ v }: { v: any }) {
   if (v !== null && typeof v === "object") return <Pretty v={v} />;
@@ -13,6 +13,9 @@ function Val({ v }: { v: any }) {
   return <span>{s}</span>;
 }
 
+/** "sourcing.extract_claims@v1" → "Extract claims". */
+const skillName = (skill: string) => humanize(String(skill || "").split("@")[0].split(".").pop() || "");
+
 export default function Privacy({ arg }: { arg: string | null }) {
   const [calls] = usePoll<any[]>("/api/model-calls?limit=60", 4000);
   const [selId, setSelId] = useState<string | null>(arg);
@@ -21,8 +24,8 @@ export default function Privacy({ arg }: { arg: string | null }) {
   return (
     <>
       <div className="page-head">
-        <h1>What personal data reaches a model</h1>
-        <p>Every model call, side by side: what the kernel held, and the exact payload that left it. Undeclared fields are stripped, names become placeholders, and PAN and bank details never leave the vault.</p>
+        <h1>Privacy</h1>
+        <p>See exactly what the AI was sent. Names and ID numbers are hidden before anything leaves.</p>
       </div>
       <div className="split">
         <section className="panel">
@@ -30,48 +33,50 @@ export default function Privacy({ arg }: { arg: string | null }) {
             <tbody>
               {(calls || []).map((c) => (
                 <tr key={c.id} className={`click ${sel?.id === c.id ? "sel" : ""}`} onClick={() => setSelId(c.id)}>
-                  <td><b className="mono" style={{ fontSize: 13 }}>{c.skill}</b>
-                    <div className="small muted">tier {c.tier} · {c.model} · {fmtInr(c.inr, 5)} · {fmtTime(c.at)}</div></td>
+                  <td><b>{skillName(c.skill)}</b>
+                    <div className="small muted">{c.tier >= 2 ? "bigger AI" : "AI"} · {fmtInr(c.inr)} · {fmtTime(c.at)}</div></td>
                 </tr>
               ))}
-              {!(calls || []).length && <tr><td className="empty">No model calls yet. Run onboarding or ask the helpdesk something.</td></tr>}
+              {!(calls || []).length && <tr><td className="empty">The AI hasn't been used yet. Start an onboarding or ask something in Chat.</td></tr>}
             </tbody>
           </table>
         </section>
         {sel ? (
           <section className="panel panel-pad stack">
             <div className="row">
-              <h2 style={{ margin: 0 }}>{sel.skill}</h2>
-              <span className="tag agent">tier {sel.tier}</span><span className="tag">{sel.provider}:{sel.model}</span>
-              <span className="tag">region: {sel.region}</span><span className="tag">prompt v{sel.prompt_version}</span>
+              <h2 style={{ margin: 0 }}>{skillName(sel.skill)}</h2>
+              <span className="small muted">cost {fmtInr(sel.inr)}</span>
             </div>
-            <div className="small muted">Why this tier: {sel.escalation_reason} · {sel.tokens_in} tokens in, {sel.tokens_out} out · {fmtInr(sel.inr, 5)}</div>
+            <div className="small">Sent to <b>{String(sel.provider).startsWith("sim") || String(sel.region || "").includes("in-process") ? "the built-in simulator (never leaves this server)" : sel.region || humanize(String(sel.provider))}</b> · model {sel.model}</div>
+            {sel.tier >= 2 && <div className="small muted">Why the bigger AI: {plainReason(sel.escalation_reason)}</div>}
             <div className="grid g2">
               <div>
-                <h2>Held by the kernel</h2>
+                <h2>What SETU has</h2>
                 <div className="kv">
-                  {Object.entries(sel.source_record || {}).filter(([k]) => k !== "…withheld").map(([k, v]) => <span key={k} style={{ display: "contents" }}><div className="k">{k}</div><div><Val v={v} /></div></span>)}
+                  {Object.entries(sel.source_record || {}).filter(([k]) => k !== "…withheld").map(([k, v]) => <span key={k} style={{ display: "contents" }}><div className="k">{humanize(k)}</div><div><Val v={v} /></div></span>)}
                 </div>
                 {sel.source_record?.["…withheld"]?.length > 0 && (
-                  <p className="small muted">Also in scope but never offered to this skill: {sel.source_record["…withheld"].length} fields ({sel.source_record["…withheld"].slice(0, 6).join(", ")}…)</p>
+                  <p className="small muted">{sel.source_record["…withheld"].length} other fields weren't offered to the AI at all.</p>
                 )}
               </div>
               <div>
-                <h2>Sent to the model</h2>
+                <h2>What the AI got</h2>
                 <div className="kv">
-                  {Object.entries(sel.outbound_payload || {}).map(([k, v]) => <span key={k} style={{ display: "contents" }}><div className="k">{k}</div><div><Val v={v} /></div></span>)}
+                  {Object.entries(sel.outbound_payload || {}).map(([k, v]) => <span key={k} style={{ display: "contents" }}><div className="k">{humanize(k)}</div><div><Val v={v} /></div></span>)}
                 </div>
                 {sel.stripped_fields?.length > 0 && (
-                  <div className="stack small" style={{ marginTop: 10 }}>
-                    {sel.stripped_fields.slice(0, 8).map((s: any, i: number) => <div key={i}><span className="tag seal">stripped</span> <span className="mono">{s.field}</span> — {s.reason}</div>)}
-                  </div>
+                  <More label={`${sel.stripped_fields.length} fields removed before sending`}>
+                    <div className="stack small">
+                      {sel.stripped_fields.slice(0, 12).map((s: any, i: number) => <div key={i}><span className="tag seal">Removed</span> {humanize(s.field)}: {/undeclared/.test(s.reason) ? "not needed for this task" : s.reason}</div>)}
+                    </div>
+                  </More>
                 )}
               </div>
             </div>
-            <div>
-              <h2>Model response</h2>
+            <More label="What the AI said back">
               <div className="panel" style={{ padding: 12, background: "#fafbfc" }}><Pretty v={sel.response} /></div>
-            </div>
+              <p className="small muted">Model {sel.model} · {sel.tokens_in} tokens in, {sel.tokens_out} out</p>
+            </More>
           </section>
         ) : <div className="panel empty">Select a call.</div>}
       </div>
@@ -86,42 +91,45 @@ function Dpdp() {
   const [bundle, setBundle] = useState<any>(null);
   const [sweep, setSweep] = useState<any>(null);
   const [cross, setCross] = useState<any>(null);
+  const [people] = usePoll<any[]>("/api/people?kind=employee", 0);
   return (
     <div className="grid g2" style={{ marginTop: 16 }}>
       <section className="panel panel-pad">
-        <h2>Retention clocks</h2>
-        <p className="sub">Started by the exit event. Fields whose purpose has ended are deleted; statutory fields are held back with the rule cited.</p>
+        <h2>When data gets deleted</h2>
+        <p className="sub">The clock starts when someone leaves. Data that's no longer needed is deleted. Data the law says to keep is kept.</p>
         <div className="row" style={{ marginBottom: 10 }}>
-          <button className="btn" onClick={async () => { setSweep(await api.post("/api/dpdp/sweep")); reload(); }}>Run the retention sweep now</button>
-          <span className="small muted">Fast-forward the clock first to see deletions.</span>
+          <button className="btn" onClick={async () => { setSweep(await api.post("/api/dpdp/sweep")); reload(); }}>Delete what's due now</button>
+          <span className="small muted">Move the date forward first (+30 days).</span>
         </div>
-        {sweep && <div className="notice small" style={{ marginBottom: 10 }}>As of {sweep.as_of}: deleted {sweep.deleted.length} field(s), held {sweep.held.length} under statutory rules.</div>}
+        {sweep && <div className="notice small" style={{ marginBottom: 10 }}>Deleted {sweep.deleted.length}. Kept {sweep.held.length} because the law requires it.</div>}
         <table className="t small">
-          <thead><tr><th>Person</th><th>Field</th><th>Delete on</th><th>Hold</th></tr></thead>
+          <thead><tr><th>Person</th><th>Data</th><th>Delete on</th><th>Kept because</th></tr></thead>
           <tbody>
             {(schedule || []).slice(0, 14).map((r: any) => (
-              <tr key={r.person_id + r.field}><td>{r.display_name || r.person_id}</td><td className="mono">{r.field}</td>
-                <td>{r.deleted_at ? <span className="tag ok">deleted</span> : r.retention_until}</td><td className="small">{r.statutory_hold_rule || "—"}</td></tr>
+              <tr key={r.person_id + r.field}><td>{r.display_name || r.person_id}</td><td>{humanize(r.field)}</td>
+                <td>{r.deleted_at ? <span className="tag ok">Deleted</span> : r.retention_until}</td><td className="small">{r.statutory_hold_rule ? "the law requires it" : "—"}</td></tr>
             ))}
-            {!(schedule || []).length && <tr><td colSpan={4} className="muted">No clocks running. Complete an exit to start them.</td></tr>}
+            {!(schedule || []).length && <tr><td colSpan={4} className="muted">Nothing scheduled. This starts after someone leaves.</td></tr>}
           </tbody>
         </table>
       </section>
       <section className="panel panel-pad stack">
         <div>
-          <h2>Access request</h2>
-          <p className="sub">A data principal asks what we hold. Answered from the record, including every automated decision about them.</p>
+          <h2>"What do you have on me?"</h2>
+          <p className="sub">Anyone can ask. The answer includes every automatic decision made about them.</p>
           <div className="row">
-            <input value={person} onChange={(e) => setPerson(e.target.value)} aria-label="Person ID" />
-            <button className="btn" onClick={async () => setBundle(await api.get(`/api/dpdp/access/${person}`))}>Answer the request</button>
+            <select value={person} onChange={(e) => setPerson(e.target.value)} aria-label="Person">
+              {(people || []).map((p: any) => <option key={p.id} value={p.id}>{p.display_name}</option>)}
+            </select>
+            <button className="btn" onClick={async () => setBundle(await api.get(`/api/dpdp/access/${person}`))}>Show their data</button>
           </div>
           {bundle && <div className="panel" style={{ marginTop: 10, padding: 12, maxHeight: 360, overflow: "auto" }}><Pretty v={bundle} /></div>}
         </div>
         <div>
-          <h2>Purpose limitation</h2>
-          <p className="sub">The onboarding agent asks for Meera's bank account to plan logistics. Bank details are tagged for payroll only.</p>
-          <button className="btn seal" onClick={async () => setCross(await api.post("/api/dpdp/cross-purpose", {}))}>Attempt the cross-purpose read</button>
-          {cross && <div className={cross.outcome === "refused" ? "refusal" : "notice"} style={{ marginTop: 10 }}><b>{cross.outcome}</b> — {cross.reason} (audit #{cross.audit_seq})</div>}
+          <h2>Using data for the wrong reason</h2>
+          <p className="sub">The onboarding AI asks for Meera's bank details. Bank details are only for payroll.</p>
+          <button className="btn seal" onClick={async () => setCross(await api.post("/api/dpdp/cross-purpose", {}))}>Let the AI try</button>
+          {cross && <div className={cross.outcome === "refused" ? "refusal" : "notice"} style={{ marginTop: 10 }}><b>{cross.outcome === "refused" ? "Blocked." : "Allowed."}</b> {cross.reason}</div>}
         </div>
       </section>
     </div>

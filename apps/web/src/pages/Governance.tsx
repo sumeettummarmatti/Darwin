@@ -3,13 +3,16 @@ import { api, fmtTime } from "../api";
 import { useApp } from "../context";
 import { usePoll } from "../hooks";
 import { ProviderKey } from "../components/ProviderKey";
+import { More, humanize, plainAction } from "../components/Pretty";
+
+const role = (r: string) => humanize(r).toLowerCase().replace(/\bhr\b/g, "HR");
 
 export default function Governance() {
   return (
     <>
       <div className="page-head">
-        <h1>Guardrails</h1>
-        <p>The reserved list is configuration HR can change. The kill switch is a row in a table. Neither needs a deploy, and the kernel enforces both.</p>
+        <h1>Safety controls</h1>
+        <p>Test the limits, pause things in an emergency, and choose what only people can decide.</p>
       </div>
       <div className="stack" style={{ gap: 16 }}>
         <Drill />
@@ -34,41 +37,46 @@ function Drill() {
     setRes(await api.post("/api/drill", { user_id: user.id }));
     setBusy(false);
   }
+  const refused = res ? res.results.filter((r: any) => r.outcome === "refused").length : 0;
   return (
     <section className="panel panel-pad">
       <div className="row">
         <div>
-          <h2>Reserved-decision drill</h2>
-          <p className="sub" style={{ margin: 0 }}>An agent deliberately attempts every reserved action, every forbidden verb and every route-only matter. Each one must come back refused, with an audit entry.</p>
+          <h2>Try to make the AI break the rules</h2>
+          <p className="sub" style={{ margin: 0 }}>The AI attempts every action it's not allowed to do. Each attempt should be blocked.</p>
         </div>
         <span className="spacer" />
-        <button className="btn seal" onClick={run} disabled={busy}>{busy ? "Running…" : "Run the drill"}</button>
+        <button className="btn seal" onClick={run} disabled={busy}>{busy ? "Running…" : "Run the test"}</button>
       </div>
       {res && (
         <div style={{ marginTop: 16 }}>
-          <div className="row" style={{ gap: 20, alignItems: "center", marginBottom: 12 }}>
+          <div className="row" style={{ gap: 20, alignItems: "center" }}>
             <div className={`seal-stamp stamp-in ${res.all_refused ? "" : "ok"}`} style={{ width: 110, height: 110 }}>
-              <b>{res.results.filter((r: any) => r.outcome === "refused").length}/{res.results.length}</b>
-              <small>REFUSED · 403</small>
+              <b>{refused}/{res.results.length}</b>
+              <small>BLOCKED</small>
             </div>
             <p style={{ maxWidth: 520 }}>
-              {res.all_refused ? "Every attempt was refused by the kernel, not hidden by the UI. Each refusal is in the audit chain with its reason." : "Some attempts were not refused — this is a bug and should fail the build."}
+              {res.all_refused ? "Every attempt was blocked by the system itself, not just hidden on screen. Each one is in the history log." : "Some attempts got through. This is a bug."}
             </p>
           </div>
-          <table className="t">
-            <thead><tr><th>Attempted action</th><th>Status</th><th>Kernel's reason</th><th>Audit</th></tr></thead>
-            <tbody>
-              {res.results.map((r: any) => (
-                <tr key={r.action}><td className="mono">{r.action}</td><td><span className={`tag ${r.outcome === "refused" ? "seal" : "warn"}`}>{r.status} {r.outcome}</span></td>
-                  <td className="small">{r.reason}</td><td className="mono small">#{r.audit_seq}</td></tr>
-              ))}
-            </tbody>
-          </table>
+          <More label="See every attempt">
+            <table className="t">
+              <thead><tr><th>What the AI tried</th><th>Result</th><th>Why</th></tr></thead>
+              <tbody>
+                {res.results.map((r: any) => (
+                  <tr key={r.action}><td>{plainAction(r.action)}</td><td><span className={`tag ${r.outcome === "refused" ? "seal" : "warn"}`}>{r.outcome === "refused" ? "Blocked" : "Allowed"}</span></td>
+                    <td className="small">{r.reason}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </More>
         </div>
       )}
     </section>
   );
 }
+
+const SCOPE_LABEL: Record<string, string> = { global: "Everything", workflow: "One process", skill: "One AI helper", connector: "One connected system" };
 
 function KillSwitch() {
   const { user, boot, toast } = useApp();
@@ -82,41 +90,44 @@ function KillSwitch() {
     skill: boot.registry.skills,
     connector: boot.registry.connectors,
   };
+  const name = (s: string, t: string) => (s === "global" ? "Everything" : humanize(t));
   async function set(active: boolean, s = scope, t = target) {
     await api.post("/api/killswitch", { scope: s, target: s === "global" ? "*" : t, active, reason, user_id: user.id });
-    toast(active ? `Engaged: ${s}:${t}. In-flight work parks with its context.` : `Released: ${s}:${t}`);
+    toast(active ? `Paused: ${name(s, t)}. Anything in progress waits in Approvals.` : `Resumed: ${name(s, t)}`);
     reload();
   }
   const active = (data?.switches || []).filter((s: any) => s.active);
   return (
     <section className="panel panel-pad">
-      <h2>Kill switch</h2>
-      <p className="sub">Four blast radii. Paused runs park in the decision queue so HR can finish them by hand.</p>
+      <h2>Emergency stop</h2>
+      <p className="sub">Pause something straight away. Work in progress waits for a person.</p>
       <div className="row">
-        <select value={scope} onChange={(e) => { setScope(e.target.value); setTarget(targets[e.target.value][0]); }} aria-label="Scope">
-          {Object.keys(targets).map((s) => <option key={s}>{s}</option>)}
+        <select value={scope} onChange={(e) => { setScope(e.target.value); setTarget(targets[e.target.value][0]); }} aria-label="What to pause">
+          {Object.keys(targets).map((s) => <option key={s} value={s}>{SCOPE_LABEL[s]}</option>)}
         </select>
         {scope !== "global" && (
-          <select value={target} onChange={(e) => setTarget(e.target.value)} aria-label="Target">
-            {targets[scope].map((t) => <option key={t}>{t}</option>)}
+          <select value={target} onChange={(e) => setTarget(e.target.value)} aria-label="Which one">
+            {targets[scope].map((t) => <option key={t} value={t}>{humanize(t)}</option>)}
           </select>
         )}
-        <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason (recorded)" style={{ flex: 1, minWidth: 140 }} />
-        <button className="btn seal" onClick={() => set(true)}>Engage</button>
+        <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why? (optional)" style={{ flex: 1, minWidth: 140 }} />
+        <button className="btn seal" onClick={() => set(true)}>Pause</button>
       </div>
       <div className="stack" style={{ marginTop: 14 }}>
         {active.map((s: any) => (
           <div key={s.scope + s.target} className="refusal row">
-            <div><b>{s.scope}:{s.target}</b><div className="small">{s.reason || "no reason given"} · by {s.actor} · {fmtTime(s.at)}</div></div>
+            <div><b>Paused: {name(s.scope, s.target)}</b><div className="small">{s.reason || "No reason given"} · {fmtTime(s.at)}</div></div>
             <span className="spacer" />
-            <button className="btn small" onClick={() => set(false, s.scope, s.target)}>Release</button>
+            <button className="btn small" onClick={() => set(false, s.scope, s.target)}>Resume</button>
           </div>
         ))}
-        {!active.length && <div className="small muted">Nothing paused. The automatic circuit breaker will engage a workflow switch itself if its escalation rate crosses the threshold in policies/circuit_breakers.</div>}
+        {!active.length && <div className="small muted">Nothing is paused.</div>}
       </div>
     </section>
   );
 }
+
+const SYSTEM_LABEL: Record<string, string> = { assets: "Laptops", tickets: "IT tickets", access: "Access cards", directory: "Email accounts", payroll: "Payroll", mail: "Mail" };
 
 function Chaos() {
   const { toast } = useApp();
@@ -126,37 +137,44 @@ function Chaos() {
   const [mode, setMode] = useState("error_500");
   async function apply(m = mode) {
     await api.post("/api/mocks/chaos", { system, mode: m, count: 3 });
-    toast(m === "clear" ? `${system} recovered` : `${system} now returns ${m}`);
+    toast(m === "clear" ? `${SYSTEM_LABEL[system]} is working again` : `${SYSTEM_LABEL[system]} is now broken`);
     reload();
   }
+  const broken = data?.chaos || [];
+  const tripped = (ks?.breakers || []).filter((b: any) => b.state !== "closed");
   return (
     <section className="panel panel-pad">
-      <h2>Break a TBO system</h2>
-      <p className="sub">The mocks are deliberately not idempotent. Duplicate prevention is the kernel's job: same key, outbox, read-back.</p>
+      <h2>Break a system (for testing)</h2>
+      <p className="sub">See SETU survive a crash without doing anything twice.</p>
       <div className="row">
         <select value={system} onChange={(e) => setSystem(e.target.value)} aria-label="System">
-          {["assets", "tickets", "access", "directory", "payroll", "mail"].map((s) => <option key={s}>{s}</option>)}
+          {Object.keys(SYSTEM_LABEL).map((s) => <option key={s} value={s}>{SYSTEM_LABEL[s]}</option>)}
         </select>
-        <select value={mode} onChange={(e) => setMode(e.target.value)} aria-label="Failure mode">
-          <option value="error_500">500 errors ×3</option>
-          <option value="timeout_after_commit">timeout after commit</option>
-          <option value="ack_no_commit">200 but nothing written</option>
-          <option value="down">down until restored</option>
+        <select value={mode} onChange={(e) => setMode(e.target.value)} aria-label="How it breaks">
+          <option value="error_500">Fails 3 times</option>
+          <option value="timeout_after_commit">Saves, then times out</option>
+          <option value="ack_no_commit">Says OK, saves nothing</option>
+          <option value="down">Down until fixed</option>
         </select>
-        <button className="btn seal" onClick={() => apply()}>Inject</button>
-        <button className="btn" onClick={() => apply("clear")}>Restore</button>
+        <button className="btn seal" onClick={() => apply()}>Break it</button>
+        <button className="btn" onClick={() => apply("clear")}>Fix it</button>
       </div>
       <div className="small" style={{ marginTop: 12 }}>
-        {(data?.chaos || []).map((c: any) => <span key={c.system} className="tag seal" style={{ marginRight: 6 }}>{c.system}: {c.mode}{c.remaining > 0 ? ` ×${c.remaining}` : ""}</span>)}
-        {(ks?.breakers || []).filter((b: any) => b.state !== "closed").map((b: any) => <span key={b.name} className="tag warn" style={{ marginRight: 6 }}>breaker {b.name}: {b.state}</span>)}
+        {broken.map((c: any) => <span key={c.system} className="tag seal" style={{ marginRight: 6 }}>{SYSTEM_LABEL[c.system] || c.system} broken</span>)}
+        {tripped.map((b: any) => <span key={b.name} className="tag warn" style={{ marginRight: 6 }}>SETU stopped calling {SYSTEM_LABEL[b.name] || humanize(b.name)} for now</span>)}
+        {!broken.length && !tripped.length && <span className="muted">All systems working.</span>}
       </div>
-      <table className="t" style={{ marginTop: 8 }}>
-        <tbody>
-          {(data?.calls || []).slice(0, 7).map((c: any) => (
-            <tr key={c.seq}><td className="mono small">{c.system}.{c.op}</td><td><span className={`tag ${c.outcome === "ok" ? "ok" : "seal"}`}>{c.outcome}</span></td><td className="small muted">{fmtTime(c.at)}</td></tr>
-          ))}
-        </tbody>
-      </table>
+      {(data?.calls || []).length > 0 && (
+        <More label="Recent calls to these systems">
+          <table className="t">
+            <tbody>
+              {(data?.calls || []).slice(0, 7).map((c: any) => (
+                <tr key={c.seq}><td className="small">{SYSTEM_LABEL[c.system] || c.system}: {humanize(c.op).toLowerCase()}</td><td><span className={`tag ${c.outcome === "ok" ? "ok" : "seal"}`}>{c.outcome === "ok" ? "OK" : humanize(c.outcome)}</span></td><td className="small muted">{fmtTime(c.at)}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        </More>
+      )}
     </section>
   );
 }
@@ -170,65 +188,68 @@ function Registry() {
   async function save() {
     const r = await api.post("/api/reserved", { yaml: draft, user_id: user.id });
     setResult(r);
-    if (r.ok) { toast(`Reserved list updated: ${r.path}. Live now, no deploy.`); setDraft(null); reload(); reloadBoot(); }
+    if (r.ok) { toast("Saved. The new list is live."); setDraft(null); reload(); reloadBoot(); }
   }
   return (
     <section className="panel panel-pad">
       <div className="row">
         <div>
-          <h2>Reserved decisions · {reg.ref}</h2>
-          <p className="sub" style={{ margin: 0 }}>An agent can never complete these. Edit to save as a new version; its tests must pass or it will not load.</p>
+          <h2>Only a person can do these</h2>
+          <p className="sub" style={{ margin: 0 }}>The AI can never do these, whatever it's told. HR can edit the list.</p>
         </div>
         <span className="spacer" />
-        {draft === null ? <button className="btn" onClick={() => setDraft(reg.yaml.replace(/^version: (\d+)/m, (_: string, v: string) => `version: ${Number(v) + 1}`))}>Edit as HR</button>
-          : <><button className="btn ghost" onClick={() => { setDraft(null); setResult(null); }}>Cancel</button><button className="btn primary" onClick={save}>Save new version</button></>}
+        {draft === null ? <button className="btn" onClick={() => setDraft(reg.yaml.replace(/^version: (\d+)/m, (_: string, v: string) => `version: ${Number(v) + 1}`))}>Edit the list</button>
+          : <><button className="btn ghost" onClick={() => { setDraft(null); setResult(null); }}>Cancel</button><button className="btn primary" onClick={save}>Save</button></>}
       </div>
       {draft !== null ? (
         <div style={{ marginTop: 12 }}>
-          <textarea className="code" value={draft} onChange={(e) => setDraft(e.target.value)} aria-label="Reserved registry YAML" />
-          {result && !result.ok && <div className="refusal" style={{ marginTop: 8 }}>Refused: {result.reason || JSON.stringify(result.reload?.problems)}</div>}
+          <textarea className="code" value={draft} onChange={(e) => setDraft(e.target.value)} aria-label="Approval list" />
+          {result && !result.ok && <div className="refusal" style={{ marginTop: 8 }}>Not saved: {result.reason || (result.reload?.problems || []).map((x: any) => x.message || String(x)).join("; ")}</div>}
         </div>
       ) : (
-        <div className="grid g2" style={{ marginTop: 14 }}>
-          <table className="t">
-            <thead><tr><th>Action</th><th>Approver</th></tr></thead>
+        <>
+          <table className="t" style={{ marginTop: 12 }}>
+            <thead><tr><th>Action</th><th>Who decides</th></tr></thead>
             <tbody>
               {reg.entries.map((e: any) => (
-                <tr key={e.action}><td className="mono">{e.action}</td><td className="small">{e.approver_role.join(e.mode === "sequential" ? " → " : " or ")}</td></tr>
+                <tr key={e.action}><td>{plainAction(e.action)}</td><td className="small">{e.approver_role.map(role).join(e.mode === "sequential" ? ", then " : " or ")}</td></tr>
               ))}
             </tbody>
           </table>
-          <div className="stack">
-            <div><b>Route only, never decide</b>
-              {reg.route_only.map((r: any) => <div key={r.action} className="small"><span className="mono">{r.action}</span> → {r.route_to_role.replace("_", " ")}</div>)}
+          <More label="More: things passed on unread, and what the AI may or may not do">
+            <div className="stack">
+              <div><b>Passed straight to a person, never judged by the AI</b>
+                {reg.route_only.map((r: any) => <div key={r.action} className="small">{plainAction(r.action)}: goes to {role(r.route_to_role)}</div>)}
+              </div>
+              <div><b>The AI may</b><div className="row small">{reg.may.map((v: string) => <span key={v} className="tag agent">{humanize(v)}</span>)}</div></div>
+              <div><b>The AI may never</b><div className="row small">{reg.may_never.map((v: string) => <span key={v} className="tag seal">{humanize(v)}</span>)}</div></div>
+              <div className="small muted">The list's own checks: {reg.tests.filter((t: any) => t.passed).length} of {reg.tests.length} passing.</div>
             </div>
-            <div><b>Agents may</b><div className="row small">{reg.may.map((v: string) => <span key={v} className="tag agent">{v}</span>)}</div></div>
-            <div><b>Agents may never</b><div className="row small">{reg.may_never.map((v: string) => <span key={v} className="tag seal">{v}</span>)}</div>
-              <div className="small muted">A workflow or skill granting one of these fails validation at load time.</div></div>
-            <div><b>Registry tests</b><div className="small">{reg.tests.filter((t: any) => t.passed).length}/{reg.tests.length} passing</div></div>
-          </div>
-        </div>
+          </More>
+        </>
       )}
     </section>
   );
 }
 
+const PROFILE_LABEL: Record<string, string> = { sim: "Simulator", sim_alt: "Simulator (second vendor)", groq: "Groq" };
+
 function Provider() {
   const { boot, user, toast, reloadBoot } = useApp();
   async function swap(profile: string) {
     await api.post("/api/provider", { profile, user_id: user.id });
-    toast(`Model profile switched to ${profile}. No skill changed.`);
+    toast(`Now using: ${PROFILE_LABEL[profile] || profile}`);
     reloadBoot();
   }
   return (
     <section className="panel panel-pad row">
       <div>
-        <h2>Switch profile</h2>
-        <p className="sub" style={{ margin: 0 }}>Changing vendor is configuration. Swap the profile, then re-run the suite: the skills, prompts and rules do not change.</p>
+        <h2>Switch AI</h2>
+        <p className="sub" style={{ margin: 0 }}>Changing the AI provider changes nothing else.</p>
       </div>
       <span className="spacer" />
-      {boot.profiles.map((p: string) => (
-        <button key={p} className={`btn ${boot.profile === p ? "primary" : ""}`} disabled={p === "openai_compatible" || (p === "groq" && !boot.groq_ready)} onClick={() => swap(p)} title={p === "openai_compatible" ? "Needs SETU_TIER*_ env vars" : ""}>{p}</button>
+      {boot.profiles.filter((p: string) => p !== "openai_compatible").map((p: string) => (
+        <button key={p} className={`btn ${boot.profile === p ? "primary" : ""}`} disabled={p === "groq" && !boot.groq_ready} onClick={() => swap(p)} title={p === "groq" && !boot.groq_ready ? "Add a Groq key first" : ""}>{PROFILE_LABEL[p] || p}</button>
       ))}
     </section>
   );

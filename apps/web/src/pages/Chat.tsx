@@ -1,7 +1,8 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { Hash } from "lucide-react";
-import { api, fmtInr } from "../api";
+import { api } from "../api";
 import { useApp } from "../context";
+import { humanize } from "../components/Pretty";
 
 type Msg = { from: "user" | "bot"; text: string; meta?: any; name: string };
 
@@ -20,7 +21,8 @@ export default function Chat() {
   const [busy, setBusy] = useState(false);
   const end = useRef<HTMLDivElement>(null);
   const msgs = log[speaker.id] || [];
-  useEffect(() => end.current?.scrollIntoView({ behavior: "smooth" }), [msgs.length]);
+  // Braces matter: newer browsers return a Promise from scrollIntoView, and React would call it as a cleanup.
+  useEffect(() => { end.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs.length]);
 
   async function send(value: string, e?: FormEvent) {
     e?.preventDefault();
@@ -33,19 +35,19 @@ export default function Chat() {
       const r = await api.post("/api/intent", { user_id: speaker.id, text: value, channel: "slack" });
       push({ from: "bot", text: r.reply, meta: r, name: "SETU" });
     } catch (err: any) {
-      push({ from: "bot", text: `The kernel returned an error: ${err.message}`, name: "SETU" });
+      push({ from: "bot", text: `Something went wrong: ${err.message}`, name: "SETU" });
     } finally { setBusy(false); }
   }
 
   return (
     <>
       <div className="page-head">
-        <h1>Chat, where people already work</h1>
-        <p>A Slack-style surface over the same intent API the console uses. Intents are recognised by rule; answers cite the clause and pack version.</p>
+        <h1>Chat</h1>
+        <p>Employees ask HR things here, like in Slack. Try one of the suggestions.</p>
       </div>
       <section className="panel chat">
         <div className="row panel-pad" style={{ paddingBottom: 12, borderBottom: "1px solid var(--line)" }}>
-          <Hash size={18} /><b>ask-hr</b><span className="muted small">— speaking as</span>
+          <Hash size={18} /><b>ask-hr</b><span className="muted small">talking as</span>
           <select value={speaker.id} onChange={(e) => setUser(e.target.value)} aria-label="Employee">
             {employees.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
           </select>
@@ -62,13 +64,10 @@ export default function Chat() {
                 <div className="body">{m.text}</div>
                 {m.meta && (
                   <div className="row small" style={{ marginTop: 6 }}>
-                    <span className="tag rule">{m.meta.policy} {m.meta.rule_ids?.join(" ")}</span>
-                    <span className="tag">intent {m.meta.intent}</span>
-                    {m.meta.citations?.map((c: any) => <span key={c.clause || c.field} className="tag rule">{c.clause || c.field} · {c.pack || c.source}</span>)}
-                    {m.meta.tier !== undefined && <span className={`tag ${m.meta.tier ? "agent" : ""}`}>tier {m.meta.tier}</span>}
-                    {m.meta.cost_inr !== undefined && <span className="tag">{fmtInr(m.meta.cost_inr, 5)}</span>}
-                    {m.meta.run_id && <button className="btn small ghost" onClick={() => go(`runs/${m.meta.run_id}`)}>Open run</button>}
-                    {m.meta.queue_id && <span className="tag seal">routed only — nothing assessed it</span>}
+                    {m.meta.citations?.length > 0 && <span className="tag rule">Source: {m.meta.citations.map((c: any) => c.clause || humanize(c.field || "")).join(", ")}</span>}
+                    {m.meta.tier !== undefined && <span className={`tag ${m.meta.tier ? "agent" : ""}`}>{m.meta.tier ? "Used AI" : "No AI needed"}</span>}
+                    {m.meta.queue_id && <span className="tag seal">Passed to a person. The AI didn't read it.</span>}
+                    {m.meta.run_id && <button className="btn small ghost" onClick={() => go(`runs/${m.meta.run_id}`)}>Open the process</button>}
                   </div>
                 )}
               </div>

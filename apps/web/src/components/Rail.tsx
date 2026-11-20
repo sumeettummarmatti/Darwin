@@ -1,3 +1,4 @@
+import { plainStatus, stepTitle } from "./Pretty";
 import { Calculator, Check, Clock, Plug, ShieldAlert, Sparkles, Stamp, X } from "lucide-react";
 
 export type Step = {
@@ -30,9 +31,9 @@ export function Rail({ steps, selected, onSelect }: { steps: Step[]; selected?: 
           selected === s.id ? "sel" : "",
         ].join(" ");
         return (
-          <button key={s.id} className={cls} role="listitem" onClick={() => onSelect?.(s.id)} title={`${s.title} — ${s.status}`}>
+          <button key={s.id} className={cls} role="listitem" onClick={() => onSelect?.(s.id)} title={`${stepTitle(s.title)}: ${plainStatus(s.status)}`}>
             <span className="dot">{icon(s)}</span>
-            <span className="lbl">{s.title}</span>
+            <span className="lbl">{stepTitle(s.title)}</span>
           </button>
         );
       })}
@@ -43,10 +44,10 @@ export function Rail({ steps, selected, onSelect }: { steps: Step[]; selected?: 
 export function RailLegend() {
   return (
     <div className="legend">
-      <span><i style={{ background: "var(--agent)" }} /> agent, no human touch</span>
-      <span><i style={{ background: "var(--seal)" }} /> a named human decided</span>
-      <span><i style={{ border: "2px dashed var(--agent)" }} /> scheduled or retrying</span>
-      <span><i style={{ background: "var(--seal-soft)", border: "2px solid var(--seal)" }} /> refused or failed</span>
+      <span><i style={{ background: "var(--agent)" }} /> done automatically</span>
+      <span><i style={{ background: "var(--seal)" }} /> a person decided</span>
+      <span><i style={{ border: "2px dashed var(--agent)" }} /> waiting or retrying</span>
+      <span><i style={{ background: "var(--seal-soft)", border: "2px solid var(--seal)" }} /> blocked</span>
     </div>
   );
 }

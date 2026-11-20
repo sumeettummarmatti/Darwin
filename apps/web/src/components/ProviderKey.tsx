@@ -34,25 +34,24 @@ export function ProviderKey({ compact = false, onlyRejected = false }: { compact
       <div className="row" style={{ alignItems: "flex-start" }}>
         <KeyRound size={20} style={{ marginTop: 3 }} />
         <div style={{ flex: 1 }}>
-          <h2>Model provider</h2>
+          <h2>Real AI (optional)</h2>
           <p className="sub" style={{ marginBottom: 8 }}>
             {status.profile === "groq" && g.state !== "rejected"
-              ? <>Model steps run on <b>Groq</b> — gpt-oss-20b, escalating to gpt-oss-120b on a measured trigger. Key ending {g.hint}. Only tokenised synthetic data is sent.</>
+              ? <>Using <b>Groq</b>. A small model first, a bigger one only when needed. Names and personal details are hidden before anything is sent.</>
               : g.state === "rejected"
-                ? <>Groq turned the key down: {g.message} The platform carries on with the offline simulator until a new key is added.</>
-                : <>Running on the offline simulator. Add a Groq key to use real models — nothing else needs configuring.</>}
+                ? <>Groq didn't accept the key, so SETU is using the built-in simulator. Add a new key to use real AI again.</>
+                : <>Using the built-in simulator, which is free and works offline. Paste a Groq key to use real AI.</>}
           </p>
-          {g.message && g.state === "ok" && <p className="small muted" style={{ margin: "0 0 8px" }}>{g.message}</p>}
           {(needsKey || !compact) && (
             <div className="row">
-              <input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder={needsKey ? "Paste a Groq API key (gsk_…)" : "Replace the key"}
+              <input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder={needsKey ? "Paste a Groq key (starts with gsk_)" : "Replace the key"}
                 aria-label="Groq API key" style={{ flex: 1, minWidth: 220 }} autoComplete="off" />
-              <button className="btn primary" disabled={busy || !key} onClick={save}>{busy ? "Checking with Groq…" : "Check and save"}</button>
-              <a className="btn ghost" href={g.create_url} target="_blank" rel="noreferrer">Create a key</a>
-              {status.profile !== "sim" && <button className="btn ghost" onClick={useSimulator}>Use the simulator</button>}
+              <button className="btn primary" disabled={busy || !key} onClick={save}>{busy ? "Checking…" : "Save key"}</button>
+              <a className="btn ghost" href={g.create_url} target="_blank" rel="noreferrer">Get a free key</a>
+              {status.profile !== "sim" && <button className="btn ghost" onClick={useSimulator}>Use the simulator instead</button>}
             </div>
           )}
-          {msg && <div className={msg.ok ? "notice small" : "refusal small"} style={{ marginTop: 8 }}>{msg.text}{!msg.ok && <> — <a href={g.create_url} target="_blank" rel="noreferrer">create a new key</a>.</>}</div>}
+          {msg && <div className={msg.ok ? "notice small" : "refusal small"} style={{ marginTop: 8 }}>{msg.text}{!msg.ok && <> Try a new one: <a href={g.create_url} target="_blank" rel="noreferrer">get a key</a>.</>}</div>}
         </div>
       </div>
     </section>
