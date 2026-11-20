@@ -164,6 +164,15 @@ systemctl is-active sixthsense-core sixthsense-insight sixthsense-worker caddy
 
 ## Deployment log
 
+### 2026-11-20 — redeploy: plain-language console, system-down notices, icp v3 ✅
+
+| Check | Result |
+|---|---|
+| Code | `deploy` fast-forwarded to `main` (80bf73e); `git pull` in `/opt/setu/app` |
+| Container | image rebuilt; `docker rm -f setu` and the step-2 `docker run` (same volumes and limits); data in `/opt/setu/var` kept |
+| Live | `/api/health` ok, audit chain intact, public URL 401 without credentials; new console served; chat answers "what is my name" from the record; provider profile `groq` |
+| SixthSense after | `api.` and `insight.` `/docs` both 200; `sixthsense-core`, `sixthsense-insight`, `caddy` active. Caddy not touched |
+
 ### 2026-11-19 — first deployment ✅
 
 | Check | Result |
