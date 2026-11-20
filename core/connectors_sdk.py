@@ -87,7 +87,7 @@ class Connector(ABC):
 
     def prior_effects(self, action: str, args: dict[str, Any], idem_key: str) -> list[dict[str, Any]]:
         """Open effects of the same kind for the same subject that this key did
-        NOT produce. Prativaad gate A's duplicate_side_effect check uses it."""
+        NOT produce. Devil's Advocate gate A's duplicate_side_effect check uses it."""
         return []
 
     def is_effect_closed(self, record: dict[str, Any]) -> tuple[bool, str]:

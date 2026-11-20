@@ -1,4 +1,4 @@
-"""PARAKH: lawful basis, no-raid, span-backed claims, deterministic scores, reserved rejection, suppression."""
+"""FairHire: lawful basis, no-raid, span-backed claims, deterministic scores, reserved rejection, suppression."""
 
 from tests.conftest import decide_open
 

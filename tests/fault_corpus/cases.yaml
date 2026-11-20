@@ -1,4 +1,4 @@
-# Fault-injection corpus for Prativaad gate A (DESIGN.md §10.4, §16.9).
+# Fault-injection corpus for Devil's Advocate gate A (DESIGN.md §10.4, §16.9).
 # Each case plants one defect in an otherwise plausible step — or none, to
 # measure false alarms. `expect` is the objection class that must be raised
 # (blocking unless it is compensation_coverage). `judgement: true` marks

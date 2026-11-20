@@ -1,4 +1,4 @@
-"""Run Prativaad gate A against the planted-defect corpus and report what each layer caught.
+"""Run Devil's Advocate gate A against the planted-defect corpus and report what each layer caught.
 
 The number this produces is the honest one: if the model layer adds nothing over
 the deterministic checks, the report says so.
@@ -52,7 +52,7 @@ def run_corpus(kernel, path: Path = CORPUS) -> dict[str, Any]:
         expect = case.get("expect")
         if "schedule" in case:
             s = case["schedule"]
-            obj = kernel.prativaad.check_schedule(run_id=f"corpus-{case['id']}", step_id="act",
+            obj = kernel.devils_advocate.check_schedule(run_id=f"corpus-{case['id']}", step_id="act",
                                                   scheduled_for=s["scheduled_for"], should_be=s["should_be"])
             found = [obj] if obj else []
         else:
@@ -61,9 +61,9 @@ def run_corpus(kernel, path: Path = CORPUS) -> dict[str, Any]:
             connector = _PlantedConnector(kernel.registry.connectors[case["connector"]], case.get("prior_effects") or [])
             run = {"id": f"corpus-{case['id']}", "budget_inr": 2.0, "policy_versions": case.get("policy_versions") or []}
             scope = {"steps": case.get("steps") or {}, "facts": case.get("facts") or {}, "subject": {"id": "EMP-1"}}
-            result = kernel.prativaad.gate_a(run=run, wf=wf, step=step, connector=connector, args=case.get("args") or {},
+            result = kernel.devils_advocate.gate_a(run=run, wf=wf, step=step, connector=connector, args=case.get("args") or {},
                                              idem_key=f"corpus:{case['id']}:v1", scope=scope, raw_pii=set(case.get("raw_pii") or []),
-                                             model_review=kernel.prativaad_model_review(run, step, agent))
+                                             model_review=kernel.devils_advocate_model_review(run, step, agent))
             found = result.objections
         classes_rules = {o.cls for o in found if o.layer == "rules"}
         classes_model = {o.cls for o in found if o.layer == "model"}

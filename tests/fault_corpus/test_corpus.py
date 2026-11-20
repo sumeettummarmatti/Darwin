@@ -1,4 +1,4 @@
-"""Prativaad against planted defects. Guards the honest number, in both directions."""
+"""Devil's Advocate against planted defects. Guards the honest number, in both directions."""
 
 from bench.fault_corpus import run_corpus
 

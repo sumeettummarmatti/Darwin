@@ -72,7 +72,7 @@ def seed(kernel: "Kernel", *, joiners: int = 8, leavers: int = 6) -> dict[str, A
         doj=(today.replace(day=15) - timedelta(days=365 * 4 + 62)),     # ≈ 4 years 2 months of service
         extra={"leave_balance": {"earned": 21.0, "casual": 4.0, "sick": 7.0}, "basic_monthly": 92000})
     # Meera: joining in 11 days. Her faint ID scan goes to a human; her prior contract stint left an
-    # allocation record open in the asset system (returned, never closed) — Prativaad's duplicate catch.
+    # allocation record open in the asset system (returned, never closed) — Devil's Advocate's duplicate catch.
     emp("EMP-4821", "Meera Iyer", "DATA", "L4", status="pre_joining", pii_seed=4821, doj=today + timedelta(days=11),
         extra={"role_title": "Senior Analyst", "manager_id": "EMP-2101", "manager_name": "Arjun Mehta",
                "id_scan_quality": 0.42,
@@ -106,9 +106,9 @@ def seed(kernel: "Kernel", *, joiners: int = 8, leavers: int = 6) -> dict[str, A
                        "holder_ref": "CAND-1182"},
         "reference": "contract:CAND-1182:asset", "allocated_on": "2024-03-04T09:00:00+00:00", "returned_on": "2024-09-14"}])
 
-    from tools.seed_parakh import seed_parakh  # the sourcing line seeds its own synthetic signals
-    parakh = seed_parakh(kernel)
-    return {"employees": 4 + 60 + joiners, "population_sample": population[:5], "parakh": parakh}
+    from tools.seed_fairhire import seed_fairhire  # the sourcing line seeds its own synthetic signals
+    fairhire = seed_fairhire(kernel)
+    return {"employees": 4 + 60 + joiners, "population_sample": population[:5], "fairhire": fairhire}
 
 
 def reset_and_seed() -> dict[str, Any]:

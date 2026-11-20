@@ -1,4 +1,4 @@
-"""PRATIVAAD — the devil's-advocate layer.
+"""Devil's Advocate — the challenge layer.
 
 Its instruction is not "check this" but "find the reason this must not run".
 A fixed taxonomy of objection classes keeps it cheap and measurable:
@@ -10,7 +10,7 @@ Gates:
 
 * **A — pre-commit** (runtime): before an irreversible connector action. The
   deterministic checks run in code first; a tier-1 model reviews only the
-  judgement-shaped residue, and only while Prativaad has spent < 8% of the
+  judgement-shaped residue, and only while Devil's Advocate has spent < 8% of the
   workflow budget. Over budget it degrades to rules-only and logs that.
 * **B — policy change**: property-based adversarial cases over a pack's
   declared input domains; finds statutory-floor breaches before activation.
@@ -69,7 +69,7 @@ class GateResult:
         return [o for o in self.objections if o.severity in BLOCKING]
 
 
-class Prativaad:
+class DevilsAdvocate:
     def __init__(self, store: Store, clock: Clock, audit: AuditChain, registry: Callable[[], Registry]):
         self.store = store
         self.clock = clock
@@ -102,7 +102,7 @@ class Prativaad:
         leaked = sorted(v for v in raw_pii if len(v) >= 6 and v in flat)
         if leaked:
             objections.append(Objection("pii_overreach", "high",
-                                        f"{len(leaked)} piece(s) of real personal data were about to be sent out. Only hidden placeholders may leave SETU.",
+                                        f"{len(leaked)} piece(s) of real personal data were about to be sent out. Only hidden placeholders may leave HR Autopilot.",
                                         ["payload"], "replace_with_tokens"))
 
         # entitlement_mismatch — step-declared invariants (YAML, not Python).
@@ -179,7 +179,7 @@ class Prativaad:
         return objection
 
     def spent_inr(self, run_id: str) -> float:
-        row = self.store.one("SELECT COALESCE(SUM(inr),0) AS s FROM audit WHERE run_id=? AND action LIKE 'model.prativaad%'", (run_id,))
+        row = self.store.one("SELECT COALESCE(SUM(inr),0) AS s FROM audit WHERE run_id=? AND action LIKE 'model.devils_advocate%'", (run_id,))
         return float(row["s"]) if row else 0.0
 
     def resolve(self, objection_id: str, resolution: str, upheld: bool | None) -> None:
@@ -199,7 +199,7 @@ class Prativaad:
                      self.clock.now_iso()),
                 )
         self.audit.append(AuditEntry(
-            actor="prativaad", action=f"prativaad.gate_{gate.lower()}", kind="prativaad",
+            actor="devils_advocate", action=f"devils_advocate.gate_{gate.lower()}", kind="devils_advocate",
             outcome="objected" if result.objections else "cleared", run_id=run_id, step_id=step_id,
             inputs={"checked": result.checked}, inr=0.0,
             detail={"objections": [o.as_dict() for o in result.objections], "objection_ids": ids,
@@ -268,7 +268,7 @@ class Prativaad:
                   "finding_count": len(findings), "failing_tests": failing_tests, "proposed_tests": unique,
                   "changed": changed[:50], "changed_count": len(changed), "pack": pack.ref}
         self.audit.append(AuditEntry(
-            actor="prativaad", action="prativaad.gate_b", kind="prativaad",
+            actor="devils_advocate", action="devils_advocate.gate_b", kind="devils_advocate",
             outcome="objected" if findings or failing_tests else "cleared", policy_versions=[pack.ref],
             inputs={"cases": cases}, detail={"finding_count": len(findings), "failing_tests": len(failing_tests),
                                              "changed_count": len(changed)},

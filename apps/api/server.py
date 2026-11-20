@@ -66,7 +66,7 @@ class Holder:
 
 
 holder = Holder()
-app = FastAPI(title="SETU", version="0.2.0", description="Agent-first HR platform with a governance kernel.")
+app = FastAPI(title="HR Autopilot", version="0.2.0", description="Agent-first HR platform with a governance kernel.")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 
@@ -116,7 +116,7 @@ def _workflow_view(k: Kernel, wf: Any) -> dict[str, Any]:
                    "connector": s.connector, "action": s.action or s.reserved_action, "deterministic": s.deterministic,
                    "when": s.when.source if s.when else None, "schedule_at": s.schedule_at,
                    "model": bool(s.skill and k.registry.skills[s.skill].kind == "model")} for s in wf.steps],
-        "lint": k.prativaad.gate_c(wf),
+        "lint": k.devils_advocate.gate_c(wf),
     }
 
 
@@ -364,7 +364,7 @@ def policy_draft(name: str) -> dict[str, Any]:
 
 @app.post("/api/policies/{name}/review")
 def policy_review(name: str, body: dict[str, Any] = Body(...)) -> dict[str, Any]:
-    """Prativaad gate B over a draft pack: tests + property-based adversarial cases + diff vs the active version."""
+    """Devil's Advocate gate B over a draft pack: tests + property-based adversarial cases + diff vs the active version."""
     k = K()
     try:
         raw = yaml.safe_load(body["yaml"])
@@ -374,7 +374,7 @@ def policy_review(name: str, body: dict[str, Any] = Body(...)) -> dict[str, Any]
         old = k.registry.pack(name, k.clock.today())
     except KeyError:
         old = None
-    return k.prativaad.gate_b(raw, old)
+    return k.devils_advocate.gate_b(raw, old)
 
 
 @app.post("/api/policies/{name}/activate")
@@ -382,9 +382,9 @@ def policy_activate(name: str, body: dict[str, Any] = Body(...)) -> dict[str, An
     """Write a new pack version and hot-reload. Refused unless tests pass and gate B is clean."""
     k = K()
     raw = yaml.safe_load(body["yaml"])
-    review = k.prativaad.gate_b(raw, None)
+    review = k.devils_advocate.gate_b(raw, None)
     if not review["ok"]:
-        return {"ok": False, "reason": "Prativaad gate B blocked activation", "review": review}
+        return {"ok": False, "reason": "Devil's Advocate gate B blocked activation", "review": review}
     try:
         pack = parse_pack(raw, "<activate>")
     except PackLoadError as exc:
@@ -591,7 +591,7 @@ def mock_http(system: str, op: str, payload: dict[str, Any] = Body(default={})) 
 @app.get("/{path:path}", include_in_schema=False)
 def spa(path: str) -> Any:
     if not WEB_DIST.exists():
-        return JSONResponse({"message": "SETU API is running. Build the console with `make web` (apps/web)."})
+        return JSONResponse({"message": "HR Autopilot API is running. Build the console with `make web` (apps/web)."})
     target = (WEB_DIST / path).resolve()
     if path and target.is_file() and WEB_DIST.resolve() in target.parents:
         return FileResponse(target)

@@ -125,7 +125,7 @@ class Dpdp:
                                      inputs={"person": person_id, "field": field_name}))
         return {"ok": True}
 
-    # ── consent and suppression (PARAKH) ──────────────────────────────────────
+    # ── consent and suppression (FairHire) ──────────────────────────────────────
 
     @staticmethod
     def identity_hash(public_url: str) -> str:

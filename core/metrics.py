@@ -78,7 +78,7 @@ def overview(k: "Kernel") -> dict[str, Any]:
     objections = k.store.query("SELECT * FROM objections")
     resolved = [o for o in objections if o["upheld"] is not None]
     upheld = [o for o in resolved if o["upheld"]]
-    pv_cost = k.store.one("SELECT COALESCE(SUM(inr),0) AS c FROM audit WHERE action LIKE 'model.prativaad%'")["c"]
+    pv_cost = k.store.one("SELECT COALESCE(SUM(inr),0) AS c FROM audit WHERE action LIKE 'model.devils_advocate%'")["c"]
     total_cost = k.store.one("SELECT COALESCE(SUM(cost_inr),0) AS c FROM workflow_runs")["c"]
     by_class: dict[str, int] = {}
     for o in objections:
@@ -114,7 +114,7 @@ def overview(k: "Kernel") -> dict[str, Any]:
             "time_to_approve_p50_s": _pct(tta, 0.5),
             "audit": k.audit.verify(),
         },
-        "prativaad": {
+        "devils_advocate": {
             "objections": len(objections), "by_class": by_class,
             "by_layer": {layer: sum(1 for o in objections if o["layer"] == layer) for layer in ("rules", "model")},
             "resolved": len(resolved), "upheld": len(upheld),

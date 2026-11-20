@@ -33,7 +33,7 @@ def test_grievance_line_routes_and_stops(kernel):
     assert all("bullying" not in c["outbound_payload"] for c in model_calls)
 
 
-def test_buyout_moves_the_date_and_prativaad_reschedules_the_card(kernel):
+def test_buyout_moves_the_date_and_devils_advocate_reschedules_the_card(kernel):
     today = date.fromisoformat(kernel.clock.today())
     requested = (today + timedelta(days=20)).isoformat()
     run_id = _start(kernel, requested_last_day=requested)

@@ -9,7 +9,7 @@ process mid-run and calling ``advance`` again resumes without duplicating work.
 Step kinds:
 
 * ``skill``      — an agent skill. Deterministic skills never reach a model.
-* ``connector``  — a side effect, through Prativaad gate A and the governed executor.
+* ``connector``  — a side effect, through Devil's Advocate gate A and the governed executor.
 * ``reserved``   — a decision only a named human can make; produces a receipt.
 * ``route_only`` — POSH / grievance / whistleblower: hand off untouched, decide nothing.
 """
@@ -25,7 +25,7 @@ from core.clock import new_id, parse_ts
 from core.connectors_sdk import TransportError
 from core.db import dumps, loads
 from core.pii import PointerOnlyViolation, PurposeViolation, UndeclaredInput
-from core.prativaad import Objection
+from core.devils_advocate import Objection
 from core.router.router import CallContext
 from core.rules.expr import Expression, ExpressionError
 from core.rules.packs import Decision, PolicyViolation
@@ -146,7 +146,7 @@ class SkillContext:
             tried_bigger = " even after trying the bigger model" if result.tier != self._spec.model_tier else ""
             raise NeedsHuman(
                 question,
-                {"summary": f"The AI wasn't sure enough{tried_bigger}, so SETU stopped instead of guessing.",
+                {"summary": f"The AI wasn't sure enough{tried_bigger}, so HR Autopilot stopped instead of guessing.",
                  "draft": output, "reason": result.reason, "escalations": result.escalations, "model": result.model},
                 kind="low_confidence", title=self._spec.raw.get("needs_human_title") or f"Low confidence · {self._spec.name}")
         return output
@@ -167,8 +167,8 @@ class SkillContext:
     # ── read-only governance hooks (no egress, no writes) ─────────────────────
 
     def challenge_rationales(self, rationales: dict[str, str]) -> list[dict[str, Any]]:
-        """Prativaad gate D. Flags proxy phrases for the human reviewer; never rewrites a ranking."""
-        return self._kernel.prativaad.gate_d(rationales, run_id=self._run["id"])
+        """Devil's Advocate gate D. Flags proxy phrases for the human reviewer; never rewrites a ranking."""
+        return self._kernel.devils_advocate.gate_d(rationales, run_id=self._run["id"])
 
     def is_suppressed(self, public_url: str) -> bool:
         """Has this person objected to contact? Checked before anything else touches them."""
@@ -478,13 +478,13 @@ class Orchestrator:
                                                detail={"scheduled_for": should_be}))
                 return
             if sr["status"] == "scheduled":
-                objection = self.k.prativaad.check_schedule(run_id=run["id"], step_id=step.id,
+                objection = self.k.devils_advocate.check_schedule(run_id=run["id"], step_id=step.id,
                                                             scheduled_for=sr["scheduled_for"], should_be=should_be)
                 if objection:
-                    for oid in self.k.prativaad.latest_objection_ids(run["id"], step.id):
-                        self.k.prativaad.resolve(oid, f"auto-corrected: rescheduled {sr['scheduled_for'][:16]} → {should_be[:16]}", True)
+                    for oid in self.k.devils_advocate.latest_objection_ids(run["id"], step.id):
+                        self.k.devils_advocate.resolve(oid, f"auto-corrected: rescheduled {sr['scheduled_for'][:16]} → {should_be[:16]}", True)
                     self._set_step(run["id"], step.id, scheduled_for=should_be,
-                                   note=f"rescheduled by Prativaad (date_ordering): {sr['scheduled_for'][:16]} → {should_be[:16]}")
+                                   note=f"rescheduled by Devil's Advocate (date_ordering): {sr['scheduled_for'][:16]} → {should_be[:16]}")
                     return
                 if parse_ts(sr["scheduled_for"]) > now:
                     return
@@ -493,14 +493,14 @@ class Orchestrator:
         agent = self.agent_for(run, wf)
         spec = connector.manifest.actions[step.action]
 
-        # Prativaad gate A — once per step, before an irreversible action.
+        # Devil's Advocate gate A — once per step, before an irreversible action.
         if spec.irreversible and not sr["gate"]:
             raw_pii = self.k.vault.raw_values_for(run["subject"]) if run["subject"] else set()
             try:
                 # The model residue reviews the plan once per run (first irreversible step);
                 # every irreversible step still gets the deterministic checks.
-                review = self.k.prativaad_model_review(run, step, agent) if self.k.prativaad.spent_inr(run["id"]) == 0 else None
-                gate = self.k.prativaad.gate_a(run=run, wf=wf, step=step, connector=connector, args=args, idem_key=key or "",
+                review = self.k.devils_advocate_model_review(run, step, agent) if self.k.devils_advocate.spent_inr(run["id"]) == 0 else None
+                gate = self.k.devils_advocate.gate_a(run=run, wf=wf, step=step, connector=connector, args=args, idem_key=key or "",
                                                scope=scope, raw_pii=raw_pii, model_review=review)
                 blocking = gate.blocking
                 unresolved = self._auto_resolve(connector, step, args, key or "", blocking) if blocking else []
@@ -511,30 +511,30 @@ class Orchestrator:
                 if sr["attempts"] + 1 >= SYSTEM_NOTICE_AFTER:
                     self._notify_system_down(run, step, connector, key or "", sr["attempts"] + 1, str(exc))
                 return self._set_step(run["id"], step.id, status="running", attempts=sr["attempts"] + 1, scheduled_for=retry_at,
-                                      note=f"The checker could not read {connector.manifest.system} to check for duplicates, so it is waiting")
+                                      note=f"The Devil's Advocate could not read {connector.manifest.system} to check for duplicates, so it is waiting")
             if gate.cost_inr:
-                # Prativaad's review is metered to the run but does not change where the step itself ran.
+                # Devil's Advocate's review is metered to the run but does not change where the step itself ran.
                 self._add_cost(run["id"], step.id, gate.cost_inr, tier=0)
-            ids = self.k.prativaad.latest_objection_ids(run["id"], step.id)
+            ids = self.k.devils_advocate.latest_objection_ids(run["id"], step.id)
             if blocking:
                 if unresolved:
                     return self._to_human(
-                        run, step, kind="objection", title=f"The checker has a concern · {step.title or step.id}",
-                        question=f"The checker raised {len(unresolved)} concern(s) before this step. "
+                        run, step, kind="objection", title=f"The Devil's Advocate has a concern · {step.title or step.id}",
+                        question=f"The Devil's Advocate raised {len(unresolved)} concern(s) before this step. "
                                  "Go ahead anyway, or skip it?",
                         packet={"summary": unresolved[0].claim, "objections": [o.as_dict() for o in unresolved],
                                 "objection_ids": ids, "computed": {"args": args, "idempotency_key": key},
                                 "clauses": [], "options": ["proceed", "skip_step"]},
                         roles=["hr_business_partner"])
                 for oid in ids:
-                    self.k.prativaad.resolve(oid, "verified by kernel read-back: " + "; ".join(o.claim for o in blocking), True)
+                    self.k.devils_advocate.resolve(oid, "verified by kernel read-back: " + "; ".join(o.claim for o in blocking), True)
             advisory = len(gate.objections) - len(blocking)
             if blocking:
-                note = "The checker raised a concern. SETU checked the other system and it was fine."
+                note = "The Devil's Advocate raised a concern. HR Autopilot checked the other system and it was fine."
             elif advisory:
-                note = f"The checker noted {advisory} minor point(s). Nothing serious."
+                note = f"The Devil's Advocate noted {advisory} minor point(s). Nothing serious."
             else:
-                note = "Prativaad: clear"
+                note = "Devil's Advocate: clear"
             self._set_step(run["id"], step.id, gate=("verified" if blocking else "advisory" if advisory else "clear"), note=note)
 
         proposal = ProposedAction(action=f"{connector.name}.{step.action}", args=args, idem_key=key, connector=connector.name,
@@ -544,7 +544,7 @@ class Orchestrator:
         self._set_step(run["id"], step.id, status="running", attempts=attempts, started_at=sr["started_at"] or self.k.clock.now_iso())
         result = self.k.executor.submit(proposal, agent, scope.get("subject") or None)
         if result.done:
-            self._close_system_notice(run, step.id, "the system came back and SETU finished the step automatically")
+            self._close_system_notice(run, step.id, "the system came back and HR Autopilot finished the step automatically")
             self._add_cost(run["id"], step.id, connector.manifest.cost_inr_per_call, tier=0)
             outputs = {**(result.result or {}), "idempotency_key": key, "outcome": result.outcome}
             return self._finish_step(run, step, outputs)
@@ -638,7 +638,7 @@ class Orchestrator:
         role = self.k.registry.reserved.route_only[step.reserved_action]
         source_ref = render(step.args.get("source_ref", "{{run.id}}"), scope) if step.args else run["id"]
         packet = {
-            "summary": "Passed straight to you. SETU didn't read, judge or summarise it.",
+            "summary": "Passed straight to you. HR Autopilot didn't read, judge or summarise it.",
             "source_ref": source_ref,
             "route": {"action": step.reserved_action, "to_role": role},
             "platform_did": ["detected a route-only trigger with a deterministic lexicon rule", "stopped", "handed off"],
@@ -722,12 +722,12 @@ class Orchestrator:
             ids = item["packet"].get("objection_ids") or []
             if decision in ("proceed", "approve"):
                 for oid in ids:
-                    self.k.prativaad.resolve(oid, f"overruled by human: {item['decision'].get('note') or 'no note'}", False)
-                self._set_step(run["id"], step_id, status="pending", human_touch=1, gate="overruled", note="Prativaad objection overruled by a human")
+                    self.k.devils_advocate.resolve(oid, f"overruled by human: {item['decision'].get('note') or 'no note'}", False)
+                self._set_step(run["id"], step_id, status="pending", human_touch=1, gate="overruled", note="Devil's Advocate objection overruled by a human")
             else:
                 for oid in ids:
-                    self.k.prativaad.resolve(oid, "upheld by human: action skipped", True)
-                self._set_step(run["id"], step_id, status="skipped", human_touch=1, note="skipped on Prativaad objection (upheld)")
+                    self.k.devils_advocate.resolve(oid, "upheld by human: action skipped", True)
+                self._set_step(run["id"], step_id, status="skipped", human_touch=1, note="skipped on Devil's Advocate objection (upheld)")
         elif kind == "system_down":
             if decision == "compensate":
                 self.compensate(run["id"], reason=f"human chose to undo while {step_id} waited for a system that was down")
@@ -849,8 +849,8 @@ class Orchestrator:
         self.k.queue.create(
             kind="system_down", run_id=run["id"], step_id=step.id, title=f"System down · {step.title or step.id}",
             question=f"The {system} system is not responding, so '{step.title or step.id}' is on hold. "
-                     "SETU will finish it automatically when the system is back. Keep waiting, or undo this process?",
-            packet={"summary": f"SETU tried {attempts} time(s) and is holding the request safely. Nothing has been done twice.",
+                     "HR Autopilot will finish it automatically when the system is back. Keep waiting, or undo this process?",
+            packet={"summary": f"HR Autopilot tried {attempts} time(s) and is holding the request safely. Nothing has been done twice.",
                     "computed": {"system": system, "step": step.title or step.id, "attempts": attempts,
                                  "last_error": reason, "idempotency_key": key},
                     "workflow": run["workflow"], "subject_id": run["subject"], "clauses": [],

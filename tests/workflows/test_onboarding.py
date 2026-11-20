@@ -11,7 +11,7 @@ def test_meera_onboarding_golden_run(kernel):
     ent = steps["resolve_entitlements"]
     assert ent["status"] == "done" and ent["tier"] == 0 and ent["outputs"]["laptop_class"] == "A"
 
-    # Prativaad caught the prior allocation and the kernel released it by *reading* the return ledger.
+    # Devil's Advocate caught the prior allocation and the kernel released it by *reading* the return ledger.
     objections = kernel.store.query("SELECT * FROM objections WHERE run_id=? AND class='duplicate_side_effect'", (run_id,))
     assert objections and objections[0]["upheld"] == 1 and "returned on 2024-09-14" in objections[0]["resolution"]
     assert steps["allocate_laptop"]["status"] == "done"

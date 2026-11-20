@@ -1,9 +1,9 @@
-"""hrx — the developer CLI for extending SETU without touching core/.
+"""hrx — the developer CLI for extending HR Autopilot without touching core/.
 
     hrx scaffold workflow <name>      workflow + policy pack (empty tests:) + test spec
     hrx scaffold skill <name>         deterministic skill skeleton
     hrx scaffold connector <name>     connector skeleton against the SDK
-    hrx validate                      schema, invariants and the governance lint (Prativaad gate C)
+    hrx validate                      schema, invariants and the governance lint (Devil's Advocate gate C)
     hrx test [--workflow NAME] [--runs N]
                                       pack tests + replay N synthetic runs under an injected retry storm
 
@@ -202,7 +202,7 @@ def _registry():
 
 
 def validate() -> int:
-    from core.prativaad import Prativaad
+    from core.devils_advocate import DevilsAdvocate
 
     print(f"{BOLD}hrx validate{RESET}")
     reg = _registry()
@@ -225,7 +225,7 @@ def validate() -> int:
         def append(self, *_a, **_k):
             return 0
 
-    lint = Prativaad(None, None, _Null(), lambda: reg)  # gate C needs only the registry
+    lint = DevilsAdvocate(None, None, _Null(), lambda: reg)  # gate C needs only the registry
     for wf in reg.latest_workflows():
         for f in lint.gate_c(wf):
             where = f"{wf.ref}{(':' + f['step']) if f['step'] else ''}"
@@ -346,7 +346,7 @@ def _effects(k) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="hrx", description="Extend SETU without touching core/.")
+    parser = argparse.ArgumentParser(prog="hrx", description="Extend HR Autopilot without touching core/.")
     sub = parser.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("scaffold")
     s.add_argument("kind", choices=["workflow", "skill", "connector"])

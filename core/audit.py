@@ -28,7 +28,7 @@ _HASHED = (
 class AuditEntry:
     actor: str                                   # "agent:onboarding.plan@v3" | "human:USR-114" | "kernel"
     action: str                                  # what was attempted
-    kind: str                                    # step | policy | reserved | connector | model | prativaad | human | system
+    kind: str                                    # step | policy | reserved | connector | model | devils_advocate | human | system
     outcome: str                                 # ok | refused | held | failed | retried | objected | cleared | …
     run_id: str | None = None
     step_id: str | None = None

@@ -1,4 +1,4 @@
-"""VIDHI — the governance kernel. Wires every component together.
+"""Gatekeeper — the governance kernel. Wires every component together.
 
 The kernel is the only path to the outside world. Agents (skills) return
 proposed actions; the kernel decides whether they happen, executes them once,
@@ -24,7 +24,7 @@ from core.killswitch import ConnectorBreaker, KillSwitch
 from core.orchestrator import Orchestrator
 from core.pdp import PolicyDecisionPoint
 from core.pii import PiiProxy, Vault
-from core.prativaad import Objection, Prativaad
+from core.devils_advocate import DevilsAdvocate, Objection
 from core.queue import HumanQueue
 from core.registry import Registry
 from core.router.router import CallContext, Router, RoutingConfig
@@ -51,7 +51,7 @@ class Kernel:
         self.breaker = ConnectorBreaker(self.store, self.clock, self.audit)
         self.executor = GovernedExecutor(self.store, self.clock, self.audit, lambda: self.registry, self.pdp, self.killswitch, self.breaker)
         self.queue = HumanQueue(self.store, self.clock, self.audit, lambda: self.registry.reserved)
-        self.prativaad = Prativaad(self.store, self.clock, self.audit, lambda: self.registry)
+        self.devils_advocate = DevilsAdvocate(self.store, self.clock, self.audit, lambda: self.registry)
         self.sor = SystemOfRecord(self.store, self.clock, self.audit, self.vault, lambda: self.registry.pack("dpdp", self.clock.today()))
         self.dpdp = Dpdp(self.store, self.clock, self.audit, self.vault, self.sor, lambda: self.registry.pack("dpdp", self.clock.today()))
         self.orchestrator = Orchestrator(self)
@@ -102,22 +102,22 @@ class Kernel:
         self.orchestrator.on_decision(decided)
         return decided
 
-    # ── Prativaad model residue ───────────────────────────────────────────────
+    # ── Devil's Advocate model residue ───────────────────────────────────────────────
 
-    def prativaad_model_review(self, run: dict[str, Any], step: Any, agent: Principal):
-        spec = self.registry.skills.get("prativaad.review")
+    def devils_advocate_model_review(self, run: dict[str, Any], step: Any, agent: Principal):
+        spec = self.registry.skills.get("devils_advocate.review")
         if spec is None:
             return None
 
         def review(plan: dict[str, Any], budget_left: float) -> tuple[list[Objection], float]:
             source = {f"plan.{k}": v for k, v in plan.items()}
             minimised = self.proxy.minimise(source, spec.inputs, None)
-            ctx = CallContext(run_id=run["id"], step_id=step.id, actor="prativaad", on_behalf_of=agent.label,
+            ctx = CallContext(run_id=run["id"], step_id=step.id, actor="devils_advocate", on_behalf_of=agent.label,
                               budget_remaining_inr=budget_left, max_tier=1, source_record=source)
             try:
                 result = self.router.complete(spec, minimised, ctx)
-            except Exception as exc:  # noqa: BLE001 - a provider outage degrades Prativaad to rules-only
-                self.audit.append(AuditEntry(actor="prativaad", action="model.prativaad.review", kind="model", outcome="failed",
+            except Exception as exc:  # noqa: BLE001 - a provider outage degrades Devil's Advocate to rules-only
+                self.audit.append(AuditEntry(actor="devils_advocate", action="model.devils_advocate.review", kind="model", outcome="failed",
                                              run_id=run["id"], step_id=step.id,
                                              detail={"error": repr(exc), "degraded_to": "deterministic checks only"}))
                 return [], 0.0

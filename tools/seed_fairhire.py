@@ -1,4 +1,4 @@
-"""PARAKH synthetic signals and applicants. Every person, employer and URL is fictional.
+"""FairHire synthetic signals and applicants. Every person, employer and URL is fictional.
 
 Public signals are pointer-shaped on purpose: the sourcing mock never returns a
 profile of someone who has not given TBO a basis to hold one.
@@ -49,7 +49,7 @@ APPLICANTS = [
 ]
 
 
-def seed_parakh(kernel: "Kernel") -> dict[str, Any]:
+def seed_fairhire(kernel: "Kernel") -> dict[str, Any]:
     kernel.mocks.seed_sourcing(SIGNALS, APPLICANTS)
     kernel.dpdp.suppress("https://patents.example/IN202341007731#inventor-1", "objected to an earlier campaign (seed)", "system:seed")
     return {"signals": len(SIGNALS), "applicants": len(APPLICANTS)}

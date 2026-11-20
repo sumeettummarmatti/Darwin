@@ -122,7 +122,7 @@ class Vault:
         return value["value"] if value else ""
 
     def raw_values_for(self, person_id: str) -> set[str]:
-        """Used only by Prativaad's pii_overreach check, inside the kernel."""
+        """Used only by Devil's Advocate's pii_overreach check, inside the kernel."""
         rows = self.store.query(
             "SELECT v.value FROM pii_fields f JOIN vault v ON v.token=f.token WHERE f.person_id=? AND f.deleted_at IS NULL",
             (person_id,),

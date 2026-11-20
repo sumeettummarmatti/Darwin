@@ -205,7 +205,7 @@ def load_workflow_file(path: Path) -> WorkflowDef:
 
 def validate_workflow(wf: WorkflowDef, *, skills: dict[str, SkillSpec], connectors: dict[str, Connector],
                       registry: ReservedRegistry) -> None:
-    """Raise WorkflowLoadError on any invariant violation. Lint warnings live in Prativaad gate C."""
+    """Raise WorkflowLoadError on any invariant violation. Lint warnings live in Devil's Advocate gate C."""
     where = f"{wf.source_path} ({wf.ref})"
     ids = [s.id for s in wf.steps]
     duplicates = {i for i in ids if ids.count(i) > 1}
