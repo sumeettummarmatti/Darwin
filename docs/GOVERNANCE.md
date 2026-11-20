@@ -28,7 +28,7 @@ What the platform will never let an agent do, how that is enforced, and how to c
 
 **How it is enforced.** Every proposed action is classified by the kernel before anything else. An agent attempting a reserved action, or any action whose verb is `approve`, `accept`, `reject_candidate`, `sign_off` or `decide`, gets `403 RESERVED` and an audit entry — whatever the UI shows. A workflow or skill that grants one of those verbs to an agent fails validation when it loads, so it cannot be deployed. A human approver must hold the required role; sequential approvals must come in order.
 
-**Check it:** Guardrails → *Run the drill*. An agent attempts every reserved action, every forbidden verb and every route-only matter; each comes back refused, with the audit entry number.
+**Check it:** Safety controls → *Run the test*. An agent attempts every reserved action, every forbidden verb and every route-only matter; each comes back refused, with the audit entry number.
 
 ## 2. Route only, never decide
 

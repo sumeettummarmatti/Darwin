@@ -9,13 +9,13 @@
 
 ---
 
-## As built — 19 Nov 2026
+## As built — updated 20 Nov 2026
 
 This document is the design. What follows is what the repository actually does today, checked against the master story (§4.3), so nobody presents a beat that does not exist. Live at `https://setu.139-84-220-87.sslip.io` (see DEPLOY.md).
 
 ### How it works, end to end
 
-1. **Something starts a workflow** — a console button, a chat message ("I want to resign"), or a demo-story beat. Chat goes through one intent API; intents are matched by rules (`policies/intents.v1.yaml`), not a model.
+1. **Something starts a workflow** — a console button, a chat message ("I want to resign"), or a demo-story beat. Chat goes through one intent API; intents are matched by rules (`policies/intents.v2.yaml`), not a model; questions about the person's own record (name, manager, joining status) are answered from the record with no model.
 2. **The orchestrator** (`core/orchestrator.py`) loads the workflow YAML and walks its steps in dependency order, saving every step's state in SQLite, so a crash resumes without repeating work.
 3. **Each step is one of four kinds.** *Skill*: an agent function — deterministic ones only evaluate policy packs; model ones go through the PII proxy and the router. *Connector*: a side effect in another system. *Reserved*: a decision only a named human can make. *Route-only*: POSH / grievance / whistleblower, handed off untouched.
 4. **Every side effect walks the governed path**: kill switch → Prativaad gate A (irreversible actions) → authorisation (reserved verbs, RBAC ∩ capability ∩ step scope, DPDP purpose) → outbox → connector with the same idempotency key on every retry → read-back verification → audit entry with ₹.
@@ -67,6 +67,9 @@ This document is the design. What follows is what the repository actually does t
 - **TBO's mock APIs were not available**; `mocks/tbo.py` stands in, deliberately not idempotent.
 - **Prativaad's model layer** reviews the plan once per run (it measured 46% of run cost when run on every step). On the simulator it adds nothing over the rules (88% catch, 0 false alarms on the fault corpus); on Groq it raised a real objection — re-measure before claiming a number.
 - **Exit and PARAKH needed kernel changes first** (fan-out steps, our own record as a connector, sourced-person records), made in separate `core:` commits before the lines; the lines themselves touch no `core/` file.
+- **20 Nov: further kernel changes** — a *system down* notice to the human queue (the design's §-fail-safely intent, which the build had only half met: work was held safely but nobody was told), plain-language messages, and record-backed chat answers. The last of these should become an extension point; until then, a new kind of chat answer is a `core/` change.
+- **What is editable on screen:** policy packs and the reserved list (validated, versioned, hot-reloaded). **Workflows are YAML files** — a developer edits them and runs `hrx validate`; there is no workflow editor in the console.
+- **Hiring on a real model** needed `icp@v3`: places arrive as written ("Bengaluru"), so the place-to-region mapping is now a table in the pack rather than something the simulator quietly did.
 
 ## 0. How to read this document
 

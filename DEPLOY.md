@@ -135,7 +135,7 @@ Data in `/opt/setu/var` survives. To start the demo fresh, use **Reset** in the 
 
 - **Synthetic data only.** Never load real employee data onto the demo server.
 - **Basic auth is required.** The console can reset data, edit policies and the reserved list, and store a model key; without auth anyone with the URL could.
-- **Groq key**: paste it in *Guardrails → Model provider* (validated with Groq, written to `/opt/setu/.env`, never displayed), or put it in `/opt/setu/.env` before starting. Without a key SETU runs on the offline simulator.
+- **Groq key**: paste it in *Safety controls → Real AI* (validated with Groq, written to `/opt/setu/.env`, never displayed), or put it in `/opt/setu/.env` before starting. Without a key SETU runs on the offline simulator.
 - The container listens on `127.0.0.1` only; do not add a public port or a firewall rule for it.
 
 ## Server facts (Vultr, shared with SixthSense)

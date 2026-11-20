@@ -159,11 +159,36 @@ Declare each action's `side_effect`, `irreversible`, `money`, `compensation` and
 
 ## Changing a policy safely
 
-Draft the new version in the console (**Policy packs → Draft a change**) and press **Ask Prativaad to attack it**. Gate B runs the pack's own tests, then generates every combination of its `adversarial:` input domains and checks its `properties:` hold; it shows what changes against the active version and proposes regression tests. Activation writes `policies/<name>.vN+1.yaml` and hot-reloads — only if gate B is clean.
+Draft the new version in the console (**Rules → Suggest a change**) and press **Check this change**. Gate B runs the pack's own tests, then generates every combination of its `adversarial:` input domains and checks its `properties:` hold; it shows what changes against the active version and proposes regression tests. Activation writes `policies/<name>.vN+1.yaml` and hot-reloads — only if gate B is clean.
 
 ## Changing the reserved list
 
-**Guardrails → Reserved decisions → Edit as HR**. The registry's own `tests:` must pass or the new version will not load (try adding `it.assets.allocate` without updating the test that says agents may allocate laptops).
+**Safety controls → Only a person can do these → Edit the list**. The registry's own `tests:` must pass or the new version will not load (try adding `it.assets.allocate` without updating the test that says agents may allocate laptops).
+
+## Editing on screen vs in files
+
+| Change | Where |
+|---|---|
+| A rule (notice, leave, gratuity…) | On screen: **Rules → Suggest a change → Check this change → Make it live** (new version, tests and gate B must pass) |
+| Who approves what | On screen: **Safety controls → Edit the list** (the list's own tests must pass) |
+| Pause a workflow, skill or connector | On screen: **Safety controls → Emergency stop** |
+| Add, remove or reorder workflow steps; make a step need approval | **File**: edit `workflows/<line>.vN.yaml` (prefer a new version), run `hrx validate && hrx test`, restart. No console editor yet |
+| A new skill or connector | **File**: new folder under `skills/` or `connectors/` |
+
+Example — add "collect issued materials" to exit, with no code:
+
+```yaml
+  - id: collect_materials
+    title: Collect issued materials
+    connector: it.ticketing
+    action: open_ticket
+    needs: [accept_resignation]
+    args: { summary: "Collect issued materials from {{subject.display_name}} by {{facts.last_working_day}}" }
+    idempotency_key: "exit:{{subject.id}}:materials:v1"
+    compensation: close_ticket
+```
+
+Then add `collect_materials` to `mark_exited`'s `needs:`.
 
 ## Checklist before you open a PR
 

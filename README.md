@@ -17,13 +17,13 @@ make up        # builds the console, seeds a synthetic dataset, serves everythin
 
 or `make docker`. No API keys, no external services: the model provider defaults to an in-process simulated profile, so the demo is reproducible and nothing leaves the machine.
 
-Open **Demo story** in the console and press the buttons in order — it plays one week at TBO on the real screens.
+Open **Start here** in the console and press the buttons in order — it plays one week at TBO on the real screens.
 
-**Use real models (optional, one step):** paste a Groq key into **Guardrails → Model provider** on the website (it is checked with Groq first, kept only in the git-ignored `.env`, and never shown again), or put it in `.env` yourself (`cp .env.example .env`). If the key later expires or is revoked, the site asks for a new one and keeps running on the simulator meanwhile. SETU then runs every model step — including Prativaad's reviewer — on Groq (`openai/gpt-oss-20b`, escalating to `openai/gpt-oss-120b` on a measured trigger; both Apache-2.0). Only tokenised synthetic payloads leave the machine; the Personal data page shows each one. Tests and `make bench` stay on the offline simulator unless you pass `python -m bench.run --profile groq`. The scripted behaviours listed in [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) belong to the simulator; with Groq the model behaves as it will.
+**Use real models (optional, one step):** paste a Groq key into **Safety controls → Real AI** on the website (it is checked with Groq first, kept only in the git-ignored `.env`, and never shown again), or put it in `.env` yourself (`cp .env.example .env`). If the key later expires or is revoked, the site asks for a new one and keeps running on the simulator meanwhile. SETU then runs every model step — including Prativaad's reviewer — on Groq (`openai/gpt-oss-20b`, escalating to `openai/gpt-oss-120b` on a measured trigger; both Apache-2.0). Only tokenised synthetic payloads leave the machine; the Privacy page shows each one. Tests and `make bench` stay on the offline simulator unless you pass `python -m bench.run --profile groq`. The scripted behaviours listed in [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) belong to the simulator; with Groq the model behaves as it will.
 
 | Command | What it does |
 |---|---|
-| `make test` | 88 tests: policy packs, governance, golden runs, chaos, Hypothesis idempotency property, API contract, fault corpus |
+| `make test` | 96 tests: policy packs, governance, golden runs, chaos, Hypothesis idempotency property, API contract, fault corpus |
 | `./hrx validate` | Schema, load-time invariants and the governance lint (Prativaad gate C) |
 | `./hrx test` | Replays synthetic runs under an injected retry storm; fails on any duplicate side effect |
 | `make bench` | Every number in this README comes from here → [`bench/results/latest.md`](bench/results/latest.md) |
@@ -93,12 +93,12 @@ From `make bench` (one deterministic week on the synthetic dataset, simulated pr
 |---|---|---|---|---|
 | 1 | Automate end to end | Durable orchestrator, connectors, scheduled steps, fan-out | `core/orchestrator.py`, `workflows/` | Overview "no human touch", drillable to each human step |
 | 2 | Platform, not point solution | Five extension points, `hrx`, load-time validation | `workflows/ skills/ connectors/ policies/` | Exit, PARAKH and leave-encashment commits touch no `core/` file (below) |
-| 3 | Humans on decisions that matter | Reserved registry as config; `may_never` verbs fail at load; agents get 403 | `policies/reserved_decisions.v4.yaml`, `core/reserved.py` | Guardrails → Run the drill |
-| 4 | Comply by design | Versioned packs with tests; refuse to load untested; gate B property testing | `policies/`, `core/rules/` | Policy packs → Draft a change → Ask Prativaad |
-| 5 | Clean system of record | Employment spells, PII rows with purpose + retention, hash-linked audit | `core/sor.py`, `core/audit.py` | Audit chain → edit a row → verification breaks |
-| 6 | Fail safely | Idempotency keys, outbox, read-back, breaker, saga, human queue with context | `core/executor.py` | Guardrails → break the asset system; tests/chaos |
-| 7 | Serve people where they work | One intent API; rules-first intents; Slack-style surface | `core/intents.py` | Chat |
-| 8 | Prove cost and impact | Per-call metering in ₹, p50/p95, bench | `core/router/`, `core/metrics.py`, `bench/` | `make bench` |
+| 3 | Humans on decisions that matter | Reserved registry as config; `may_never` verbs fail at load; agents get 403 | `policies/reserved_decisions.v4.yaml`, `core/reserved.py` | Safety controls → Run the test |
+| 4 | Comply by design | Versioned packs with tests; refuse to load untested; gate B property testing | `policies/`, `core/rules/` | Rules → Suggest a change → Check this change |
+| 5 | Clean system of record | Employment spells, PII rows with purpose + retention, hash-linked audit | `core/sor.py`, `core/audit.py` | History log → Secretly edit an old entry |
+| 6 | Fail safely | Idempotency keys, outbox, read-back, breaker, saga, human queue with context | `core/executor.py`, `core/orchestrator.py` | Safety controls → Break a system → "A system is down" appears in Approvals; tests/chaos |
+| 7 | Serve people where they work | One intent API; rules-first intents; Slack-style surface | `core/intents.py`, `policies/intents.v2.yaml` | Chat (web; Slack/Teams adapters not built) |
+| 8 | Prove cost and impact | Per-call metering in ₹, p50/p95, bench | `core/router/`, `core/metrics.py`, `bench/` | Dashboard (click any figure); `make bench` |
 
 | Guardrail | Enforced by |
 |---|---|
@@ -141,7 +141,7 @@ apps/api       thin HTTP layer;  apps/web  the console (React + Vite)
 tools/hrx      scaffold · validate · test;  tools/seed.py  synthetic data
 tests/         policy · governance · workflows · chaos · property · contract · fault_corpus
 bench/         make bench + the Prativaad fault corpus runner
-docs/          DEVGUIDE · GOVERNANCE · COST · DEMO_SCRIPT
+docs/          DEVGUIDE · GOVERNANCE · COST · DEMO_SCRIPT · TRY_IT (click-by-click script)
 ```
 
 Design: [DESIGN.md](DESIGN.md) · plan: [PLAN.md](PLAN.md) · working rules: [CLAUDE.md](CLAUDE.md) · log: [PROGRESS.md](PROGRESS.md)
