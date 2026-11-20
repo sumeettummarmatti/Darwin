@@ -11,7 +11,7 @@ model_tier: 1
 escalate_to_tier: 2
 escalate_when: "confidence < 0.6"
 capabilities: [compute, draft]
-prompt_version: 2
+prompt_version: 3
 policy_tags: [parakh, fair_hiring]
 needs_human_title: "Claim extraction unsure"
 needs_human_question: "The extractor was not confident about these résumés. Review the extracted claims before they are scored?"

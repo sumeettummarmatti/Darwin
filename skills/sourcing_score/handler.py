@@ -15,6 +15,9 @@ def run(ctx):
     for a in ctx.input("args.applicants") or []:
         mine = [c for c in claims if c["candidate"] == a["candidate_id"]]
         facts = {c["criterion"]: c["value"] for c in mine if c["criterion"] in FACTS}
+        if isinstance(facts.get("location"), str):
+            # Formatting only ("Bengaluru." → "bengaluru"); the icp pack decides which region a place is.
+            facts["location"] = facts["location"].strip().strip(".,;").strip().lower()
         d = ctx.policy("icp", facts)
         breakdown = [{"criterion": c["criterion"], "value": c["value"], "weight_rule": WEIGHTS.get(c["criterion"]),
                       "contributes": d.outputs.get(WEIGHTS.get(c["criterion"], ""), None), "evidence": c["quote"],

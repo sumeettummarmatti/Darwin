@@ -1,0 +1,90 @@
+# Ideal Candidate Profile — a policy pack, not a prompt. Scoring is
+# deterministic arithmetic over claims the model extracted WITH a character
+# span; a claim without a span never reaches this pack. The model never scores.
+# prohibited_criteria are stripped by the PII proxy and any rule reading one
+# fails validation at load time.
+pack: icp
+version: 3
+effective_from: 2026-11-01
+owner: hr_head
+role: senior_platform_engineer
+
+defaults:
+  years_distributed: 0
+  location: unknown
+  production_scale: false
+  oss_or_patent: false
+  domain_travel_or_fintech: false
+  languages: []
+
+tables:
+  eligible_locations: { IN-KA: yes, IN-HR: yes, remote_IN: yes }
+  # v3: real models return the place as written ("Bengaluru."). The skill only
+  # lower-cases and trims punctuation; which place counts as which region is
+  # decided here. Codes map to themselves so already-coded values still work.
+  place_codes:
+    bengaluru: IN-KA
+    bangalore: IN-KA
+    in-ka: IN-KA
+    gurugram: IN-HR
+    gurgaon: IN-HR
+    in-hr: IN-HR
+    "remote, india": remote_IN
+    remote india: remote_IN
+    remote_in: remote_IN
+    pune: IN-MH
+    mumbai: IN-MH
+    in-mh: IN-MH
+    kolkata: IN-WB
+    in-wb: IN-WB
+
+prohibited_criteria: [age, gender, caste, religion, marital_status, pregnancy_or_family_status, disability, name_origin, college_tier, employment_gap, photograph]
+
+derive:
+  - id: ICP-L1
+    name: location_code
+    expr: "lookup('place_codes', lower(location), 'unknown')"
+  - id: ICP-M1
+    name: must_years
+    expr: "years_distributed >= 4"
+  - id: ICP-M2
+    name: must_location
+    expr: "in_table('eligible_locations', location_code)"
+  - id: ICP-M3
+    name: must_have_met
+    expr: "must_years and must_location"
+  - id: ICP-W1
+    name: w_production_scale
+    expr: "0.30 if production_scale else 0"
+  - id: ICP-W2
+    name: w_oss_or_patent
+    expr: "0.20 if oss_or_patent else 0"
+  - id: ICP-W3
+    name: w_domain
+    expr: "0.15 if domain_travel_or_fintech else 0"
+  - id: ICP-W4
+    name: w_language
+    expr: "0.10 if contains(languages, 'go') or contains(languages, 'rust') or contains(languages, 'java') else 0"
+  - id: ICP-W5
+    name: w_years
+    expr: "round(0.25 * min(years_distributed / 8, 1), 3)"
+  - id: ICP-S1
+    name: score
+    expr: "round(w_production_scale + w_oss_or_patent + w_domain + w_language + w_years, 3)"
+
+tests:
+  - name: "strong applicant"
+    given: { years_distributed: 8, location: IN-KA, production_scale: true, oss_or_patent: true, domain_travel_or_fintech: true, languages: [go] }
+    expect: { must_have_met: true, score: 1.0 }
+  - name: "misses both must-haves"
+    given: { years_distributed: 2, location: IN-WB }
+    expect: { must_have_met: false, score: 0.062 }
+  - name: "remote in India is eligible"
+    given: { years_distributed: 5, location: remote_IN, languages: [python] }
+    expect: { must_have_met: true, w_language: 0 }
+  - name: "a place written as text maps to its region"
+    given: { years_distributed: 7, location: bengaluru }
+    expect: { must_have_met: true, location_code: IN-KA }
+  - name: "a place outside the eligible regions is not met"
+    given: { years_distributed: 7, location: kolkata }
+    expect: { must_have_met: false, location_code: IN-WB }
