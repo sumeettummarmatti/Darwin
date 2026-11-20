@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BookOpenText, Clock3, FileCheck2, Gauge, Inbox as InboxIcon, Landmark, LayoutList, MessagesSquare, RotateCcw, ScanEye, ScrollText, Users } from "lucide-react";
+import { Blocks as BlocksIcon, BookOpenText, Clock3, FileCheck2, Gauge, Inbox as InboxIcon, Landmark, LayoutList, MessagesSquare, RotateCcw, ScanEye, ScrollText, Users } from "lucide-react";
 import { api, fmtTime } from "./api";
 import { Ctx, User } from "./context";
 import { usePoll } from "./hooks";
@@ -13,6 +13,7 @@ import Policies from "./pages/Policies";
 import Privacy from "./pages/Privacy";
 import Audit from "./pages/Audit";
 import Talent from "./pages/Talent";
+import Workflows from "./pages/Workflows";
 import { ProviderKey } from "./components/ProviderKey";
 import { PageBoundary } from "./components/PageBoundary";
 
@@ -24,6 +25,7 @@ const PAGES: { id: string; label: string; icon: any; group?: string }[] = [
   { id: "chat", label: "Chat", icon: MessagesSquare },
   { id: "talent", label: "Hiring", icon: Users },
   { id: "governance", label: "Safety controls", icon: Landmark, group: "Safety" },
+  { id: "workflows", label: "Workflows", icon: BlocksIcon },
   { id: "policies", label: "Rules", icon: FileCheck2 },
   { id: "privacy", label: "Privacy", icon: ScanEye },
   { id: "audit", label: "History log", icon: ScrollText },
@@ -76,7 +78,7 @@ export default function App() {
   }
 
   const Page = { overview: Overview, story: Story, runs: Runs, inbox: Inbox, chat: Chat, governance: Governance,
-    policies: Policies, privacy: Privacy, audit: Audit, talent: Talent }[page] || Story;
+    policies: Policies, privacy: Privacy, audit: Audit, talent: Talent, workflows: Workflows }[page] || Story;
 
   let lastGroup: string | undefined;
   return (
