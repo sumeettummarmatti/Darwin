@@ -172,7 +172,7 @@ Draft the new version in the console (**Rules → Suggest a change**) and press 
 | A rule (notice, leave, gratuity…) | On screen: **Rules → Suggest a change → Check this change → Make it live** (new version, tests and gate B must pass) |
 | Who approves what | On screen: **Safety controls → Edit the list** (the list's own tests must pass) |
 | Pause a workflow, skill or connector | On screen: **Safety controls → Emergency stop** |
-| Add, remove or reorder workflow steps; make a step need approval | **File**: edit `workflows/<line>.vN.yaml` (prefer a new version), run `hrx validate && hrx test`, restart. No console editor yet |
+| Add, remove or reorder workflow steps; make a step need approval | On screen: **Workflows → Edit this workflow → Add a block → Check this change → Make it live** (same checks as `hrx validate`, saved as a new version, no restart). Or edit `workflows/<line>.vN.yaml` and run `hrx validate && hrx test` |
 | A new skill or connector | **File**: new folder under `skills/` or `connectors/` |
 
 Example — add "collect issued materials" to exit, with no code:

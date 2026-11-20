@@ -149,7 +149,7 @@ Only the ones that could change what we do this week. Full list in `DESIGN.md` �
 1. Move record-backed chat answers out of `core/intents.py` into an extension point (intent handlers as skills).
 2. Console login with per-person roles (today: persona switcher behind Caddy basic auth).
 3. HTTP transport for connectors (today in-process to the mocks; `/mocks/{system}/{op}` already exists).
-4. Workflow editing from the console (rules and the reserved list are editable on screen; workflows are files).
+4. ~~Workflow editing from the console~~ — done 20 Nov: Workflows page (blocks view, edit, check, make live as a new version).
 5. DPDP correction requests have a kernel method (`core/dpdp.py`) but no API or screen.
 6. Re-run `make bench` and the fault corpus on Groq; publish real-model ₹.
 7. Chat phrasing gaps (e.g. "booking earned leave" is not recognised as a leave request).

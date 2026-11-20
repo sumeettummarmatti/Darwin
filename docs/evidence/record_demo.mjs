@@ -21,6 +21,8 @@ const arg = (name, dflt) => { const i = process.argv.indexOf(`--${name}`); retur
 const BASE = arg("base", "http://localhost:8000");
 const OUT = arg("out", path.join(os.homedir(), "Desktop", "HR_Autopilot_Recordings")).replace(/^~/, os.homedir());
 const ONLY = arg("only", "");
+const CAPTIONS = arg("captions", "on") !== "off";   // off for the narrated cut: the voice explains instead
+const HOLD = Number(arg("hold", "1"));                // scale caption pauses (e.g. 0.6 for a tighter cut)
 const sleep = (s) => new Promise((r) => setTimeout(r, s * 1000));
 const RESULTS = [];
 
@@ -32,6 +34,7 @@ class Demo {
     return r.json();
   }
   async caption(text, hold = 1.8) {
+    if (!CAPTIONS) { await sleep(hold * HOLD); return; }
     await this.page.evaluate((t) => {
       let c = document.getElementById("__cap");
       if (!c) {
@@ -42,7 +45,7 @@ class Demo {
       }
       c.textContent = t;
     }, text);
-    await sleep(hold);
+    await sleep(hold * HOLD);
   }
   async go(route) { await this.page.goto(`${BASE}/#/${route}`); await this.page.waitForLoadState("networkidle"); await sleep(1); }
   async asUser(id) { await this.page.getByLabel("You are").selectOption(id); await sleep(1); }
@@ -319,8 +322,35 @@ async function s10_history_dashboard(d) {
   await d.caption("Cost details: rules vs AI, and the monthly estimate.", 3);
 }
 
+
+async function s11_workflows(d) {
+  await d.go("workflows/exit");
+  await d.caption("11 · Workflows are Lego blocks: the exit process as blocks — rules, AI, other systems, and where a person approves.", 3);
+  await d.expect("workflow shown as blocks", "A person approves");
+  await d.click("Edit this workflow");
+  await d.caption("Edit it as a new version. Add a block: 'Collect issued materials' — one paste, no code.", 2);
+  await d.click("Add a block");
+  await d.page.getByLabel("Workflow file").evaluate((el) => el.scrollTo(0, 0));
+  await d.click("Check this change");
+  await d.expect("new block passes the same checks as a release", "Valid\\.");
+  await d.scroll(450);
+  await d.expect("preview shows the new block", "Collect issued materials");
+  await d.caption("Valid: same checks as before any release. Make it live — new processes use it, running ones keep theirs.", 2.5);
+  await d.click("Make it live");
+  await d.expect("new version live, no restart", "is live");
+  await d.caption("Edge case: someone removes a receipt number from a step that changes another system.", 2);
+  await d.click("Edit this workflow");
+  const box = d.page.getByLabel("Workflow file");
+  const text = (await box.inputValue()).replace(/\n\s*idempotency_key: "exit:\{\{subject\.id\}\}:materials:v1"/, "");
+  await box.fill(text);
+  await d.click("Check this change");
+  await d.expect("unsafe workflow refused", "Not valid");
+  await d.caption("Refused: no receipt number means a retry could act twice. The engine itself was never touched.", 3);
+  await d.click("Cancel");
+}
+
 const SCENARIOS = [s01_onboarding, s02_system_down, s03_retries, s04_chat, s05_bad_rule,
-  s06_exit, s07_hiring, s08_safety, s09_privacy, s10_history_dashboard];
+  s06_exit, s07_hiring, s08_safety, s09_privacy, s10_history_dashboard, s11_workflows];
 
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 fs.mkdirSync(path.join(OUT, "_raw"), { recursive: true });

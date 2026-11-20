@@ -68,7 +68,7 @@ This document is the design. What follows is what the repository actually does t
 - **Devil's Advocate's model layer** reviews the plan once per run (it measured 46% of run cost when run on every step). On the simulator it adds nothing over the rules (88% catch, 0 false alarms on the fault corpus); on Groq it raised a real objection — re-measure before claiming a number.
 - **Exit and FairHire needed kernel changes first** (fan-out steps, our own record as a connector, sourced-person records), made in separate `core:` commits before the lines; the lines themselves touch no `core/` file.
 - **20 Nov: further kernel changes** — a *system down* notice to the human queue (the design's §-fail-safely intent, which the build had only half met: work was held safely but nobody was told), plain-language messages, and record-backed chat answers. The last of these should become an extension point; until then, a new kind of chat answer is a `core/` change.
-- **What is editable on screen:** policy packs and the reserved list (validated, versioned, hot-reloaded). **Workflows are YAML files** — a developer edits them and runs `hrx validate`; there is no workflow editor in the console.
+- **What is editable on screen:** policy packs and the reserved list (validated, versioned, hot-reloaded). **Workflows** are YAML files, also editable on screen (Workflows page: blocks view, edit, check with the same validator and governance lint as `hrx validate`, saved as a new version and hot-reloaded).
 - **Hiring on a real model** needed `icp@v3`: places arrive as written ("Bengaluru"), so the place-to-region mapping is now a table in the pack rather than something the simulator quietly did.
 
 ## 0. How to read this document
