@@ -5,4 +5,4 @@ description: Classifies every sourced record by lawful basis (sourcing_basis pac
 inputs: [args.signals, args.applicants]
 outputs: { pointers: array, eligible: array, refused: array, suppressed: integer, decisions: array }
 capabilities: [compute]
-policy_tags: [tier0, dpdp, parakh]
+policy_tags: [tier0, dpdp, fairhire]

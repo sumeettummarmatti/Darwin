@@ -1,5 +1,5 @@
 # Reserved-decision registry — EXTENSION POINT 5. Configuration HR can change.
-# v3 adds the PARAKH (talent intelligence) entries — config only, no code.
+# v3 adds the FairHire (talent intelligence) entries — config only, no code.
 # An agent can never complete any action below. The kernel enforces it; the UI
 # merely reflects it. Editing this file changes kernel behaviour with no deploy.
 registry: reserved_decisions
@@ -26,7 +26,7 @@ reserved:
   - { action: statutory.file,              approver_role: [finance_controller] }
   # Onboarding
   - { action: onboarding.document_verify,  approver_role: [hr_business_partner], note: "identity documents are verified by a person" }
-  # Talent intelligence (PARAKH)
+  # Talent intelligence (FairHire)
   - { action: sourcing.campaign_approve,     approver_role: [talent_acquisition_lead], note: "target list, notice-first template and lawful-basis attestation" }
   - { action: sourcing.add_source,           approver_role: [legal, dpo], mode: sequential, note: "a new data source is a lawful-basis determination" }
   - { action: sourcing.restricted_exception, approver_role: [legal, hr_head], mode: sequential }
@@ -42,7 +42,7 @@ agent_capabilities:
   may: [prepare, compute, draft, notify, schedule, recommend, provision, deprovision, record]
   may_never: [approve, accept, reject_candidate, sign_off, decide]
 
-# Facts that only a reserved decision may set. Prativaad's reserved_leakage
+# Facts that only a reserved decision may set. Devil's Advocate's reserved_leakage
 # check objects to any step that acts on one without a reserved step upstream.
 reserved_facts: [last_working_day, notice_buyout_days, salary, grade, offer_ctc, band_exception]
 

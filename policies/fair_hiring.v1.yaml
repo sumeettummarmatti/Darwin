@@ -1,6 +1,6 @@
 # Fair hiring. `prohibited_criteria` are stripped by the PII proxy before any
 # model sees them and make any pack that references them fail validation.
-# `proxy_phrases` power Prativaad gate D — phrases that smuggle a prohibited
+# `proxy_phrases` power Devil's Advocate gate D — phrases that smuggle a prohibited
 # criterion back in through prose.
 pack: fair_hiring
 version: 1

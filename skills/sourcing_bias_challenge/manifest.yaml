@@ -1,7 +1,7 @@
 skill: sourcing.bias_challenge
 version: 1
 kind: deterministic
-description: Prativaad gate D over ranking rationales — flags phrases that stand in for a prohibited criterion. Flags go to the human; the ranking is never silently rewritten.
+description: Devil's Advocate gate D over ranking rationales — flags phrases that stand in for a prohibited criterion. Flags go to the human; the ranking is never silently rewritten.
 inputs: [args.ranking]
 outputs: { flags: array }
 capabilities: [compute, recommend]

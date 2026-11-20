@@ -1,4 +1,4 @@
-"""Adapter for SETU's own record (system 'sor'). Same contract as any external connector."""
+"""Adapter for HR Autopilot's own record (system 'sor'). Same contract as any external connector."""
 
 from typing import Any
 

@@ -1,4 +1,4 @@
-# PARAKH — "assess one person". Exists to show the refusal: for a pointer_only
+# FairHire — "assess one person". Exists to show the refusal: for a pointer_only
 # subject the PII proxy refuses the model call before anything is sent.
 workflow: sourcing_assess
 version: 1

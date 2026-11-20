@@ -1,4 +1,4 @@
-"""Asset allocation adapter, including the reads Prativaad needs to catch a duplicate laptop."""
+"""Asset allocation adapter, including the reads Devil's Advocate needs to catch a duplicate laptop."""
 
 from typing import Any
 

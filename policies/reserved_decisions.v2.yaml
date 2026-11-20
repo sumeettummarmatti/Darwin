@@ -37,7 +37,7 @@ agent_capabilities:
   may: [prepare, compute, draft, notify, schedule, recommend, provision, deprovision, record]
   may_never: [approve, accept, reject_candidate, sign_off, decide]
 
-# Facts that only a reserved decision may set. Prativaad's reserved_leakage
+# Facts that only a reserved decision may set. Devil's Advocate's reserved_leakage
 # check objects to any step that acts on one without a reserved step upstream.
 reserved_facts: [last_working_day, notice_buyout_days, salary, grade, offer_ctc, band_exception]
 

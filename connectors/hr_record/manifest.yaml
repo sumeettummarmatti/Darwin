@@ -2,7 +2,7 @@ connector: hr.record
 version: 1
 system: sor
 domain: hr_record
-description: SETU's own system of record. Writes to it go through the governed executor like any external call.
+description: HR Autopilot's own system of record. Writes to it go through the governed executor like any external call.
 actions:
   record_event:      { side_effect: true, irreversible: false, capability: record }
   start_retention:   { side_effect: true, irreversible: false, capability: record }

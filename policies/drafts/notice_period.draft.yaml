@@ -1,6 +1,6 @@
 # DRAFT v5 — prepared for the demo (Friday: the state amendment).
 # The draft "simplifies" fixed-term notice to follow the contract clause and,
-# in doing so, drops the statutory-floor guard. Prativaad gate B should block it.
+# in doing so, drops the statutory-floor guard. Devil's Advocate gate B should block it.
 # Notice periods. Contract may exceed the statutory floor, never undercut it.
 # Statutory floor values are ILLUSTRATIVE for the demo (state Shops &
 # Establishments rules + contract terms); counsel supplies the real table.
@@ -53,7 +53,7 @@ derive:
     name: buyout_is_reserved
     expr: "True"
 
-# Gate B (Prativaad policy-change review) checks these properties over every
+# Gate B (Devil's Advocate policy-change review) checks these properties over every
 # combination of the adversarial domains before a new version can activate.
 properties:
   - id: NP-P1

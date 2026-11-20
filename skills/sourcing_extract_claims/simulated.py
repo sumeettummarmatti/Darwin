@@ -4,7 +4,7 @@ Scripted behaviours, so the demo shows the defences (documented in DEMO_SCRIPT):
 * for CAND-2004 it "invents" a patent claim whose quote is not in the text —
   the handler discards it because no verbatim span exists;
 * its rationale for CAND-2002 echoes the education line ("top-tier institute"),
-  which Prativaad gate D then flags as a college-tier proxy.
+  which Devil's Advocate gate D then flags as a college-tier proxy.
 """
 
 import re

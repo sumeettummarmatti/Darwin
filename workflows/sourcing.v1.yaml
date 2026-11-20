@@ -1,4 +1,4 @@
-# PARAKH — talent intelligence for one requisition. A differently-shaped line:
+# FairHire — talent intelligence for one requisition. A differently-shaped line:
 # external data, outbound contact, no employee record yet. Built from
 # extension points only (this file, three policy packs, skills, the sourcing
 # mock connector and reserved-registry v3).
@@ -81,7 +81,7 @@ steps:
     args: { applicants: "{{steps.no_raid.cleared_applicants}}", claims: "{{steps.extract_claims.claims}}", rationales: "{{steps.extract_claims.rationales}}" }
 
   - id: bias_challenge
-    title: Prativaad gate D — proxy-bias challenge
+    title: Devil's Advocate gate D — proxy-bias challenge
     skill: sourcing.bias_challenge
     deterministic: true
     needs: [score]

@@ -5,4 +5,4 @@ description: Deterministic ICP scoring over span-backed claims. Ranks and explai
 inputs: [args.applicants, args.claims, args.rationales]
 outputs: { ranking: array, below_must_haves: array }
 capabilities: [compute, recommend]
-policy_tags: [tier0, parakh, fair_hiring]
+policy_tags: [tier0, fairhire, fair_hiring]

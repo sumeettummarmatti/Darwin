@@ -5,7 +5,7 @@ domain: sourcing
 description: >
   SOURCING MOCK — synthetic profiles only. Public signals (patent inventors, OSS contributors,
   authors) return pointer-shaped records; applicants come from the ATS with a basis. No live
-  vendor, no LinkedIn, no enrichment, ever (CLAUDE.md, PARAKH rules).
+  vendor, no LinkedIn, no enrichment, ever (CLAUDE.md, FairHire rules).
 actions:
   signals:    { side_effect: false, verify: false, capability: compute }
   applicants: { side_effect: false, verify: false, capability: compute }

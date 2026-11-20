@@ -5,4 +5,4 @@ description: Checks TBO's own non-solicit obligations (no_raid pack) before anyo
 inputs: [args.pointers, args.applicants]
 outputs: { cleared_pointers: array, cleared_applicants: array, blocked: array }
 capabilities: [compute]
-policy_tags: [tier0, parakh]
+policy_tags: [tier0, fairhire]

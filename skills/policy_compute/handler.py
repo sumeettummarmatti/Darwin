@@ -1,4 +1,4 @@
-"""Generic policy evaluation. Every statutory number in SETU is produced here, by rule."""
+"""Generic policy evaluation. Every statutory number in HR Autopilot is produced here, by rule."""
 
 
 def run(ctx):

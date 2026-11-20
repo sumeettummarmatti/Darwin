@@ -56,7 +56,7 @@ guards:
     assert: "notice_days >= lookup('statutory_floor_days', state)"
     error: "below statutory floor"
 
-# Gate B (Prativaad policy-change review) checks these properties over every
+# Gate B (Devil's Advocate policy-change review) checks these properties over every
 # combination of the adversarial domains before a new version can activate.
 properties:
   - id: NP-P1
