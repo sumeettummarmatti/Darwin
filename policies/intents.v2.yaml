@@ -1,0 +1,54 @@
+# Intent routing for every conversational surface (web chat, Slack, Teams).
+# Rules first; a model is not needed to recognise "I want to resign".
+# Route-only triggers are deterministic lexicon matches: they ROUTE a matter
+# without reading it for merit — no classification, no summary.
+pack: intents
+version: 2
+effective_from: 2026-11-01
+owner: hr_head
+
+rules:
+  - id: IN-001
+    when: "contains_any(text, ['resign', 'resigning', 'resignation', 'quit', 'quitting', 'serve my notice', 'put in my papers'])"
+    then: { intent: "'exit.resign'", workflow: "'exit'" }
+  - id: RO-001
+    when: "contains_any(text, ['harass', 'harassed', 'harassment', 'posh', 'sexual', 'inappropriate touching', 'stalking'])"
+    then: { intent: "'route_only'", action: "'posh.complaint'" }
+  - id: RO-002
+    when: "contains_any(text, ['grievance', 'bullying', 'bullied', 'hostile', 'humiliated', 'discriminated', 'discrimination', 'unfair treatment', 'retaliation', 'threatened'])"
+    then: { intent: "'route_only'", action: "'grievance.complaint'" }
+  - id: RO-003
+    when: "contains_any(text, ['whistleblower', 'whistleblow', 'fraud', 'bribe', 'bribery', 'kickback', 'embezzle', 'embezzlement'])"
+    then: { intent: "'route_only'", action: "'whistleblower.report'" }
+  - id: IN-002
+    when: "contains_any(text, ['how many leaves', 'leave balance', 'leaves left', 'leaves do i have', 'casual leaves', 'sick leaves'])"
+    then: { intent: "'helpdesk.leave_balance'" }
+  - id: IN-003
+    when: "contains_any(text, ['apply leave', 'apply for leave', 'take leave', 'day off', 'days off', 'need leave', 'book leave'])"
+    then: { intent: "'leave.apply'", workflow: "'leave'" }
+  # v2: questions about the person's own record or joining are answered from the record, not from policy text.
+  - id: IN-004
+    when: "contains_any(text, ['my laptop', 'my latop', 'my access card', 'my id card', 'my email account', 'my induction', 'my onboarding', 'my joining', 'joining status', 'onboarding status'])"
+    then: { intent: "'onboarding.status'" }
+  - id: IN-005
+    when: "contains_any(text, ['my name', 'who am i', 'my manager', 'my buddy', 'my team', 'my role', 'my details', 'my profile', 'my joining date', 'my start date'])"
+    then: { intent: "'self.profile'" }
+  - id: IN-006
+    when: "len(text) <= 24 and contains_any(text, ['hi', 'hii', 'hello', 'hey', 'namaste', 'good morning', 'good afternoon', 'good evening', 'thanks', 'thank you', 'help'])"
+    then: { intent: "'greeting'" }
+  - id: IN-099
+    then: { intent: "'helpdesk.answer'" }
+
+tests:
+  - { given: { text: "Hi, I want to resign. My last day can be end of next month." }, expect: { intent: exit.resign } }
+  - { given: { text: "I have been harassed by a colleague" }, expect: { intent: route_only, action: posh.complaint } }
+  - { given: { text: "My manager has been bullying me in standups" }, expect: { action: grievance.complaint } }
+  - { given: { text: "How many casual leaves do I have?" }, expect: { intent: helpdesk.leave_balance } }
+  - { given: { text: "what do I need to bring on day one?" }, expect: { intent: helpdesk.answer } }
+  - { given: { text: "I need leave next Monday and Tuesday" }, expect: { intent: leave.apply } }
+  - { given: { text: "hi" }, expect: { intent: greeting } }
+  - { given: { text: "hi, what do I need to bring on day one?" }, expect: { intent: helpdesk.answer }, name: "a greeting inside a real question still gets answered" }
+  - { given: { text: "what is my name" }, expect: { intent: self.profile } }
+  - { given: { text: "when is my latop issued can you tell me that" }, expect: { intent: onboarding.status } }
+  - { given: { text: "My manager has been bullying me" }, expect: { intent: route_only }, name: "a complaint about 'my manager' is still routed, never answered" }
+  - { given: { text: "The quitting time policy" }, expect: { intent: exit.resign }, name: "known false positive: word match; the exit run then asks a human, nothing irreversible happens before acceptance" }
