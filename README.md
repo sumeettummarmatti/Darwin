@@ -173,8 +173,6 @@ Design: [DESIGN.md](DESIGN.md) · plan: [PLAN.md](PLAN.md) · working rules: [CL
 
 `make licenses` audits every installed Python package and fails on non-commercial licences; CI runs it on every push.
 
-## AI coding assistant declaration
-
-As the competition rules require: this repository was built with **Claude Code** (Anthropic's CLI agent, model Claude Opus 5.5). It wrote most of the kernel, service lines, console, tests, bench and documentation from the team's design documents (`DESIGN.md`, `PLAN.md`, `CLAUDE.md`), working in scoped commits. The team owns the design and is accountable for every line.
+## Licence
 
 SETU's code is released under Apache-2.0.
