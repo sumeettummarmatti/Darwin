@@ -53,3 +53,30 @@ def test_policy_activation_refuses_path_traversal(client):
     yaml_text = "pack: ../../core/evil\nversion: 9\neffective_from: 2026-01-01\nrules: [{id: R1, then: {x: 1}}]\ntests: [{given: {}, expect: {x: 1}}]\n"
     r = client.post("/api/policies/notice_period/activate", json={"yaml": yaml_text}).json()
     assert r["ok"] is False
+
+
+MATERIALS_STEP = '''
+  - id: collect_materials
+    title: Collect issued materials
+    connector: it.ticketing
+    action: open_ticket
+    needs: [accept_resignation]
+    args: { summary: "Collect issued materials from {{subject.display_name}}" }
+    idempotency_key: "exit:{{subject.id}}:materials:v1"
+    compensation: close_ticket
+'''
+
+
+def test_workflow_editor_checks_like_hrx_validate(client):
+    blocks = {w["name"]: w for w in client.get("/api/workflows").json()}
+    assert any(s["kind"] == "person" for s in blocks["exit"]["steps"])
+    src = client.get("/api/workflows/exit/source").json()["yaml"]
+    added = src.replace("\nsteps:\n", "\nsteps:\n" + MATERIALS_STEP.lstrip("\n") + "\n", 1)
+    ok = client.post("/api/workflows/exit/check", json={"yaml": added}).json()
+    assert ok["ok"] and any(s["id"] == "collect_materials" for s in ok["preview"]["steps"])
+    # An agent step that tries to accept the resignation itself is refused, exactly as at load time.
+    bad = added.replace("connector: it.ticketing\n    action: open_ticket", "connector: hr.record\n    action: accept_resignation", 1)
+    assert not client.post("/api/workflows/exit/check", json={"yaml": bad}).json()["ok"]
+    # Saving without bumping the version is refused, so running processes keep their version.
+    refused = client.post("/api/workflows/exit/activate", json={"yaml": added}).json()
+    assert not refused["ok"] and "version" in refused["reason"]

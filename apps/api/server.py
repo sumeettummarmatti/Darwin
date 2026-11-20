@@ -26,6 +26,7 @@ from core.kernel import Kernel
 from core.queue import QueueError
 from core.rules.packs import PackLoadError, parse_pack
 from core.reserved import RegistryLoadError, parse_registry
+from core.workflows import WorkflowLoadError, parse_workflow, validate_workflow
 
 WEB_DIST = config.ROOT / "apps" / "web" / "dist"
 SAFE_NAME = re.compile(r"[a-z0-9_]+")
@@ -403,6 +404,75 @@ def policy_activate(name: str, body: dict[str, Any] = Body(...)) -> dict[str, An
     if not result["ok"]:
         path.unlink()
     return {"ok": result["ok"], "path": str(path.relative_to(config.ROOT)), "reload": result}
+
+
+# ── workflows: view as blocks, edit as a new version (validated, hot-reloaded) ──
+
+def _workflow_view(k: Kernel, wf: Any) -> dict[str, Any]:
+    def kind(st: Any) -> str:
+        if st.kind == "skill":
+            spec = k.registry.skills.get(st.skill or "")
+            return "ai" if spec is not None and spec.kind == "model" else "rules"
+        return {"connector": "system", "reserved": "person", "route_only": "route"}.get(st.kind, st.kind)
+    return {"name": wf.name, "version": wf.version, "ref": wf.ref, "description": wf.description,
+            "path": str(Path(wf.source_path).relative_to(config.ROOT)) if Path(wf.source_path).is_absolute() else wf.source_path,
+            "steps": [{"id": st.id, "title": st.title or st.id, "kind": kind(st), "needs": st.needs,
+                       "approver_action": st.reserved_action, "system": st.connector, "action": st.action,
+                       "scheduled": bool(st.schedule_at)} for st in wf.steps]}
+
+
+@app.get("/api/workflows")
+def workflows() -> list[dict[str, Any]]:
+    k = K()
+    return [_workflow_view(k, wf) for wf in sorted(k.registry.latest_workflows(), key=lambda w: w.name)]
+
+
+@app.get("/api/workflows/{name}/source")
+def workflow_source(name: str) -> dict[str, Any]:
+    wf = K().registry.workflow(name)
+    return {"ref": wf.ref, "path": str(Path(wf.source_path).relative_to(config.ROOT)), "yaml": Path(wf.source_path).read_text()}
+
+
+def _check_workflow(k: Kernel, text: str) -> tuple[Any, dict[str, Any]]:
+    """The same checks as `hrx validate`: schema, keys, reserved verbs, known systems, then the governance lint."""
+    try:
+        raw = yaml.safe_load(text)
+        wf = parse_workflow(raw, "<console draft>")
+        validate_workflow(wf, skills=k.registry.skills, connectors=k.registry.connectors, registry=k.registry.reserved)
+    except (yaml.YAMLError, WorkflowLoadError, KeyError, TypeError, ValueError) as exc:
+        return None, {"ok": False, "errors": [str(exc)], "warnings": []}
+    findings = k.devils_advocate.gate_c(wf)
+    errors = [f["message"] for f in findings if f["level"] == "error"]
+    warnings = [f["message"] for f in findings if f["level"] != "error"]
+    return wf, {"ok": not errors, "errors": errors, "warnings": warnings, "preview": _workflow_view(k, wf) if not errors else None}
+
+
+@app.post("/api/workflows/{name}/check")
+def workflow_check(name: str, body: dict[str, Any] = Body(...)) -> dict[str, Any]:
+    return _check_workflow(K(), body.get("yaml", ""))[1]
+
+
+@app.post("/api/workflows/{name}/activate")
+def workflow_activate(name: str, body: dict[str, Any] = Body(...)) -> dict[str, Any]:
+    """Write the edited workflow as a new version file and hot-reload. New runs use it; running ones keep theirs."""
+    k = K()
+    wf, result = _check_workflow(k, body.get("yaml", ""))
+    if not result["ok"]:
+        return {**result, "reason": "; ".join(result["errors"])}
+    if not SAFE_NAME.fullmatch(wf.name) or wf.name != name:
+        return {"ok": False, "reason": f"the file declares workflow '{wf.name}' but is being saved as '{name}'"}
+    current = k.registry.workflow(name).version
+    if wf.version <= current:
+        return {"ok": False, "reason": f"bump the version above {current}"}
+    path = config.WORKFLOWS_DIR / f"{wf.name}.v{wf.version}.yaml"
+    if path.exists():
+        return {"ok": False, "reason": f"{path.name} already exists"}
+    path.write_text(body["yaml"])
+    reloaded = k.reload()
+    if not reloaded["ok"]:
+        path.unlink()
+        return {"ok": False, "reason": "reload refused", "reload": reloaded}
+    return {"ok": True, "path": str(path.relative_to(config.ROOT)), "ref": f"{wf.name}@v{wf.version}"}
 
 
 @app.get("/api/reserved")
