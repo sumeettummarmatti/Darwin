@@ -1,6 +1,6 @@
-# Deploying SETU to a shared server (Vultr)
+# Deploying HR Autopilot to a shared server (Vultr)
 
-SETU runs as **one Docker container** (FastAPI kernel + built React console + SQLite) bound to `127.0.0.1`, behind the server's existing reverse proxy on its own hostname. Nothing belonging to the project already on the server is modified: we add a directory, a container, and one new proxy server block.
+HR Autopilot runs as **one Docker container** (FastAPI kernel + built React console + SQLite) bound to `127.0.0.1`, behind the server's existing reverse proxy on its own hostname. Nothing belonging to the project already on the server is modified: we add a directory, a container, and one new proxy server block.
 
 > Target: the Vultr server that already runs **SixthSense**. Values below come from the SixthSense deploy kit; items marked *verify* are checked read-only before anything changes.
 
@@ -46,7 +46,7 @@ docker run -d --name setu --restart unless-stopped \
 curl -s http://127.0.0.1:8100/api/health
 ```
 
-The first start seeds the synthetic dataset into `/opt/setu/var`. `--memory`/`--cpus` keep SETU from starving the other project.
+The first start seeds the synthetic dataset into `/opt/setu/var`. `--memory`/`--cpus` keep HR Autopilot from starving the other project.
 
 ## 3. Reverse proxy (new server block only)
 
@@ -58,7 +58,7 @@ server {
     server_name setu.139-84-220-87.sslip.io;
     client_max_body_size 2m;
 
-    auth_basic "SETU demo";
+    auth_basic "HR Autopilot demo";
     auth_basic_user_file /etc/nginx/.setu_htpasswd;
 
     location / {
@@ -135,7 +135,7 @@ Data in `/opt/setu/var` survives. To start the demo fresh, use **Reset** in the 
 
 - **Synthetic data only.** Never load real employee data onto the demo server.
 - **Basic auth is required.** The console can reset data, edit policies and the reserved list, and store a model key; without auth anyone with the URL could.
-- **Groq key**: paste it in *Safety controls → Real AI* (validated with Groq, written to `/opt/setu/.env`, never displayed), or put it in `/opt/setu/.env` before starting. Without a key SETU runs on the offline simulator.
+- **Groq key**: paste it in *Safety controls → Real AI* (validated with Groq, written to `/opt/setu/.env`, never displayed), or put it in `/opt/setu/.env` before starting. Without a key HR Autopilot runs on the offline simulator.
 - The container listens on `127.0.0.1` only; do not add a public port or a firewall rule for it.
 
 ## Server facts (Vultr, shared with SixthSense)
@@ -145,13 +145,13 @@ Data in `/opt/setu/var` survives. To start the demo fresh, use **Reset** in the 
 | Host | `139.84.220.87`, Ubuntu (*verify* `lsb_release -a`), SSH `root@139.84.220.87` with the existing key |
 | Reverse proxy | Caddy, `/etc/caddy/Caddyfile`, automatic Let's Encrypt — no nginx, no certbot |
 | Taken hostnames | `api.139-84-220-87.sslip.io` (:8000), `insight.139-84-220-87.sslip.io` (:8001) |
-| SETU hostname | `setu.139-84-220-87.sslip.io` |
-| Ports in use (all 127.0.0.1) | 8000, 8001, 8003 (CompreFace), 5433, 5434, 6379, 4222, 8222, 1025, 8025 — **SETU uses 8100** (*verify* free with `ss -ltn`) |
+| HR Autopilot hostname | `setu.139-84-220-87.sslip.io` |
+| Ports in use (all 127.0.0.1) | 8000, 8001, 8003 (CompreFace), 5433, 5434, 6379, 4222, 8222, 1025, 8025 — **HR Autopilot uses 8100** (*verify* free with `ss -ltn`) |
 | Docker | apt `docker.io` + `docker-compose-v2` (*verify* `docker --version`) |
-| Firewall | Vultr cloud firewall + ufw; 22, 80, 443 open (*verify* `ufw status`). SETU needs no new rule |
-| Memory | CompreFace + two Postgres are heavy — *verify* `free -h` before starting SETU (it is capped at 512 MB) |
+| Firewall | Vultr cloud firewall + ufw; 22, 80, 443 open (*verify* `ufw status`). HR Autopilot needs no new rule |
+| Memory | CompreFace + two Postgres are heavy — *verify* `free -h` before starting HR Autopilot (it is capped at 512 MB) |
 
-**Do not touch:** `/opt/sixthsense`, the `sixthsense-*` systemd units, the existing Caddy blocks, SixthSense's compose project. **Never run `docker system prune`** (it could delete SixthSense's images and volumes). SETU uses `docker run --name setu`, not a compose project, so no `compose down` can reach the other app.
+**Do not touch:** `/opt/sixthsense`, the `sixthsense-*` systemd units, the existing Caddy blocks, SixthSense's compose project. **Never run `docker system prune`** (it could delete SixthSense's images and volumes). HR Autopilot uses `docker run --name setu`, not a compose project, so no `compose down` can reach the other app.
 
 ### Read-only pre-flight (changes nothing)
 

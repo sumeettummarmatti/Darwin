@@ -1,4 +1,4 @@
-# SETU — architecture (Round 1, six pages)
+# HR Autopilot — architecture (Round 1, six pages)
 
 *Challenge 2: an AI-native HR platform for TBO. Every claim below points to code in this repository and, where it is a number, to `make bench`.*
 
@@ -6,20 +6,20 @@
 
 ## Page 1 — What we chose, and the one claim
 
-**Depth line: onboarding.** The brief's own example — a hire is recorded, then people chase IT, Admin and Finance — and the mock APIs TBO supplies are an onboarding toolkit. **Second line: exit**, the mirror image, which carries the richest governance surface (resignation acceptance, buyouts, payroll sign-off, gratuity, DPDP retention). **Third: talent intelligence (PARAKH)**, a deliberately differently-shaped line — external data, outbound contact, no employee record — built to test whether the extension model survives a shape it was not designed for. Leave and helpdesk run on the same kernel.
+**Depth line: onboarding.** The brief's own example — a hire is recorded, then people chase IT, Admin and Finance — and the mock APIs TBO supplies are an onboarding toolkit. **Second line: exit**, the mirror image, which carries the richest governance surface (resignation acceptance, buyouts, payroll sign-off, gratuity, DPDP retention). **Third: talent intelligence (FairHire)**, a deliberately differently-shaped line — external data, outbound contact, no employee record — built to test whether the extension model survives a shape it was not designed for. Leave and helpdesk run on the same kernel.
 
-**The claim:** agents have no network egress. They return *proposed actions*. A governance kernel (VIDHI) decides whether each one happens, executes it exactly once, verifies it, prices it and writes it down. That one constraint makes the guardrails enforceable rather than aspirational.
+**The claim:** agents have no network egress. They return *proposed actions*. A governance kernel (Gatekeeper) decides whether each one happens, executes it exactly once, verifies it, prices it and writes it down. That one constraint makes the guardrails enforceable rather than aspirational.
 
 ```
  Experience   web console · chat · dashboard                    one intent API (core/intents.py)
  Agents       skills = manifest + handler, no HTTP/DB/connector  propose, never act (skills/)
- VIDHI        orchestrator · policy decision point · reserved gate · outbox + read-back
-              PII proxy · model router + cost meter · hash-linked audit · kill switch · Prativaad
+ Gatekeeper        orchestrator · policy decision point · reserved gate · outbox + read-back
+              PII proxy · model router + cost meter · hash-linked audit · kill switch · Devil's Advocate
  Data         system of record · policy packs · workflow defs · vault · connector SDK
  External     ticketing · assets · access cards · directory · payroll · ATS/sourcing · mail
 ```
 
-**What a TBO developer touches to add a line:** a workflow (YAML), a policy pack (YAML with tests), maybe a skill. Not `core/`. The exit line, PARAKH and two rehearsal lines in this repository were committed without touching `core/`; CI fails any `service-line` PR that does.
+**What a TBO developer touches to add a line:** a workflow (YAML), a policy pack (YAML with tests), maybe a skill. Not `core/`. The exit line, FairHire and two rehearsal lines in this repository were committed without touching `core/`; CI fails any `service-line` PR that does.
 
 ## Page 2 — Agents and the governed action flow
 
@@ -30,13 +30,13 @@
 | `exit.prepare_packet` | 1 → 2 | Prose around rule-computed values for the human deciding |
 | `helpdesk.answer` | 1 → 2 | Phrase an answer from retrieved clauses; cite clause + pack version |
 | `sourcing.extract_claims` | 1 → 2 | Claims from résumés, each with a verbatim quote; no quote ⇒ discarded |
-| `prativaad.review` | 1 | The judgement-shaped residue of the devil's-advocate check, once per run |
+| `devils_advocate.review` | 1 | The judgement-shaped residue of the devil's-advocate check, once per run |
 | `intake.screen` | 0 | Route-only lexicon for POSH / grievance / whistleblower |
 
 **Every action walks one path** (`core/executor.py`, `core/orchestrator.py`):
 
 1. **Propose** — a workflow step or a skill's `propose()`, limited to the step's scope.
-2. **Prativaad gate A** — irreversible actions only: deterministic checks first (duplicate effect, PII in payload, entitlement invariants, reserved leakage, stale policy, compensation), then a tier-1 review of the plan once per run, capped at 8% of the run budget.
+2. **Devil's Advocate gate A** — irreversible actions only: deterministic checks first (duplicate effect, PII in payload, entitlement invariants, reserved leakage, stale policy, compensation), then a tier-1 review of the plan once per run, capped at 8% of the run budget.
 3. **Policy check** — RBAC as `principal ∩ agent capability ∩ step scope`, org-unit scope, DPDP purpose of every PII token in the payload.
 4. **Reserved?** — agents get `403 RESERVED` with an audit entry; reserved workflow steps become a human task with a context packet.
 5. **Idempotency** — the intent is committed to the outbox under a templated key before the call.
@@ -61,7 +61,7 @@ Each step writes an audit entry: actor (and on whose behalf), inputs as tokens, 
 
 **Kill switch** — global, workflow, skill or connector; a database row, no restart. Paused runs park with context. A workflow whose escalation rate crosses its threshold pauses itself.
 
-**Prativaad gates B and C.** Gate B attacks a policy draft: it runs the pack's tests, generates every combination of the pack's declared adversarial inputs, checks its stated properties (for example "fixed-term notice is never below the state floor") and proposes regression tests. Gate C is the governance lint inside `hrx validate`.
+**Devil's Advocate gates B and C.** Gate B attacks a policy draft: it runs the pack's tests, generates every combination of the pack's declared adversarial inputs, checks its stated properties (for example "fixed-term notice is never below the state floor") and proposes regression tests. Gate C is the governance lint inside `hrx validate`.
 
 ## Page 4 — Compliance by design
 
@@ -96,13 +96,13 @@ Each step writes an audit entry: actor (and on whose behalf), inputs as tokens, 
 
 **Threshold justification method.** Run about 200 instances per skill, compare tier-1 output with a tier-2 reference and human adjudication, plot accuracy against threshold and choose the knee. This needs a real model and has not been run; no curve is claimed.
 
-## Page 6 — Extension model, live-test readiness, and Prativaad in one panel
+## Page 6 — Extension model, live-test readiness, and Devil's Advocate in one panel
 
 **Five extension points**, each with a contract and a validator: workflow, skill, connector, policy pack, reserved-registry entry. `hrx scaffold workflow <name>` writes a workflow, a pack with an empty `tests:` block (which `hrx validate` refuses) and a test spec. `hrx validate` enforces idempotency keys, model-free deterministic steps, no reserved verbs for agents, known reserved actions, and runs the governance lint. `hrx test` replays synthetic runs under an injected retry storm and fails on any duplicate side effect.
 
 **Rehearsed, cold, in the repository.** *Leave encashment on exit, capped at 30 days, Finance sign-off above ₹50,000*: validate refused the untested pack; the lint caught a first draft paying money with no reserved step; green under the retry storm. *Probation confirmation*: a new reserved action through registry v4; its workflow test caught a window bug in the first rule. Both commits touch no `core/` file. `docs/DEVGUIDE.md` is the script.
 
-**Prativaad, measured honestly.** On a corpus of 16 planted defects and 4 clean steps, the deterministic layer catches **88% with no false alarms**. On the simulated provider the model layer adds nothing and costs 21% of run spend; it was already cut from every irreversible step to once per run when it measured 46%. With a real model we re-measure; under 20% added value, it shrinks to the deterministic pre-filter, and we will say so.
+**Devil's Advocate, measured honestly.** On a corpus of 16 planted defects and 4 clean steps, the deterministic layer catches **88% with no false alarms**. On the simulated provider the model layer adds nothing and costs 21% of run spend; it was already cut from every irreversible step to once per run when it measured 46%. With a real model we re-measure; under 20% added value, it shrinks to the deterministic pre-filter, and we will say so.
 
 ### Assumptions we state rather than hide
 

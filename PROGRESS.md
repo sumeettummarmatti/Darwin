@@ -1,4 +1,4 @@
-# SETU — Progress Log
+# HR Autopilot — Progress Log
 
 Running log. Newest session at the top. Update at the end of every working session: what shipped, what was decided, what was reversed, what is open.
 
@@ -21,10 +21,10 @@ Running log. Newest session at the top. Update at the end of every working sessi
 | Gate | What it proves | State |
 |---|---|---|
 | 0 | Round 1 submitted, no unprovable claims | 🟨 `docs/ARCHITECTURE_6PAGE.md` drafted from built and measured work; video not recorded (beat sheet in docs/DEMO_SCRIPT.md); not submitted |
-| 1 | Vertical slice: one step through all 7 governed-flow steps | ✅ every connector step: Prativaad → authorize → outbox → connector → read-back → audit → ₹ |
+| 1 | Vertical slice: one step through all 7 governed-flow steps | ✅ every connector step: Devil's Advocate → authorize → outbox → connector → read-back → audit → ₹ |
 | 2 | Onboarding end to end, real ₹/run and automation rate | ✅ on the simulated provider (rates are a declared card, see COST.md) |
 | 3 | Reserved-decision drill clean | ✅ `/api/drill`, `tests/test_governance.py` |
-| 4 | **Exit line added with zero `core/` commits** | ✅ exit commit touches no `core/` file; PARAKH needed two kernel additions first (D17) |
+| 4 | **Exit line added with zero `core/` commits** | ✅ exit commit touches no `core/` file; FairHire needed two kernel additions first (D17) |
 | 5 | Every published number reproducible by `make bench`; 3 unseen requirements rehearsed | 🟨 bench ✅; two rehearsals of three (leave encashment, probation confirmation) |
 
 ### Measurements
@@ -48,9 +48,9 @@ From `make bench`, sim profile, synthetic dataset (bench/results/latest.md). Rup
 | Helpdesk | ₹0.0055 | ₹0.0357 | 100% | 0% | 24 runs |
 | Sourcing | ₹0.0165 | ₹0.0165 | 91% | 0% | 1 run |
 
-**Negative result on Groq:** Prativaad's model layer raised 32 runtime objections with 9% precision, a 75% false-alarm rate on clean fault-corpus steps, and 57% of run spend; it added no catches over the rules (88%). Its false objections are why exit drops to 37% automation. Recommended next step: run Prativaad rules-only on real models (shrink, per CLAUDE.md), then re-measure.
+**Negative result on Groq:** Devil's Advocate's model layer raised 32 runtime objections with 9% precision, a 75% false-alarm rate on clean fault-corpus steps, and 57% of run spend; it added no catches over the rules (88%). Its false objections are why exit drops to 37% automation. Recommended next step: run Devil's Advocate rules-only on real models (shrink, per CLAUDE.md), then re-measure.
 
-| Prativaad | Value | Measured on |
+| Devil's Advocate | Value | Measured on |
 |---|---|---|
 | Objections per run (bench week) | 71 over 90 runs, mostly low-severity compensation advisories | bench |
 | Objection precision (upheld by human) | 100% of resolved (resolutions are mostly kernel read-back verifications) | bench |
@@ -67,9 +67,9 @@ Append-only. If a decision is reversed, add a new row rather than editing the ol
 | D1 | 2026-11-18 | Depth line is **onboarding**; **exit** is the second line | TBO's mock APIs are an onboarding toolkit; exit is the mirror image and carries the richest governance surface | — |
 | D2 | 2026-11-18 | **Kernel-first, demo-second** | Governance + extensibility = 40%; bolting them on afterwards is visible to judges | — |
 | D3 | 2026-11-18 | Agents have **no network egress**; the kernel is the only path out | Makes the non-negotiable guardrails structurally enforceable rather than aspirational | — |
-| D4 | 2026-11-18 | Prativaad (devil's advocate) as a kernel component at gates A/B/C | The real risk in agentic HR is a *confidently wrong* plan, which confidence thresholds do not catch | — |
-| D5 | 2026-11-18 | Prativaad capped at 8% of workflow budget; deterministic pre-filter runs first | An unbounded critic is a cost disaster, and judges will probe exactly that | — |
-| D6 | 2026-11-19 | **Talent intelligence (PARAKH) is the extensibility proof, not a fourth depth line** | Brief penalises shallow coverage; a differently-shaped line is a stronger test of the extension model than exit (which is onboarding backwards) | — |
+| D4 | 2026-11-18 | Devil's Advocate as a kernel component at gates A/B/C | The real risk in agentic HR is a *confidently wrong* plan, which confidence thresholds do not catch | — |
+| D5 | 2026-11-18 | Devil's Advocate capped at 8% of workflow budget; deterministic pre-filter runs first | An unbounded critic is a cost disaster, and judges will probe exactly that | — |
+| D6 | 2026-11-19 | **Talent intelligence (FairHire) is the extensibility proof, not a fourth depth line** | Brief penalises shallow coverage; a differently-shaped line is a stronger test of the extension model than exit (which is onboarding backwards) | — |
 | D7 | 2026-11-19 | **No live sourcing or mail vendor.** `sourcing_mock` + `mail_mock`, synthetic profiles only | Competition rule: synthetic dataset and mock APIs only, no real personal data in any tool or model | — |
 | D8 | 2026-11-19 | Sourced people with no lawful basis are **`pointer_only`** — no profile, no score, no model call | DPDP offers only consent or narrow legitimate uses; no GDPR-style legitimate-interests basis exists for non-applicants | — |
 | D9 | 2026-11-19 | No-raid guard checks **TBO's** non-solicit obligations, not the candidate's freedom to move | Post-employment non-competes are void under s.27 Indian Contract Act; non-solicit clauses binding TBO are enforceable | — |
@@ -80,8 +80,8 @@ Append-only. If a decision is reversed, add a new row rather than editing the ol
 | D14 | 2026-11-19 | Own durable state machine on SQLite instead of Temporal | Zero-setup `make up` for judges; state in the same DB as the record; every step persisted before and after acting so a killed process resumes (tested). Schema is plain SQL that ports to Postgres | — |
 | D15 | 2026-11-19 | Default model provider is an in-process **simulated** profile with a declared rate card | No real data may reach any model; reproducible bench; provider swap stays a config change (`openai_compatible` profile exists). All rupee figures are labelled as rate-card based | — |
 | D16 | 2026-11-19 | Our own record is written through the same governed executor (`hr.record` connector) | No back door: idempotency, read-back and audit apply to our writes too | — |
-| D17 | 2026-11-19 | Kernel additions before PARAKH: fan-out (`foreach`) steps, read-only actions, nested PII scrubbing, gate-D and suppression hooks for skills, SoR operations for sourced people | A differently-shaped line found real gaps. Made as separate `core:` commits before the line so the line itself touches no `core/` file | — |
-| D18 | 2026-11-19 | Prativaad model residue runs once per run, not before every irreversible step | Measured 46% of run spend with no catches on the sim provider; now 21%. Deterministic checks still run on every irreversible step | — |
+| D17 | 2026-11-19 | Kernel additions before FairHire: fan-out (`foreach`) steps, read-only actions, nested PII scrubbing, gate-D and suppression hooks for skills, SoR operations for sourced people | A differently-shaped line found real gaps. Made as separate `core:` commits before the line so the line itself touches no `core/` file | — |
+| D18 | 2026-11-19 | Devil's Advocate model residue runs once per run, not before every irreversible step | Measured 46% of run spend with no catches on the sim provider; now 21%. Deterministic checks still run on every irreversible step | — |
 | D19 | 2026-11-19 | Deterministic vault tokens (keyed HMAC of field + value) | Lets the kernel link a new hire to a prior contractor record (duplicate laptop) without anything outside the vault seeing the PAN | — |
 | D20 | 2026-11-19 | Asset linkage uses a dedicated identity-key token, not the PAN token | Passing the PAN token to the asset system would itself breach purpose limitation | — |
 
@@ -113,9 +113,9 @@ Only the ones that could change what we do this week. Full list in `DESIGN.md` �
 | Risk | Current read | Trigger to act |
 |---|---|---|
 | Round 1 deadline closer than we think | **Unquantified — Q1 is blocking** | Resolve Q1 before anything else |
-| Gate 1 slips | Not started | > 3 days late ⇒ cut PARAKH, protect Gates 4 and 5 |
+| Gate 1 slips | Not started | > 3 days late ⇒ cut FairHire, protect Gates 4 and 5 |
 | Gate 4 fails (exit needs core changes) | Not started | Stop feature work, fix the kernel |
-| Prativaad adds little over the deterministic pre-filter | Unmeasured | < 20% improvement on fault corpus ⇒ shrink it, say so on the slide |
+| Devil's Advocate adds little over the deterministic pre-filter | Unmeasured | < 20% improvement on fault corpus ⇒ shrink it, say so on the slide |
 | Over-engineering the kernel, under-building the demo | Live concern given D2 | Experience is still 10%; `DESIGN.md` §16 drop order is pre-agreed |
 
 ---
@@ -137,7 +137,7 @@ Only the ones that could change what we do this week. Full list in `DESIGN.md` �
 - **Chat crashed in current Chrome** (an effect returned `scrollIntoView`'s Promise as its cleanup).
 
 **Reversed / honest notes**
-- **`core/` was changed in this session** — against the service-line freeze: plain-language strings in `orchestrator.py`, `prativaad.py`, `intents.py`; the system-down notice (`orchestrator.py`); the three record-backed chat handlers (`intents.py`). The first two are kernel behaviour and belong in core; **the chat handlers should move to an extension point** (open item).
+- **`core/` was changed in this session** — against the service-line freeze: plain-language strings in `orchestrator.py`, `devils_advocate.py`, `intents.py`; the system-down notice (`orchestrator.py`); the three record-backed chat handlers (`intents.py`). The first two are kernel behaviour and belong in core; **the chat handlers should move to an extension point** (open item).
 - With real Groq the "invented claim" and "proxy-bias phrase" beats do not appear in Hiring — they are scripted into the simulator. Demo them on the simulator profile and say so.
 
 **Open**
@@ -154,25 +154,25 @@ Only the ones that could change what we do this week. Full list in `DESIGN.md` �
 - `docker build` succeeds and the container serves, seeds and runs governed flows (the night's failure was a stalled Docker Hub pull).
 - Groq profile (gpt-oss-20b → gpt-oss-120b, Apache-2.0); the key is asked for on the website, validated with Groq, kept in the git-ignored `.env`. Rejected key ⇒ banner asking for a new one, platform continues on the simulator.
 - **Found only by running a real provider**: rate limits (429), JSON-mode validation failures (400), a schema miss in claim extraction (prompt v2 fixes it), and a race where the worker and an API call advanced the same run so every model call ran twice. All fixed, each in its own commit with a test.
-- Live on Groq: Meera's faint ID escalated 20b → 120b on the measured trigger and stopped for a human; the exit packet, welcome draft, helpdesk (ONB-C1) and Prativaad's reviewer all ran once each. Prativaad's model reviewer raised a real objection of its own on the first live run. **Re-run the fault corpus on Groq** to measure what it adds (open item 1).
-- Console: Prativaad objections read as hearings (charge, evidence, defence, verdict); raw JSON replaced by readable fields everywhere.
+- Live on Groq: Meera's faint ID escalated 20b → 120b on the measured trigger and stopped for a human; the exit packet, welcome draft, helpdesk (ONB-C1) and Devil's Advocate's reviewer all ran once each. Devil's Advocate's model reviewer raised a real objection of its own on the first live run. **Re-run the fault corpus on Groq** to measure what it adds (open item 1).
+- Console: Devil's Advocate objections read as hearings (charge, evidence, defence, verdict); raw JSON replaced by readable fields everywhere.
 
 
 ### 2026-11-19 (night) — the platform, built
 
 **Shipped** (all pushed to `main`, scoped commits, `core/` changes separate from service lines)
-- Kernel (VIDHI): safe policy language and packs that refuse to load untested; reserved registry with load-time and run-time enforcement; hash-linked audit; PII proxy and deterministic vault; model router with measured escalation and per-call ₹ metering; governed executor (outbox, same-key retries, read-back verification, breaker); human queue with context packets and hash-bound receipts; durable orchestrator (scheduled steps, fan-out, saga, kill-switch parking, workflow circuit breaker); Prativaad gates A–D; DPDP retention, DSR, consent, suppression; intent API; metrics with drill-downs.
-- Service lines on extension points: onboarding, exit, leave, helpdesk, PARAKH (sourcing, reply, assess-probe), and two cold rehearsals with hrx — leave encashment and probation confirmation.
+- Kernel (Gatekeeper): safe policy language and packs that refuse to load untested; reserved registry with load-time and run-time enforcement; hash-linked audit; PII proxy and deterministic vault; model router with measured escalation and per-call ₹ metering; governed executor (outbox, same-key retries, read-back verification, breaker); human queue with context packets and hash-bound receipts; durable orchestrator (scheduled steps, fan-out, saga, kill-switch parking, workflow circuit breaker); Devil's Advocate gates A–D; DPDP retention, DSR, consent, suppression; intent API; metrics with drill-downs.
+- Service lines on extension points: onboarding, exit, leave, helpdesk, FairHire (sourcing, reply, assess-probe), and two cold rehearsals with hrx — leave encashment and probation confirmation.
 - Console (React + Vite): overview, demo story, workflows with the run rail, decisions and receipts, chat, talent, guardrails, policy packs with gate-B review, personal-data payload viewer, audit chain.
 - `hrx` scaffold / validate / test; `make bench` + fault corpus; 78 tests; Makefile, Dockerfile, CI with core-freeze and licence audit; README, DEVGUIDE, GOVERNANCE, COST, DEMO_SCRIPT.
 
 **Found and fixed along the way** (each in its own commit)
-- Bad facts crashed evaluation instead of failing closed; audit hash broke on SQLite int→REAL round trip; names scrubbed before emails left the domain visible; Prativaad crashed when it could not read to verify (now waits); a crashing skill stalled its run (now routes to a human); a band exception approved without a band broke payroll templating (found by the bench).
+- Bad facts crashed evaluation instead of failing closed; audit hash broke on SQLite int→REAL round trip; names scrubbed before emails left the domain visible; Devil's Advocate crashed when it could not read to verify (now waits); a crashing skill stalled its run (now routes to a human); a band exception approved without a band broke payroll templating (found by the bench).
 
-**Honest results** — Prativaad's model layer adds nothing on the sim provider; overhead 21% of (very small) run cost. Helpdesk is 25% tier 0 by nature. Cycle times are demo-clock artefacts.
+**Honest results** — Devil's Advocate's model layer adds nothing on the sim provider; overhead 21% of (very small) run cost. Helpdesk is 25% tier 0 by nature. Cycle times are demo-clock artefacts.
 
 **Open**
-1. Run the bench and fault corpus against a real tier-1 model (`openai_compatible`), then decide on Prativaad's model layer (PLAN §10 trigger: < 20% added ⇒ shrink).
+1. Run the bench and fault corpus against a real tier-1 model (`openai_compatible`), then decide on Devil's Advocate's model layer (PLAN §10 trigger: < 20% added ⇒ shrink).
 2. One more cold rehearsal of the live extension test (leave encashment and probation confirmation done; probation's first rule had a window bug that its workflow test caught).
 3. Round 1: review and submit `docs/ARCHITECTURE_6PAGE.md` (check it prints to six pages); record the video from `docs/DEMO_SCRIPT.md`.
 6. ~~Dockerfile unverified~~ — verified 2026-11-19: `docker build -t setu .` succeeds; the container serves the console on :8000, seeds on first start, runs onboarding and the reserved drill.
@@ -185,10 +185,10 @@ Only the ones that could change what we do this week. Full list in `DESIGN.md` �
 
 **Shipped**
 - `DESIGN.md` §4.3 — master story: one week at TBO covering every feature, with a beat-to-section coverage map. Source for the video and finale run sheet.
-- `DESIGN.md` §9.5 — PARAKH: ICP scoring, lawful-basis gate, `pointer_only`, no-raid guard, governed outreach, effort table, drop rule.
+- `DESIGN.md` §9.5 — FairHire: ICP scoring, lawful-basis gate, `pointer_only`, no-raid guard, governed outreach, effort table, drop rule.
 - Cross-references updated: §2 service-line table, §3 scope, §16.11, §21 traceability, §22 asks, §24 sources.
 - `PLAN.md` — phase plan with six gates, ownership map, critical path, pre-agreed change triggers.
-- `CLAUDE.md` — ten invariants, extension-point rules, PARAKH-specific rules, PR checklist.
+- `CLAUDE.md` — ten invariants, extension-point rules, FairHire-specific rules, PR checklist.
 - `PROGRESS.md` — this file.
 
 **Decided** — D6 through D12.
@@ -197,7 +197,7 @@ Only the ones that could change what we do this week. Full list in `DESIGN.md` �
 1. The live-data version of sourcing is forbidden outright by the data rule. Reframed to mock connectors; stated on the slide rather than letting a judge find it.
 2. DPDP has no legitimate-interests basis, so the standard European sourcing design has no lawful basis in India. This would have read as *disqualifying* to a governance-weighted panel. Inverted into the `pointer_only` gate, which turns the biggest liability into the most distinctive governance feature.
 3. "Poaching" risk sits on TBO's side, not the candidate's — non-competes are void, non-solicit clauses binding TBO are not. The guard was redesigned to check TBO's obligations and surface the clause ID.
-4. A third depth line would cost the depth mark the brief explicitly rewards. Reframed PARAKH as the extension-model test case.
+4. A third depth line would cost the depth mark the brief explicitly rewards. Reframed FairHire as the extension-model test case.
 5. My own §19 week plan opened with kernel code while the actual next deliverable is the Round 1 document and video. Corrected in `PLAN.md` as Phase 0 with Gate 0.
 
 **Open** — Q1 is blocking. Everything in `PLAN.md` is relative until the Round 1 deadline is known.
@@ -214,7 +214,7 @@ Only the ones that could change what we do this week. Full list in `DESIGN.md` �
 
 **Shipped**
 - Decoded all 7 pages of the TBO brief (`Building_Software_Faster.pdf`, mangled font encoding) into the compressed brief at `DESIGN.md` §1: eight objectives, non-negotiable guardrails, cost and model rule, three rounds, evaluation weights, rules.
-- `DESIGN.md` v0.1 — 24 sections: service-line choice, two walkthroughs, four-plane architecture, governed action flow, governance kernel, compliance mapping, extension model, Prativaad, cost and routing, safe failure, data model, surfaces, dashboard, creative add-ons, stack, repo layout, round plan, risks, traceability matrix, asks of TBO.
+- `DESIGN.md` v0.1 — 24 sections: service-line choice, two walkthroughs, four-plane architecture, governed action flow, governance kernel, compliance mapping, extension model, Devil's Advocate, cost and routing, safe failure, data model, surfaces, dashboard, creative add-ons, stack, repo layout, round plan, risks, traceability matrix, asks of TBO.
 
 **Decided** — D1 through D5.
 

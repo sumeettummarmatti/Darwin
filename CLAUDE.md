@@ -1,6 +1,6 @@
 # CLAUDE.md — working rules for this repo
 
-Read this before writing any code in SETU. `DESIGN.md` is the architecture; `PLAN.md` is the order; this file is the set of rules you do not get to break.
+Read this before writing any code in HR Autopilot. `DESIGN.md` is the architecture; `PLAN.md` is the order; this file is the set of rules you do not get to break.
 
 This is a hackathon entry judged on **governance (20%), extensibility (20%), automation depth (20%), cost (15%), engineering quality (15%), experience (10%)**. A clever shortcut that breaks an invariant below costs more than the feature is worth. One wrong automation is disqualifying.
 
@@ -17,7 +17,7 @@ Violating any of these is a bug, not a trade-off. If a task seems to require it,
 5. **Policy lives in `policies/*.yaml`, never in a prompt and never in an `if`.** If you are about to encode a notice period, a leave rule, an eligibility check or a statutory timeline in Python or in prompt text, you are in the wrong file.
 6. **A step marked `deterministic: true` must not call a model.** The validator enforces it. Rule-based work in a model call is a scored failure, not a style preference.
 7. **All model calls go through the router and the PII proxy.** Never import a provider SDK outside `core/router/`. Never construct a prompt containing a raw PII field.
-8. **A `pointer_only` record is never profiled, scored, ranked, enriched, or sent to a model.** Not even to "check if they're relevant." See §PARAKH below.
+8. **A `pointer_only` record is never profiled, scored, ranked, enriched, or sent to a model.** Not even to "check if they're relevant." See §FairHire below.
 9. **Every kernel step emits an audit entry** with actor, inputs, policy pack versions, rule IDs, prompt version, model ID, tokens, INR, outcome. An action with no audit entry did not happen correctly.
 10. **Synthetic data only.** No real personal data in any tool, model, log, test fixture, screenshot or commit — including while debugging. This is a stated competition rule, not a preference.
 
@@ -86,7 +86,7 @@ Then `hrx validate && hrx test`. If you touched `core/`, explain why in the PR b
 
 ---
 
-## PARAKH — the sourcing module, extra rules
+## FairHire — the sourcing module, extra rules
 
 This is the highest-risk code in the repo. India's DPDP Act offers only consent or a narrow list of legitimate uses, with no GDPR-style legitimate-interests basis, so a person who never gave us their data has no lawful basis for us to process it.
 
@@ -111,7 +111,7 @@ This is the highest-risk code in the repo. India's DPDP Act offers only consent 
 | Property | Idempotency: N retries ⇒ one side effect. Use Hypothesis |
 | Chaos | 500s, timeouts, duplicate delivery, clock skew, mid-run process kill |
 | Replay | Historical runs reproduce under their recorded pack versions |
-| Fault corpus | Planted defects in `tests/fault_corpus/` — measures Prativaad, not the happy path |
+| Fault corpus | Planted defects in `tests/fault_corpus/` — measures Devil's Advocate, not the happy path |
 
 A feature without a test that would fail if the feature broke is not done.
 
@@ -134,7 +134,7 @@ Finalists are questioned **individually** about the parts they built, so commit 
 
 - **Code simple and readable over clever.** An intuitive implementation beats a compact one; a judge reading this repo for ten minutes is the audience for engineering quality.
 - Run the devil's-advocate pass on any design decision before implementing it: what has to be true for this to be wrong, what breaks under retry or concurrency, and what a sceptical reviewer asks first.
-- If a mechanism underperforms, **report it and shrink it**. An honest negative result on Prativaad scores better than a defended one.
+- If a mechanism underperforms, **report it and shrink it**. An honest negative result on Devil's Advocate scores better than a defended one.
 - Update `PROGRESS.md` at the end of each working session: what shipped, what decided, what reversed, what is open.
 - Do not invent measurements. A number that did not come out of `make bench` does not go in a document.
 - When blocked by a missing TBO input (volumes, mock contracts, dates), state the assumption in `PROGRESS.md` under open questions and keep moving.

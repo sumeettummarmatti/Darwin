@@ -28,7 +28,7 @@ monthly projection     = measured ₹/run (p50) × assumed runs per month + assu
 
 Helpdesk p95 is the Form 16 question: retrieval support was low, tier 1's confidence fell under 0.7, and the router moved to tier 2 — the measured trigger, logged with the call.
 
-## Prativaad: measured, and shrunk once already
+## Devil's Advocate: measured, and shrunk once already
 
 | | Value |
 |---|---|

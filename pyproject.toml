@@ -1,7 +1,7 @@
 [project]
 name = "setu"
 version = "0.2.0"
-description = "SETU — an agent-first HR services platform with a governance kernel (VIDHI) and a devil's-advocate layer (PRATIVAAD)."
+description = "HR Autopilot — an agent-first HR services platform with a governance kernel (Gatekeeper) and a Devil's Advocate layer."
 requires-python = ">=3.12"
 license = { text = "Apache-2.0" }
 dependencies = [

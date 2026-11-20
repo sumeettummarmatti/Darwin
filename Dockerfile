@@ -1,4 +1,4 @@
-# SETU — single container: API + kernel + built console + SQLite. Synthetic data only.
+# HR Autopilot — single container: API + kernel + built console + SQLite. Synthetic data only.
 FROM node:22-alpine AS web
 WORKDIR /web
 COPY apps/web/package.json apps/web/package-lock.json ./

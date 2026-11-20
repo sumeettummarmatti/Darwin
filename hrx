@@ -1,4 +1,4 @@
 #!/bin/sh
-# hrx — extend SETU without touching core/. See tools/hrx/__main__.py.
+# hrx — extend HR Autopilot without touching core/. See tools/hrx/__main__.py.
 DIR="$(cd "$(dirname "$0")" && pwd)"
 exec "$DIR/.venv/bin/python" -m tools.hrx "$@"

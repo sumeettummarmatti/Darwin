@@ -1,4 +1,4 @@
-# SETU · सेतु
+# HR Autopilot
 
 **An HR platform where the agents do the chasing, the kernel enforces the law, and you can prove what every workflow cost and who decided what.**
 
@@ -19,12 +19,12 @@ or `make docker`. No API keys, no external services: the model provider defaults
 
 Open **Start here** in the console and press the buttons in order — it plays one week at TBO on the real screens.
 
-**Use real models (optional, one step):** paste a Groq key into **Safety controls → Real AI** on the website (it is checked with Groq first, kept only in the git-ignored `.env`, and never shown again), or put it in `.env` yourself (`cp .env.example .env`). If the key later expires or is revoked, the site asks for a new one and keeps running on the simulator meanwhile. SETU then runs every model step — including Prativaad's reviewer — on Groq (`openai/gpt-oss-20b`, escalating to `openai/gpt-oss-120b` on a measured trigger; both Apache-2.0). Only tokenised synthetic payloads leave the machine; the Privacy page shows each one. Tests and `make bench` stay on the offline simulator unless you pass `python -m bench.run --profile groq`. The scripted behaviours listed in [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) belong to the simulator; with Groq the model behaves as it will.
+**Use real models (optional, one step):** paste a Groq key into **Safety controls → Real AI** on the website (it is checked with Groq first, kept only in the git-ignored `.env`, and never shown again), or put it in `.env` yourself (`cp .env.example .env`). If the key later expires or is revoked, the site asks for a new one and keeps running on the simulator meanwhile. HR Autopilot then runs every model step — including Devil's Advocate's reviewer — on Groq (`openai/gpt-oss-20b`, escalating to `openai/gpt-oss-120b` on a measured trigger; both Apache-2.0). Only tokenised synthetic payloads leave the machine; the Privacy page shows each one. Tests and `make bench` stay on the offline simulator unless you pass `python -m bench.run --profile groq`. The scripted behaviours listed in [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) belong to the simulator; with Groq the model behaves as it will.
 
 | Command | What it does |
 |---|---|
 | `make test` | 96 tests: policy packs, governance, golden runs, chaos, Hypothesis idempotency property, API contract, fault corpus |
-| `./hrx validate` | Schema, load-time invariants and the governance lint (Prativaad gate C) |
+| `./hrx validate` | Schema, load-time invariants and the governance lint (Devil's Advocate gate C) |
 | `./hrx test` | Replays synthetic runs under an injected retry storm; fails on any duplicate side effect |
 | `make bench` | Every number in this README comes from here → [`bench/results/latest.md`](bench/results/latest.md) |
 | `./hrx scaffold workflow <name>` | Starts a new service line without touching `core/` |
@@ -33,14 +33,14 @@ Open **Start here** in the console and press the buttons in order — it plays o
 
 ## What it is
 
-Agents run routine HR work end to end. A governance kernel (**VIDHI**) sits between every agent intention and every real-world action. Humans own decisions with legal, financial or human consequences. A devil's-advocate layer (**PRATIVAAD**) attacks plans before anything irreversible happens. Every step is priced, logged and replayable.
+Agents run routine HR work end to end. A governance kernel (**Gatekeeper**) sits between every agent intention and every real-world action. Humans own decisions with legal, financial or human consequences. A **Devil's Advocate** layer attacks plans before anything irreversible happens. Every step is priced, logged and replayable.
 
 ```
  Experience   web console · chat (Slack-style) · dashboard          ── one intent API
  Agents       skills: manifest + handler — NO network egress        ── propose, never act
- VIDHI        orchestrator · policy decision point · reserved gate  ── the only path out
+ Gatekeeper        orchestrator · policy decision point · reserved gate  ── the only path out
               idempotency/outbox · PII proxy · router + cost meter
-              hash-linked audit · kill switch · Prativaad
+              hash-linked audit · kill switch · Devil's Advocate
  Data         system of record · policy packs · workflow defs · vault · connector SDK
  External     TBO mocks: ticketing · assets · access cards · directory · payroll · mail
 ```
@@ -48,7 +48,7 @@ Agents run routine HR work end to end. A governance kernel (**VIDHI**) sits betw
 **Every agent action walks the same path**, with no fast lane:
 
 ```
-proposal → kill switch → Prativaad (irreversible only) → policy + RBAC ∩ capability ∩ step scope + DPDP purpose
+proposal → kill switch → Devil's Advocate (irreversible only) → policy + RBAC ∩ capability ∩ step scope + DPDP purpose
          → reserved? → HOLD for a named human (receipt with a hash of what they saw)
          → else: outbox → connector (same idempotency key on every retry) → read-back verify → audit (₹, model, rules)
 ```
@@ -63,7 +63,7 @@ proposal → kill switch → Prativaad (irreversible only) → policy + RBAC ∩
 | **Exit** (`workflows/exit.v1.yaml`) | Notice + settlement by rule; scheduled deprovisioning; retention clocks | Accept resignation (manager → HRBP), notice buyout, payroll sign-off; grievance lines route-only |
 | **Leave** (`workflows/leave.v1.yaml`) | Booked by rule within policy | Manager beyond the auto limit; HR Head above balance |
 | **Helpdesk** (`workflows/helpdesk.v1.yaml`) | Record lookups at tier 0; policy answers cite clause + pack version | — |
-| **Talent / PARAKH** (`workflows/sourcing.v1.yaml`) | Lawful-basis gate, no-raid guard, span-backed claims, deterministic ICP score, gate-D bias flags | Campaign approval; rejection is reserved to the hiring manager |
+| **Talent / FairHire** (`workflows/sourcing.v1.yaml`) | Lawful-basis gate, no-raid guard, span-backed claims, deterministic ICP score, gate-D bias flags | Campaign approval; rejection is reserved to the hiring manager |
 | **Leave encashment** (`workflows/leave_encashment.v1.yaml`) | Added cold with `hrx` as live-extension rehearsal 1 | Finance sign-off above the pack's ₹50,000 threshold |
 | **Probation confirmation** (`workflows/probation_confirmation.v1.yaml`) | Rehearsal 2: rule opens the review; registry v4 adds the reserved action | Reporting manager confirms or extends |
 
@@ -81,7 +81,7 @@ From `make bench` (one deterministic week on the synthetic dataset, simulated pr
 | Helpdesk | 32 / 32 | ₹0.0024 | ₹0.0278 | 100% | 25% |
 | Sourcing | 1 / 1 | ₹0.0156 | ₹0.0156 | 91% | 91% |
 
-- **Prativaad fault corpus** (16 planted defects, 4 clean steps): the deterministic layer catches **88%** with **0 false alarms**. On the simulated provider the model layer adds **nothing**, and it costs 21% of run spend (it is capped at 8% of each run's *budget*). Measured, reported, and the model review was already shrunk once — from every irreversible step to once per run — when it measured 46%. See [docs/COST.md](docs/COST.md).
+- **Devil's Advocate fault corpus** (16 planted defects, 4 clean steps): the deterministic layer catches **88%** with **0 false alarms**. On the simulated provider the model layer adds **nothing**, and it costs 21% of run spend (it is capped at 8% of each run's *budget*). Measured, reported, and the model review was already shrunk once — from every irreversible step to once per run — when it measured 46%. See [docs/COST.md](docs/COST.md).
 - **Projection** at assumed TBO volumes (placeholder until TBO shares figures): **≈ ₹6,510 / month**, almost all of it the assumed hosting cost; inference is a few rupees.
 - Rupee figures are only as real as the rate card in `config/routing.yaml`. Point it at a real OpenAI-compatible endpoint and re-run `make bench`.
 
@@ -92,7 +92,7 @@ From `make bench` (one deterministic week on the synthetic dataset, simulated pr
 | # | Objective | Mechanism | Where to look | Proof |
 |---|---|---|---|---|
 | 1 | Automate end to end | Durable orchestrator, connectors, scheduled steps, fan-out | `core/orchestrator.py`, `workflows/` | Overview "no human touch", drillable to each human step |
-| 2 | Platform, not point solution | Five extension points, `hrx`, load-time validation | `workflows/ skills/ connectors/ policies/` | Exit, PARAKH and leave-encashment commits touch no `core/` file (below) |
+| 2 | Platform, not point solution | Five extension points, `hrx`, load-time validation | `workflows/ skills/ connectors/ policies/` | Exit, FairHire and leave-encashment commits touch no `core/` file (below) |
 | 3 | Humans on decisions that matter | Reserved registry as config; `may_never` verbs fail at load; agents get 403 | `policies/reserved_decisions.v4.yaml`, `core/reserved.py` | Safety controls → Run the test |
 | 4 | Comply by design | Versioned packs with tests; refuse to load untested; gate B property testing | `policies/`, `core/rules/` | Rules → Suggest a change → Check this change |
 | 5 | Clean system of record | Employment spells, PII rows with purpose + retention, hash-linked audit | `core/sor.py`, `core/audit.py` | History log → Secretly edit an old entry |
@@ -116,22 +116,22 @@ From `make bench` (one deterministic week on the synthetic dataset, simulated pr
 
 ```bash
 git log --oneline -- core/                       # every kernel change, each with its reason
-git show --stat ccac514                          # PARAKH: workflows, skills, policies, connectors — no core/
+git show --stat ccac514                          # FairHire: workflows, skills, policies, connectors — no core/
 git log --stat --format='%h %s' -- workflows/leave_encashment.v1.yaml workflows/probation_confirmation.v1.yaml
 ```
 
-Two kernel additions were needed before PARAKH (fan-out steps and system-of-record operations for people who are not employees). They were made as separate `core:` commits *before* the line, and building it also surfaced one kernel bug (a crashing skill could stall a run), fixed in its own commit. All three are recorded in [PROGRESS.md](PROGRESS.md): a differently-shaped line is supposed to find gaps. The line itself, and the two rehearsal lines after it (leave encashment, probation confirmation), land on extension points only. CI fails any PR labelled `service-line` that touches `core/` (`tools/ci/core_freeze.sh`).
+Two kernel additions were needed before FairHire (fan-out steps and system-of-record operations for people who are not employees). They were made as separate `core:` commits *before* the line, and building it also surfaced one kernel bug (a crashing skill could stall a run), fixed in its own commit. All three are recorded in [PROGRESS.md](PROGRESS.md): a differently-shaped line is supposed to find gaps. The line itself, and the two rehearsal lines after it (leave encashment, probation confirmation), land on extension points only. CI fails any PR labelled `service-line` that touches `core/` (`tools/ci/core_freeze.sh`).
 
 [docs/DEVGUIDE.md](docs/DEVGUIDE.md) walks through adding leave encashment from zero.
 
-![PARAKH ranking: deterministic, with quoted evidence and a gate-D flag](docs/img/talent-ranking.jpg)
+![FairHire ranking: deterministic, with quoted evidence and a gate-D flag](docs/img/talent-ranking.jpg)
 
 ---
 
 ## Repository layout
 
 ```
-core/          VIDHI, the kernel. Frozen during service-line work.
+core/          Gatekeeper, the kernel. Frozen during service-line work.
 workflows/     extension point 1 — declarative YAML
 skills/        extension point 2 — manifest + handler (+ prompt, simulated responder)
 connectors/    extension point 3 — SDK adapters; _spares/ pre-registered for the live test
@@ -140,7 +140,7 @@ mocks/         stand-ins for TBO's mock APIs, deliberately not idempotent, with 
 apps/api       thin HTTP layer;  apps/web  the console (React + Vite)
 tools/hrx      scaffold · validate · test;  tools/seed.py  synthetic data
 tests/         policy · governance · workflows · chaos · property · contract · fault_corpus
-bench/         make bench + the Prativaad fault corpus runner
+bench/         make bench + the Devil's Advocate fault corpus runner
 docs/          DEVGUIDE · GOVERNANCE · COST · DEMO_SCRIPT · TRY_IT (click-by-click script)
 ```
 
@@ -175,4 +175,4 @@ Design: [DESIGN.md](DESIGN.md) · plan: [PLAN.md](PLAN.md) · working rules: [CL
 
 ## Licence
 
-SETU's code is released under Apache-2.0.
+HR Autopilot's code is released under Apache-2.0.

@@ -155,7 +155,7 @@ Rules for skills:
 $ ./hrx scaffold connector expense-system
 ```
 
-Declare each action's `side_effect`, `irreversible`, `money`, `compensation` and `capability` in the manifest. In `execute`, always pass the idempotency key to the system as its client reference: `read_back` uses it to verify post-state and to recognise a call that timed out after committing. Implement `prior_effects` if a duplicate is possible across different keys (Prativaad uses it). Spares for the live test are pre-registered in `connectors/_spares/` (calendar, e-signature).
+Declare each action's `side_effect`, `irreversible`, `money`, `compensation` and `capability` in the manifest. In `execute`, always pass the idempotency key to the system as its client reference: `read_back` uses it to verify post-state and to recognise a call that timed out after committing. Implement `prior_effects` if a duplicate is possible across different keys (Devil's Advocate uses it). Spares for the live test are pre-registered in `connectors/_spares/` (calendar, e-signature).
 
 ## Changing a policy safely
 

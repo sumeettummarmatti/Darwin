@@ -1,4 +1,4 @@
-# SETU — one command per job. Judges: `make up` then open http://localhost:8000
+# HR Autopilot — one command per job. Judges: `make up` then open http://localhost:8000
 PY ?= .venv/bin/python
 
 .PHONY: setup web up dev seed test validate hrx-test bench licenses demo-reset clean docker
@@ -23,7 +23,7 @@ seed:             ## reset var/ and reseed the synthetic dataset
 test:             ## the whole suite: policy, governance, workflows, chaos, property, contract
 	$(PY) -m pytest
 
-validate:         ## schema + invariants + governance lint (Prativaad gate C)
+validate:         ## schema + invariants + governance lint (Devil's Advocate gate C)
 	./hrx validate
 
 hrx-test:         ## replay synthetic runs under a retry storm; no duplicate side effects

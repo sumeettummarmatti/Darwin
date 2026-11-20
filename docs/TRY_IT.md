@@ -1,4 +1,4 @@
-# Try SETU: a click-by-click script
+# Try HR Autopilot: a click-by-click script
 
 This walks you through **every feature**, in story order. Each step tells you:
 
@@ -59,7 +59,7 @@ If a page looks old, press **Cmd+Shift+R**.
 
 **You'll see:** You jump to **Processes**. A row of circles appears: *Work out laptop and kit → Probation and first-day terms → Check the uploaded ID scan → Open IT ticket → Allocate laptop → Issue access card → Create email account → Set up payroll → …*. Most turn blue within seconds. One, **Check the uploaded ID scan**, turns maroon and the process says **Waiting for a person**.
 
-**What it means:** SETU ran a whole joining checklist by itself. It only stopped where it wasn't sure.
+**What it means:** HR Autopilot ran a whole joining checklist by itself. It only stopped where it wasn't sure.
 
 ### 1.2 Look at a step done by rules
 **Do:** Click the first circle, **Work out laptop and kit**.
@@ -74,16 +74,16 @@ If a page looks old, press **Cmd+Shift+R**.
 **You'll see:**
 - A tag **The AI wasn't sure**
 - A question: *"Meera Iyer's ID scan could not be read reliably… is it legible and does the name match?"*
-- *"The AI wasn't sure enough even after trying the bigger model, so SETU stopped instead of guessing."*
+- *"The AI wasn't sure enough even after trying the bigger model, so HR Autopilot stopped instead of guessing."*
 - **AI's answer**: confidence (e.g. 0.52), legible yes/no, name matches yes/no, its reasoning
 - *"Why you're seeing this: The AI was only 52% sure (it needs 80%), even with the bigger model."*
 
-**What it means:** The small AI tried, wasn't confident, so SETU tried a bigger AI. Still not confident, so it **stopped and asked a person one clear question**. It never guesses on important things.
+**What it means:** The small AI tried, wasn't confident, so HR Autopilot tried a bigger AI. Still not confident, so it **stopped and asked a person one clear question**. It never guesses on important things.
 
 ### 1.4 See what the AI was actually sent
 **Do:** Click the **Check the uploaded ID scan** circle → click **See exactly what the AI was sent**.
 
-**You'll see:** The **Privacy** page with two columns: **What SETU has** (Meera's real name) and **What the AI got** (her name replaced with a blue **«PERSON_1»** tag). Under it: "N fields removed before sending".
+**You'll see:** The **Privacy** page with two columns: **What HR Autopilot has** (Meera's real name) and **What the AI got** (her name replaced with a blue **«PERSON_1»** tag). Under it: "N fields removed before sending".
 
 **What it means:** The AI never sees real names, PAN or bank numbers. They're swapped for placeholders, and fields the AI doesn't need are removed.
 
@@ -94,23 +94,23 @@ If a page looks old, press **Cmd+Shift+R**.
 
 **What it means:** One click from a person and the whole joining is done: laptop, card, email, payroll and welcome email.
 
-### 1.6 The old laptop (the checker catches a duplicate)
+### 1.6 The old laptop (the Devil's Advocate catches a duplicate)
 **Do:** Click the **Allocate laptop** circle.
 
 **You'll see:** A card titled **Possible duplicate**:
 - **The charge:** "This person already has an open allocation (ASS-…) from 2024-03-04. Doing this again could create a duplicate."
 - **Evidence:** the old allocation number
-- **Defence:** "SETU checked the other system first: return ledger shows LT-B907 returned on 2024-09-14…"
+- **Defence:** "HR Autopilot checked the other system first: return ledger shows LT-B907 returned on 2024-09-14…"
 - **Verdict:** **Upheld**, "Taken seriously and dealt with before anything happened."
 
 Then: "Done once, record ASS-…".
 
-**What it means:** Meera worked here on contract two years ago and a laptop is still on her name. Before ordering a new one, the **checker (Prativaad)** raised a concern. SETU **read** the return records, confirmed the old laptop came back, and only then ordered one. A normal system would never have asked.
+**What it means:** Meera worked here on contract two years ago and a laptop is still on her name. Before ordering a new one, the **Devil's Advocate** raised a concern. HR Autopilot **read** the return records, confirmed the old laptop came back, and only then ordered one. A normal system would never have asked.
 
 ### 1.7 See the full history
 **Do:** Scroll down → **Show the full history of this process**.
 
-**You'll see:** A numbered list like "Started onboarding", "Checked the entitlements rules", "Asked the AI: extract id", "Sent to a person: low confidence", "The checker reviewed it before acting", "Assets: allocate · checked afterwards: exactly one record", each with who did it and when.
+**You'll see:** A numbered list like "Started onboarding", "Checked the entitlements rules", "Asked the AI: extract id", "Sent to a person: low confidence", "The Devil's Advocate reviewed it before acting", "Assets: allocate · checked afterwards: exactly one record", each with who did it and when.
 
 **What it means:** Every single thing is written down: who, what, when and why. That's what an auditor would ask for.
 
@@ -123,14 +123,14 @@ Then: "Done once, record ASS-…".
 
 **You'll see:** A message "The laptop system is down…". A new onboarding starts. It goes blue up to **Allocate laptop**, which shows a dashed circle (retrying).
 
-**What it means:** The laptop system is broken. SETU doesn't give up and doesn't spam it. It waits and retries.
+**What it means:** The laptop system is broken. HR Autopilot doesn't give up and doesn't spam it. It waits and retries.
 
 ### 2.2 See it from Safety controls
 **Do:** Sidebar → **Safety controls** → look at **Break a system (for testing)**.
 
-**You'll see:** A red tag **Laptops broken**, maybe also "SETU stopped calling Laptops for now". Under **Recent calls to these systems**: failed calls.
+**You'll see:** A red tag **Laptops broken**, maybe also "HR Autopilot stopped calling Laptops for now". Under **Recent calls to these systems**: failed calls.
 
-**What it means:** After a few failures SETU stops calling the broken system for a bit (so it doesn't make things worse) and tries again later.
+**What it means:** After a few failures HR Autopilot stops calling the broken system for a bit (so it doesn't make things worse) and tries again later.
 
 ### 2.3 Fix it
 **Do:** Make sure **Laptops** is selected → **Fix it**. Go back to **Processes** and open that new onboarding.
@@ -142,7 +142,7 @@ Then: "Done once, record ASS-…".
 ### 2.4 Try the nastier failures (optional)
 In **Break a system**, pick **Laptops**, then try each **How it breaks** option → **Break it** → start a new onboarding from **Processes** (Start → Onboarding → pick a joiner → Start):
 
-| Option | What happens to a normal system | What SETU does |
+| Option | What happens to a normal system | What HR Autopilot does |
 |---|---|---|
 | Fails 3 times | Gives up or double-orders | Retries, one laptop |
 | Saves, then times out | Thinks it failed, orders again → **two laptops** | Checks first, finds the saved one, stops |
@@ -167,7 +167,7 @@ Press **Fix it** when done.
 
 **You'll see:** An answer (or "I'm not confident enough… I've passed it to HR"). It may use the bigger AI.
 
-**What it means:** When the rules only partly cover a question, SETU either moves up to the bigger AI (and records why) or hands it to a person.
+**What it means:** When the rules only partly cover a question, HR Autopilot either moves up to the bigger AI (and records why) or hands it to a person.
 
 ### 3.3 Rahul's leave balance
 **Do:** Change **talking as** to **Rahul Menon** → **How many casual leaves do I have?**
@@ -181,7 +181,7 @@ Press **Fix it** when done.
 
 **You'll see:** "Done. 2 days of casual leave booked from … You have 2 casual days left." Tag: **Source: leave rules (LV-…)**.
 
-**What it means:** The rule says up to 3 casual days can be booked automatically, so SETU booked it, put it in the calendar and updated the balance.
+**What it means:** The rule says up to 3 casual days can be booked automatically, so HR Autopilot booked it, put it in the calendar and updated the balance.
 
 ### 3.5 Leave that needs a manager
 **Do:** Click **Book 9 days of earned leave from 2026-12-21**.
@@ -217,15 +217,15 @@ Press **Fix it** when done.
 
 **What it means:** This is a prepared edit someone wrote. It looks harmless but quietly removes the legal minimum notice for fixed-term contracts.
 
-### 4.3 Let the checker attack it
+### 4.3 Let the Devil's Advocate attack it
 **Do:** **Check this change**.
 
 **You'll see:**
-- Red: **"Blocked: 27 cases break the rules."** The checker tried 135 test cases; 72 would get a different answer than today.
+- Red: **"Blocked: 27 cases break the rules."** The Devil's Advocate tried 135 test cases; 72 would get a different answer than today.
 - Cards titled **Ends up below the legal minimum**: *Case: employment type fixed_term · grade L2 · state IN-KA · contract notice days 10*, *Your change gives: notice days 10…*, Verdict **Can't go live**.
-- "The checker wrote a test that catches this." → **Add to the tests**.
+- "The Devil's Advocate wrote a test that catches this." → **Add to the tests**.
 
-**What it means:** The checker made up lots of realistic employees and found one (a fixed-term worker in Karnataka) where the new rule breaks the law. It **blocks** the change and writes a test so the mistake can never sneak back.
+**What it means:** The Devil's Advocate made up lots of realistic employees and found one (a fixed-term worker in Karnataka) where the new rule breaks the law. It **blocks** the change and writes a test so the mistake can never sneak back.
 
 **Do:** **Add to the tests** → toast "Test added…". Then **Cancel** (don't make it live).
 
@@ -238,14 +238,14 @@ Press **Fix it** when done.
 
 **You'll see:** An **Exit: Rahul Menon** process. Blue: *Check the letter for complaints → Work out notice period → Estimate final pay → Prepare summary for managers*. Maroon: *Pass complaint to the ethics officer* and *Accept resignation*.
 
-**What it means:** His letter says he wants to leave early and that his manager bullied him. SETU did the maths but **can't accept the resignation itself**.
+**What it means:** His letter says he wants to leave early and that his manager bullied him. HR Autopilot did the maths but **can't accept the resignation itself**.
 
 ### 5.2 The complaint
-**You'll see** (the box under the circles): **Passed on to you · Grievance: complaint**. "SETU only passed this on. It did **not** classify, summarise, recommend, notify the person named." The **Got it** button is greyed out with "Only the ethics officer can decide this."
+**You'll see** (the box under the circles): **Passed on to you · Grievance: complaint**. "HR Autopilot only passed this on. It did **not** classify, summarise, recommend, notify the person named." The **Got it** button is greyed out with "Only the ethics officer can decide this."
 
 **What it means:** The bullying line went to the ethics officer untouched. Not even Priya (HR) can close it. **Optional:** switch **You are** to **Ishaan Bose** → **Approvals** → **Got it**.
 
-### 5.3 The numbers SETU worked out
+### 5.3 The numbers HR Autopilot worked out
 **Do:** Click **Work out notice period** and **Estimate final pay**.
 
 **You'll see:** Notice days 60, last working day, shortfall days, gratuity eligible **no** (about 4 years 4 months; you need 5), leave encashment, settlement total.
@@ -283,7 +283,7 @@ Press **Fix it** when done.
 
 **You'll see:** A **Wrong date** card: "This is scheduled for … but the date it depends on is now …". Verdict **Upheld**. The card cancellation now shows the new, earlier date.
 
-**What it means:** The last day moved earlier, but the access card was still set to be cancelled on the old date. That's a security hole (he'd keep building access). The checker noticed and **rescheduled it automatically**.
+**What it means:** The last day moved earlier, but the access card was still set to be cancelled on the old date. That's a security hole (he'd keep building access). The Devil's Advocate noticed and **rescheduled it automatically**.
 
 ### 5.9 Receipts
 **Do:** **Approvals** → **Past decisions**.
@@ -316,7 +316,7 @@ Press **Fix it** when done.
 ### 6.2 People found online, never applied
 **You'll see:** Links like `https://papers.example/…`, `https://code.example/…`, tagged **Link only**, with their company.
 
-**What it means:** These people never applied. Under Indian privacy law (DPDP) we have no right to profile them, so SETU **only stores the link**. No profile, no score, no AI.
+**What it means:** These people never applied. Under Indian privacy law (DPDP) we have no right to profile them, so HR Autopilot **only stores the link**. No profile, no score, no AI.
 
 ### 6.3 Ask the AI about one of them
 **Do:** Click **Ask the AI about them** on any link.
@@ -328,7 +328,7 @@ Press **Fix it** when done.
 ### 6.4 Can't approach
 **You'll see:** Red boxes: **Northwind Channel Partners: TBO has a non-solicit obligation…**, **Acme Client Corp…**, each with the agreement number and "Only Legal + HR Head can make an exception." Matching links show **Can't approach**.
 
-**What it means:** TBO promised these companies not to poach their staff. SETU checks TBO's promises and names the exact clause.
+**What it means:** TBO promised these companies not to poach their staff. HR Autopilot checks TBO's promises and names the exact clause.
 
 ### 6.5 Applicants, ranked
 **Scroll down. You'll see:** a table with Name, Score (e.g. **97 / 100**), Must-haves **Yes/No**, and **Proof from the CV**: quotes like "7 years building distributed systems", "Bengaluru", "Languages: Go, Python."
@@ -351,7 +351,7 @@ Press **Fix it** when done.
 - **Made-up facts, thrown away**: a claim like "holds three granted patents in consensus". It isn't in the CV, so it was ignored.
 - On one applicant: **Possible bias** card. The AI's note says "top-tier institute", which can be a hidden stand-in for college tier. **Flagged for the reviewer**.
 
-**What it means:** If the AI invents something, it's thrown out because there's no exact quote. If its explanation sneaks in a biased phrase, the checker flags it, and the score never used it anyway.
+**What it means:** If the AI invents something, it's thrown out because there's no exact quote. If its explanation sneaks in a biased phrase, the Devil's Advocate flags it, and the score never used it anyway.
 *(These two are scripted into the simulator. Real Groq usually behaves, so they don't show up there.)* Switch back to **Groq** after if you like.
 
 ### 6.8 Outreach messages
@@ -408,7 +408,7 @@ Press **Fix it** when done.
 
 **What it means:** The AI provider is a setting. Switching changes nothing else: same rules, same safety.
 
-**Try:** paste a fake key like `gsk_fake123` → **Save key** → red "Groq didn't accept the key…", and SETU keeps working on the simulator.
+**Try:** paste a fake key like `gsk_fake123` → **Save key** → red "Groq didn't accept the key…", and HR Autopilot keeps working on the simulator.
 
 ---
 
@@ -417,7 +417,7 @@ Press **Fix it** when done.
 ### 8.1 Every AI call
 **Do:** **Privacy**. Click any row on the left (e.g. **Extract claims**, **Extract id**, **Welcome draft**).
 
-**You'll see:** **What SETU has** vs **What the AI got**: names become **«PERSON_1»**, plus "N fields removed before sending" (click to see which and why: "not needed for this task", or banned criteria like college tier). **What the AI said back** (folded). If the bigger AI was used: why.
+**You'll see:** **What HR Autopilot has** vs **What the AI got**: names become **«PERSON_1»**, plus "N fields removed before sending" (click to see which and why: "not needed for this task", or banned criteria like college tier). **What the AI said back** (folded). If the bigger AI was used: why.
 
 **What it means:** You can prove for every single AI call exactly what left the building.
 
@@ -431,9 +431,9 @@ Press **Fix it** when done.
 ### 8.3 "What do you have on me?"
 **Do:** Pick **Rahul Menon** → **Show their data**.
 
-**You'll see:** Everything SETU holds about him, including every automatic decision.
+**You'll see:** Everything HR Autopilot holds about him, including every automatic decision.
 
-**What it means:** Under DPDP anyone can ask this. SETU can answer in one click.
+**What it means:** Under DPDP anyone can ask this. HR Autopilot can answer in one click.
 
 ### 8.4 Using data for the wrong reason
 **Do:** **Let the AI try**.
@@ -458,7 +458,7 @@ Press **Fix it** when done.
 
 **What it means:** Each entry is locked to the one before it (like a chain). Change one and the chain breaks, so nobody can quietly rewrite history, not even someone with database access.
 
-**Try:** the **Everything** dropdown to filter: Approvals, AI use, Checker, Other systems…
+**Try:** the **Everything** dropdown to filter: Approvals, AI use, Devil's Advocate, Other systems…
 
 ---
 
@@ -469,7 +469,7 @@ Press **Fix it** when done.
 **You'll see:**
 - **Blocked:** number of actions the AI tried that weren't allowed
 - **Decided by a person:** approvals and how fast people decided; "History log is untouched"
-- **Caught by the checker:** concerns raised, and how many were right
+- **Caught by the Devil's Advocate:** concerns raised, and how many were right
 - **By process:** Exit, Helpdesk, Leave, Onboarding, Sourcing: finished, cost per run, % fully automatic, % sent to a person
 
 **Do:** Click any number (e.g. **Blocked**).

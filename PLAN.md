@@ -1,4 +1,4 @@
-# SETU — Build Plan
+# HR Autopilot — Build Plan
 
 **Companion to `DESIGN.md`.** Design says *what and why*; this says *in what order, who owns it, and what proves it's done*.
 **Status:** v0.1 · 19 Nov 2026
@@ -79,12 +79,12 @@ Nothing here is a feature. All of it is the thing features stand on.
 
 ---
 
-## 4. Phase 3 — Governance surface + Prativaad (week 3)
+## 4. Phase 3 — Governance surface + Devil's Advocate (week 3)
 
 | # | Task | Owner | Done when |
 |---|---|---|---|
-| 3.1 | **Prativaad gate A** — deterministic pre-filter first, then tier-1 model | DA owner | Objection taxonomy implemented; budget cap enforced at 8% |
-| 3.2 | **Prativaad gate C** — governance lint inside `hrx validate` | DA owner | Catches a money-moving step with no `reserved:` flag |
+| 3.1 | **Devil's Advocate gate A** — deterministic pre-filter first, then tier-1 model | DA owner | Objection taxonomy implemented; budget cap enforced at 8% |
+| 3.2 | **Devil's Advocate gate C** — governance lint inside `hrx validate` | DA owner | Catches a money-moving step with no `reserved:` flag |
 | 3.3 | `hrx` CLI: `scaffold`, `validate`, `test` | Tooling owner | Scaffolds a workflow + pack + harness in one command |
 | 3.4 | Web console: workflow board, human queue, audit explorer | Frontend | HR can finish a parked run by hand |
 | 3.5 | Policy pack editor + reserved registry editor | Frontend | HR changes the reserved list with no deploy |
@@ -108,7 +108,7 @@ The most important week. Everything here exists to make one sentence true.
 | 4.2 | Labour-law packs: notice period, settlement, EPF, gratuity, with tests | Policy owner | Statutory-floor violations fail CI |
 | 4.3 | `route_only_never_decide` hard stop | Governance owner | A grievance phrase routes and stops; no classification, no summary |
 | 4.4 | DPDP: purpose tags, retention clocks, DSR endpoints, consent records | Governance owner | Cross-purpose read refused; clock fast-forward demo works |
-| 4.5 | **Fault-injection corpus** (~20 planted-defect runs) | QA owner | Prativaad catch rate is a number, not a claim |
+| 4.5 | **Fault-injection corpus** (~20 planted-defect runs) | QA owner | Devil's Advocate catch rate is a number, not a claim |
 | 4.6 | Chaos drill in CI: 500s, timeouts, duplicate delivery, clock skew | Reliability owner | Green, with exactly-once side effects |
 | 4.7 | **Routing-threshold calibration** (~200 runs) + the curve | Cost owner | A plot we can show; thresholds justified by data |
 | 4.8 | Saga compensation across the exit line | Reliability owner | Failure at step 9 of 12 leaves no orphan state |
@@ -119,7 +119,7 @@ The most important week. Everything here exists to make one sentence true.
 
 ---
 
-## 6. Phase 5 — PARAKH, measurement, rehearsal (week 5)
+## 6. Phase 5 — FairHire, measurement, rehearsal (week 5)
 
 | # | Task | Owner | Done when |
 |---|---|---|---|
@@ -127,7 +127,7 @@ The most important week. Everything here exists to make one sentence true.
 | 5.2 | **No-raid guard** + Legal-owned restricted list | Policy owner | Block shows the clause ID; exception is reserved |
 | 5.3 | ICP pack + deterministic scorer + evidence spans | Policy + skills | A claim with no span is discarded; scores reproducible |
 | 5.4 | `sourcing_mock` + `mail_mock` + payload viewer | Integrations | Synthetic profiles only; no real personal data anywhere |
-| 5.5 | Prativaad gate D — proxy-bias challenge | DA owner | Flags a college-tier proxy in prose, surfaces to the human |
+| 5.5 | Devil's Advocate gate D — proxy-bias challenge | DA owner | Flags a college-tier proxy in prose, surfaces to the human |
 | 5.6 | Four new reserved registry entries | Governance owner | `sourcing.add_source` routes to Legal + DPO |
 | 5.7 | Final measurement pass: ₹/run p50/p95 by tier, automation, cycle, escalation | Cost owner | `make bench` reproduces every number in the submission from seed data |
 | 5.8 | Monthly projection with TBO's volumes | Cost owner | Assumptions visible on the tile |
@@ -135,7 +135,7 @@ The most important week. Everything here exists to make one sentence true.
 | 5.10 | `GOVERNANCE.md`, `COST.md`, README with licences + AI-assistant declarations | Writer | An HR/legal reader can check us without reading code |
 | 5.11 | Demo script + finale run sheet | Presenter | Timed, rehearsed, with the six prepared Q&A answers |
 
-**PARAKH drop rule** (`DESIGN.md` §9.5): if the week is tight, ship 5.1, 5.2 and 5.3 and cut outreach to one approved campaign with three recipients. The governance mechanisms *are* the scoring part of this feature; the volume is not. **Never cut 5.9** — the live extension test is decided on the day, and rehearsal is the only preparation that transfers.
+**FairHire drop rule** (`DESIGN.md` §9.5): if the week is tight, ship 5.1, 5.2 and 5.3 and cut outreach to one approved campaign with three recipients. The governance mechanisms *are* the scoring part of this feature; the volume is not. **Never cut 5.9** — the live extension test is decided on the day, and rehearsal is the only preparation that transfers.
 
 **Gate 5:** every number in the submission is reproducible by `make bench` from seed data, and three unseen requirements have been shipped under time pressure.
 
@@ -151,7 +151,7 @@ Assign one owner per area and keep it stable. The rules say finalists are questi
 | Governance / compliance | Policy packs, DPDP, receipts, RBAC, kill switch | Lawful basis per source; what reaches a model |
 | Reliability | Idempotency, outbox, saga, chaos | Why retries cannot duplicate; what happens at step 9 of 12 |
 | Cost / routing | Router, meter, calibration, bench | Every rupee in the projection; why each threshold |
-| Devil's advocate | Prativaad gates A–D, fault corpus | Catch rate, precision, cost overhead — including if it underperforms |
+| Devil's advocate | Devil's Advocate gates A–D, fault corpus | Catch rate, precision, cost overhead — including if it underperforms |
 | Tooling / DX | `hrx`, DEVGUIDE, scaffolder | The live extension test |
 | Frontend / UX | Console, dashboard, Slack | Why approvals happen in chat |
 | Data | Lifecycle model, seed data, migrations | Why `EMPLOYMENT_SPELL` is separate |
@@ -170,11 +170,11 @@ flowchart LR
     D --> E["Gate 1<br/>vertical slice"]
     E --> F["Onboarding<br/>24 steps"]
     F --> G["Gate 2<br/>real ₹/run"]
-    G --> H["Prativaad +<br/>hrx + console"]
+    G --> H["Devil's Advocate +<br/>hrx + console"]
     H --> I["Gate 3<br/>reserved drill"]
     I --> J["Exit via<br/>extension points"]
     J --> K["Gate 4<br/>zero core commits"]
-    K --> L["PARAKH +<br/>measure + rehearse"]
+    K --> L["FairHire +<br/>measure + rehearse"]
     L --> M["Gate 5<br/>reproducible numbers"]
 ```
 
@@ -192,7 +192,7 @@ flowchart LR
 4. **Synthetic data only, always.** No real personal data in any tool, model, log or screenshot, including during debugging.
 5. **One owner per area, clean scoped commits.** Finalists are questioned individually.
 6. **Devil's advocate before each gate**, not after. The gate review asks what would have to be true for this to be wrong.
-7. **If a mechanism underperforms, report it.** Prativaad included. An honest negative result scores better than a defended one.
+7. **If a mechanism underperforms, report it.** Devil's Advocate included. An honest negative result scores better than a defended one.
 
 ---
 
@@ -202,10 +202,10 @@ Stated in advance so we notice rather than rationalise:
 
 | Signal | Response |
 |---|---|
-| Gate 1 slips more than 3 days | Cut PARAKH entirely; protect Gates 4 and 5 |
+| Gate 1 slips more than 3 days | Cut FairHire entirely; protect Gates 4 and 5 |
 | Temporal spike inconclusive at the decision date | Take the Postgres state machine. The decision date is the decision, not a checkpoint |
 | Gate 4 fails — the exit line needs core changes | Stop feature work. Fix the kernel. This is the 20% extensibility mark and the finale test |
-| Prativaad's model layer adds < 20% over the deterministic pre-filter on the fault corpus | Shrink it to the pre-filter, say so on the slide, reclaim the week |
+| Devil's Advocate's model layer adds < 20% over the deterministic pre-filter on the fault corpus | Shrink it to the pre-filter, say so on the slide, reclaim the week |
 | TBO's volumes make the projection look absurd | Re-check the tier mix before re-checking the arithmetic — it is usually the routing |
 | Mock APIs differ materially from assumptions | Connector contract tests absorb it; `_spares/` and the adapter layer exist for this |
 | Round 1 not shortlisted | Nothing above matters; retrospective on the governance and cost logic, which is what was judged |

@@ -1,8 +1,8 @@
-# SETU — Design Document
+# HR Autopilot — Design Document
 
 **Hackathon:** Building Software Faster — Challenge 2: an AI-native HR platform (TBO)
-**Working name:** SETU (the bridge that closes the loop)
-**Governance kernel:** VIDHI · **Devil's advocate layer:** PRATIVAAD
+**Working name:** HR Autopilot (the bridge that closes the loop)
+**Governance kernel:** Gatekeeper · **Challenge layer:** Devil's Advocate
 **Status:** Round 1 design · v0.1 · 18 Nov 2026
 
 > Names are placeholders. Swap them if the team prefers plain English — nothing in the architecture depends on them.
@@ -18,16 +18,16 @@ This document is the design. What follows is what the repository actually does t
 1. **Something starts a workflow** — a console button, a chat message ("I want to resign"), or a demo-story beat. Chat goes through one intent API; intents are matched by rules (`policies/intents.v2.yaml`), not a model; questions about the person's own record (name, manager, joining status) are answered from the record with no model.
 2. **The orchestrator** (`core/orchestrator.py`) loads the workflow YAML and walks its steps in dependency order, saving every step's state in SQLite, so a crash resumes without repeating work.
 3. **Each step is one of four kinds.** *Skill*: an agent function — deterministic ones only evaluate policy packs; model ones go through the PII proxy and the router. *Connector*: a side effect in another system. *Reserved*: a decision only a named human can make. *Route-only*: POSH / grievance / whistleblower, handed off untouched.
-4. **Every side effect walks the governed path**: kill switch → Prativaad gate A (irreversible actions) → authorisation (reserved verbs, RBAC ∩ capability ∩ step scope, DPDP purpose) → outbox → connector with the same idempotency key on every retry → read-back verification → audit entry with ₹.
+4. **Every side effect walks the governed path**: kill switch → Devil's Advocate gate A (irreversible actions) → authorisation (reserved verbs, RBAC ∩ capability ∩ step scope, DPDP purpose) → outbox → connector with the same idempotency key on every retry → read-back verification → audit entry with ₹.
 5. **Humans decide in the Decisions inbox.** Each item is a context packet with one question; approving binds to a hash of the packet and produces a receipt. Agents attempting a decision get 403.
-6. **Everything is measured** from the same database: ₹ per run, automation, escalations, refusals, Prativaad precision — the Overview page and `make bench`.
+6. **Everything is measured** from the same database: ₹ per run, automation, escalations, refusals, Devil's Advocate precision — the Overview page and `make bench`.
 
 ### Story coverage (§4.3)
 
 | Beat | Status | Notes |
 |---|---|---|
 | ICP pack with prohibited criteria | **Built** | `policies/icp.senior_platform_engineer.v2.yaml`; rules reading a prohibited field fail to load |
-| Patent / OSS signals → pointers | **Built** | Synthetic signals only (`tools/seed_parakh.py`) |
+| Patent / OSS signals → pointers | **Built** | Synthetic signals only (`tools/seed_fairhire.py`) |
 | Kavya stored as a pointer, model call refused | **Built** | Talent → *Ask the model about them* |
 | Restricted employer blocked with clause ID | **Built** | `policies/no_raid.v1.yaml` |
 | Campaign approval reserved; notice-first sends; objection ⇒ suppress + delete; interest ⇒ consent + upgrade | **Built** | Replies are simulated from the Talent page; mail is captured by a mock, never sent |
@@ -65,8 +65,8 @@ This document is the design. What follows is what the repository actually does t
 - **State machine on SQLite, not Temporal/Postgres** (PROGRESS.md D14) — zero-setup and resumable; the schema ports to Postgres.
 - **Models:** an offline simulator by default; Groq (`openai/gpt-oss-20b`, escalating to `-120b`, Apache-2.0) when a key is added on the website. Rupee figures use a declared rate card.
 - **TBO's mock APIs were not available**; `mocks/tbo.py` stands in, deliberately not idempotent.
-- **Prativaad's model layer** reviews the plan once per run (it measured 46% of run cost when run on every step). On the simulator it adds nothing over the rules (88% catch, 0 false alarms on the fault corpus); on Groq it raised a real objection — re-measure before claiming a number.
-- **Exit and PARAKH needed kernel changes first** (fan-out steps, our own record as a connector, sourced-person records), made in separate `core:` commits before the lines; the lines themselves touch no `core/` file.
+- **Devil's Advocate's model layer** reviews the plan once per run (it measured 46% of run cost when run on every step). On the simulator it adds nothing over the rules (88% catch, 0 false alarms on the fault corpus); on Groq it raised a real objection — re-measure before claiming a number.
+- **Exit and FairHire needed kernel changes first** (fan-out steps, our own record as a connector, sourced-person records), made in separate `core:` commits before the lines; the lines themselves touch no `core/` file.
 - **20 Nov: further kernel changes** — a *system down* notice to the human queue (the design's §-fail-safely intent, which the build had only half met: work was held safely but nobody was told), plain-language messages, and record-backed chat answers. The last of these should become an extension point; until then, a new kind of chat answer is a `core/` change.
 - **What is editable on screen:** policy packs and the reserved list (validated, versioned, hot-reloaded). **Workflows are YAML files** — a developer edits them and runs `hrx validate`; there is no workflow editor in the console.
 - **Hiring on a real model** needed `icp@v3`: places arrive as written ("Bengaluru"), so the place-to-region mapping is now a table in the pack rather than something the simulator quietly did.
@@ -77,7 +77,7 @@ This document is the design. What follows is what the repository actually does t
 |---|---|
 | 1–4 | The judge's mental model: what we chose, why, and what it feels like to use. **§4.3 is the master story — every feature in one narrative, with a coverage map** |
 | 5–9 | The architecture that earns the 40% on governance + extensibility. **§9.5 is the talent-intelligence module (ICP scoring, consent-first sourcing, the no-raid guard)** |
-| 10 | Prativaad — our differentiator |
+| 10 | Devil's Advocate — our differentiator |
 | 11–15 | Cost, failure handling, data, surfaces, metrics |
 | 16–18 | Creative add-ons, stack, repo |
 | 19–23 | Round plan, risks, traceability, assumptions |
@@ -167,7 +167,7 @@ That sentence is worth more than any demo polish.
 
 ## 3. What we're building
 
-**SETU** is an agent-first HR services platform. Agents run the routine work end to end; a governance kernel sits between every agent intention and every real-world action; humans own the decisions that carry legal, financial or human weight; and every step is priced, logged and replayable.
+**HR Autopilot** is an agent-first HR services platform. Agents run the routine work end to end; a governance kernel sits between every agent intention and every real-world action; humans own the decisions that carry legal, financial or human weight; and every step is priced, logged and replayable.
 
 ### One-line pitch
 
@@ -179,9 +179,9 @@ That sentence is worth more than any demo polish.
 |---|---|
 | Service line A — Onboarding | Offer accepted → day 30, fully instrumented, cross-team loops closed |
 | Service line B — Exit | Resignation → final settlement, built via extension points only |
-| Service line C — Talent intelligence (PARAKH) | ICP scoring + consent-first sourcing + governed outreach. A **differently-shaped** line (external data, outbound comms, no employee record yet) built to prove the extension model survives a shape it was not designed for — §9.5 |
-| Governance kernel (VIDHI) | Policy-as-configuration, reserved-decision registry, approval receipts, audit chain, kill switch, RBAC |
-| Devil's advocate (PRATIVAAD) | Adversarial review at three gates: pre-commit, policy change, extension time |
+| Service line C — Talent intelligence (FairHire) | ICP scoring + consent-first sourcing + governed outreach. A **differently-shaped** line (external data, outbound comms, no employee record yet) built to prove the extension model survives a shape it was not designed for — §9.5 |
+| Governance kernel (Gatekeeper) | Policy-as-configuration, reserved-decision registry, approval receipts, audit chain, kill switch, RBAC |
+| Devil's Advocate | Adversarial review at three gates: pre-commit, policy change, extension time |
 | Extension model | Workflow definitions, agent/skill registry, connector SDK, policy packs, CLI scaffolder, contract tests |
 | Model router + cost meter | Tiered routing, per-step metering in INR, per-workflow budget guardrail |
 | Safe failure | Idempotency keys, outbox, saga compensation, human queue with context packets, replay |
@@ -226,7 +226,7 @@ Meera Iyer accepts an offer as Senior Analyst, Gurgaon, joining in 11 days. Her 
 | 2 | Employee record created; purpose tags and retention clock attached to every PII field | Kernel | Tier 0 |
 | 3 | Onboarding plan instantiated from `workflows/onboarding.v3.yaml` — 24 steps, 3 of them reserved | Kernel | Tier 0 |
 | 4 | Role→entitlement resolution: laptop class, software list, access zones, payroll band | Rules engine | Tier 0 |
-| 5 | **Prativaad gate A**: plan reviewed before any irreversible action. Objection raised — "an asset is already allocated to this candidate ID from a prior contract stint; allocating again risks a duplicate laptop." | DA agent | Tier 1 (small) |
+| 5 | **Devil's Advocate gate A**: plan reviewed before any irreversible action. Objection raised — "an asset is already allocated to this candidate ID from a prior contract stint; allocating again risks a duplicate laptop." | DA agent | Tier 1 (small) |
 | 6 | Kernel pauses the asset branch, queries the asset mock, confirms the prior allocation is closed, releases the branch with the finding logged | Kernel | Tier 0 |
 | 7 | IT ticket raised with idempotency key `onb:EMP-4821:asset:v3` — laptop class B, software bundle, 9-day lead | Connector | Tier 0 |
 | 8 | Admin request for access card, zones derived from role and location | Connector | Tier 0 |
@@ -254,7 +254,7 @@ Rahul Menon, 4 years 2 months tenure, submits a resignation in Slack.
 | 6 | Manager proposes a notice-period buyout → second reserved decision → HR Head. Approval produces a **receipt**: approver identity, timestamp, and a hash of exactly the context that was on screen | Approval receipts |
 | 7 | Once accepted by a human, deprovisioning fans out: asset recovery ticket, access-card revocation scheduled for the last working day, email suspension (not deletion), directory update | Cross-team loop closed |
 | 8 | Final settlement assembled against statutory timelines; EPF and gratuity figures computed by rules | Labour law as rules |
-| 9 | **Prativaad gate A** objects: "access card revocation is scheduled before the last working day under the amended release date — he would lose building access while still employed." Caught, corrected | Adversarial review earning its keep |
+| 9 | **Devil's Advocate gate A** objects: "access card revocation is scheduled before the last working day under the amended release date — he would lose building access while still employed." Caught, corrected | Adversarial review earning its keep |
 | 10 | Payroll run sign-off → Finance. Agent assembles, human signs | Reserved |
 | 11 | DPDP retention timers start on exit; fields with a shorter purpose life are scheduled for deletion, with the statutory-retention set held back and the reason recorded | Retention limits |
 | 12 | Rahul, now an ex-employee, files an access request for his data; the DSR endpoint answers from the record | Access/correction rights |
@@ -285,7 +285,7 @@ A third name clears both gates. Arjun drafts a notice-first message — who we a
 
 Eleven applicants are ranked. The scorer is arithmetic: years, location, skills present, notice period, computed over extracted facts. The tier-1 model's only job is reading unstructured text and returning claims with character spans — a claim with no span is discarded, which is the cheapest defence available against a model inventing a qualification. Every position carries its criteria, weights, evidence spans and sources, so *why is she fourth* is answered from stored data.
 
-Prativaad's gate D attacks the rationales and flags one: a phrase about a "top-tier institute" is college tier leaking back in through prose after being banned as a field. The flag goes to Arjun. It does not silently rewrite his ranking.
+Devil's Advocate's gate D attacks the rationales and flags one: a phrase about a "top-tier institute" is college tier leaking back in through prose after being banned as a field. The flag goes to Arjun. It does not silently rewrite his ranking.
 
 The agent then tries to auto-reject an applicant who misses both must-haves, and gets `403 RESERVED`. `hire.reject_candidate` is in the kernel's `may_never` verb list; there is no configuration that enables it and no override path. Arjun rejects her himself, with a reason recorded against her record — which is also what she will see if she ever files an access request.
 
@@ -295,7 +295,7 @@ Meera is the pick. Two reserved decisions fire in sequence: final hiring decisio
 
 Meera accepts. The onboarding workflow instantiates from `onboarding.v3.yaml` — 24 steps, three of them reserved — and entitlements resolve by rule: laptop class, software bundle, access zones, payroll band.
 
-Before anything irreversible runs, **Prativaad gate A** objects: an open asset allocation already exists against a candidate ID sharing a PAN token with Meera's new record. She contracted here two years ago. The kernel pauses that branch, queries the asset mock, confirms the prior allocation is closed, and releases it with the finding in the log. Without that objection TBO orders a second laptop — and no confidence threshold would have caught it, because the plan was never uncertain. It was confidently wrong.
+Before anything irreversible runs, **Devil's Advocate gate A** objects: an open asset allocation already exists against a candidate ID sharing a PAN token with Meera's new record. She contracted here two years ago. The kernel pauses that branch, queries the asset mock, confirms the prior allocation is closed, and releases it with the finding in the log. Without that objection TBO orders a second laptop — and no confidence threshold would have caught it, because the plan was never uncertain. It was confidently wrong.
 
 Then the loops close on their own: IT ticket keyed `onb:EMP-4821:asset:v3`, Admin access card with zones derived from role and location, Finance payroll setup, email and directory, manager and buddy wired into the org chart. No one emails anyone. When Finance is called, the payload viewer shows the outbound request beside the source record: `«PERSON_1»`, a vault token where the PAN sits, a vault token where the bank account sits. The brief asks us to show exactly what personal data reaches a model and where it is hosted. We show it on screen rather than describing it in a paragraph.
 
@@ -307,7 +307,7 @@ Meera asks in Slack what to bring on day one, and gets an answer citing the onbo
 
 **Friday morning — the policy changes, and the platform argues back.**
 
-A state amendment lands. Priya edits the notice-period pack in the console. **Prativaad gate B** writes adversarial cases against her draft and finds one: a fixed-term contract in Karnataka with a ten-day notice clause now resolves below the statutory floor. The finding blocks, she corrects it, and the generated case is added to the pack's `tests:` block so it can never regress. The commit that would have shipped the broken rule fails compliance CI on the way in.
+A state amendment lands. Priya edits the notice-period pack in the console. **Devil's Advocate gate B** writes adversarial cases against her draft and finds one: a fixed-term contract in Karnataka with a ten-day notice clause now resolves below the statutory floor. The finding blocks, she corrects it, and the generated case is added to the pack's `tests:` block so it can never regress. The commit that would have shipped the broken rule fails compliance CI on the way in.
 
 Before activating v5 she runs the **policy simulator**: replay the fourteen open exits under the proposed pack. Three of them get a different last working day and two now require a reserved approval that nobody has given. She stages the change for Monday with the diff attached, having learned that from a replay rather than from an employee's complaint.
 
@@ -317,7 +317,7 @@ Rahul resigns in Slack. The kernel classifies it as reserved immediately. The ag
 
 The agent cannot accept it. Not because the UI lacks a button but because the kernel would refuse the action if one existed. His manager proposes a notice-period buyout, which is a second reserved decision, which goes to Deepa, which produces a second receipt.
 
-Deprovisioning fans out — and **Prativaad objects again**: the access card revocation is scheduled for 18:00 on the original last working day, which the buyout moved. Rahul would lose building access while still employed. Caught, corrected, logged.
+Deprovisioning fans out — and **Devil's Advocate objects again**: the access card revocation is scheduled for 18:00 on the original last working day, which the buyout moved. Rahul would lose building access while still employed. Caught, corrected, logged.
 
 Final settlement assembles against statutory timelines with EPF and gratuity by rule. In the demo we deliberately ask the model the gratuity rule and let it get a detail slightly wrong — then show the rules engine computing the number that actually acts. That thirty seconds settles the "compliance is not in your prompts" question permanently.
 
@@ -335,7 +335,7 @@ Nikhil, who has not seen our code, gets a requirement cold: *leave encashment on
 
 It runs live, metered, audited. **Zero files changed in `core/`.** That is the whole product argument, demonstrated by a developer who did not build it.
 
-The dashboard closes the week: cost per completed workflow in rupees at p50 and p95 by tier, automation rate per line, cycle time with the waiting-on-humans split, escalation rate by reason, policy-block rate by rule, and the Prativaad tiles — objections raised, how many the humans upheld, incidents prevented, cost overhead. Every tile drills to the audit entries that produced it, so clicking "79%" lands on the 21% that needed a person and why each one did.
+The dashboard closes the week: cost per completed workflow in rupees at p50 and p95 by tier, automation rate per line, cycle time with the waiting-on-humans split, escalation rate by reason, policy-block rate by rule, and the Devil's Advocate tiles — objections raised, how many the humans upheld, incidents prevented, cost overhead. Every tile drills to the audit entries that produced it, so clicking "79%" lands on the 21% that needed a person and why each one did.
 
 Last beat, thirty seconds: swap the model provider in config, re-run the golden suite, still green. Changing vendor is a configuration change, not a rewrite, and that is cheaper to show than to argue.
 
@@ -351,21 +351,21 @@ Last beat, thirty seconds: swap the model provider in config, re-run the golden 
 | Restricted-employer block with clause ID | No-raid guard | §9.5.5 |
 | Campaign approval by Deepa | Reserved outreach, notice-first, suppression | §9.5.7 |
 | Deterministic scoring, evidence spans | Cost rule + explainability as one mechanism | §9.5.6, §11.1 |
-| College-tier flag | Prativaad gate D, fair hiring | §10.2, §8 |
+| College-tier flag | Devil's Advocate gate D, fair hiring | §10.2, §8 |
 | Auto-rejection refused | `may_never` verb list | §7.2 |
 | Offer approvals with context hashes | Approval receipts | §7.3, §16.4 |
-| Duplicate-laptop objection | Prativaad gate A, `duplicate_side_effect` | §10.2 |
+| Duplicate-laptop objection | Devil's Advocate gate A, `duplicate_side_effect` | §10.2 |
 | Cross-team loops closed | Orchestrator + connectors, objective 1 | §5, §6 |
 | Tokenised payroll payload | PII proxy + payload viewer | §8, §16.5 |
 | IT mock outage, one laptop | Idempotency, outbox, breaker, post-state verify | §12 |
 | Slack answer with clause citation | Conversational surface, grounded answers | §14 |
 | Tier 1 → 2 escalation, logged | Measured routing triggers | §11.2 |
 | Illegible scan → human queue | Safe failure, context packets | §6, §12 |
-| Statutory-floor objection on a policy edit | Prativaad gate B | §10.2 |
+| Statutory-floor objection on a policy edit | Devil's Advocate gate B | §10.2 |
 | Broken rule fails the build | Compliance CI | §16.1 |
 | Fourteen exits replayed under v5 | Policy simulator / time-travel | §16.2 |
 | Prepared but not accepted | Reserved decisions, agent capability limits | §7.2 |
-| Card revoked before LWD, caught | Prativaad `date_ordering` | §10.2 |
+| Card revoked before LWD, caught | Devil's Advocate `date_ordering` | §10.2 |
 | Gratuity by rule, model wrong | Labour law as rules, not prompts | §8 |
 | Retention clocks and the held-back set | DPDP retention limits | §8 |
 | Rahul's access request | DSR endpoints | §8 |
@@ -395,11 +395,11 @@ flowchart TB
         OA["Onboarding agents"]
         XA["Exit agents"]
         HD["Helpdesk agent"]
-        DA["PRATIVAAD<br/>devil's advocate"]
+        DA["Devil's Advocate"]
         REG[("Agent / skill<br/>registry")]
     end
 
-    subgraph K["VIDHI — governance kernel (the only path out)"]
+    subgraph K["Gatekeeper — governance kernel (the only path out)"]
         INT["Intent API"]
         ORCH["Workflow orchestrator<br/>durable state machine"]
         PDP["Policy decision point<br/>rules engine"]
@@ -478,7 +478,7 @@ The brief describes a governed action flow of **seven steps and one decision**. 
 sequenceDiagram
     participant A as Agent
     participant O as Orchestrator
-    participant DA as Prativaad
+    participant DA as Devil's Advocate
     participant P as Policy decision point
     participant R as Reserved registry
     participant I as Idempotency / outbox
@@ -673,7 +673,7 @@ Mapped one-to-one against the brief's must-have list, so a judge can tick them o
 | **PII handling: what reaches a model, and where it is hosted** | All model calls go through the tokenisation proxy. Names → `«PERSON_1»`, PAN/bank/Aadhaar → vault tokens that are *never* sent. A hosting table per model tier states region and provider | **Show the actual outbound payload** on screen, side by side with the record. Most teams will claim this; we display it |
 | **PII minimisation** | The proxy strips fields not declared in the skill manifest's `inputs`. A skill that did not declare a field cannot see it | A skill tries to read a field it did not declare; blocked |
 | **Fair hiring: no automated rejection** | `hire.reject_candidate` is in the agent `may_never` list. Agents rank and explain; humans reject | Agent attempts a rejection; kernel returns `403 RESERVED` |
-| **Fair hiring: explain every ranking** | Each candidate's position carries the criteria, weights and evidence. Prativaad runs a **proxy-bias challenge** over the rationales (college tier, gender-coded terms, employment gaps, name origin) and flags suspected proxies to the human reviewer | Show a flagged ranking and the objection text |
+| **Fair hiring: explain every ranking** | Each candidate's position carries the criteria, weights and evidence. Devil's Advocate runs a **proxy-bias challenge** over the rationales (college tier, gender-coded terms, employment gaps, name origin) and flags suspected proxies to the human reviewer | Show a flagged ranking and the objection text |
 | **Explainability** | Audit entry per action with inputs, rule/prompt version, model, reasoning | "Why did this happen?" answered **from the log**, never by asking a model to guess |
 | **Access control** | §7.5 triple intersection | Same agent, two principals, different results |
 | **Kill switch** | §7.6 four scopes + circuit breaker | Pause mid-run; show work parked with context |
@@ -821,7 +821,7 @@ $ hrx test
   ✓ no duplicate side effects under injected retry storm
 ```
 
-**The `hrx validate` governance lint is Prativaad at design time** (gate C, §10). On the day of the live extension test, under pressure, with a panel watching, the thing that saves us is a tool that notices the reserved-decision flag we forgot.
+**The `hrx validate` governance lint is Devil's Advocate at design time** (gate C, §10). On the day of the live extension test, under pressure, with a panel watching, the thing that saves us is a tool that notices the reserved-decision flag we forgot.
 
 ### 9.4 Rehearsal, not hope
 
@@ -829,7 +829,7 @@ We will rehearse the live extension test on **three surprise requirements we hav
 
 Deliverable: `DEVGUIDE.md` with a complete worked example (adding leave encashment from zero), which doubles as our Round 2 developer guide.
 
-### 9.5 PARAKH — talent intelligence, and why it lives here
+### 9.5 FairHire — talent intelligence, and why it lives here
 
 The ICP-scoring pipeline we built for GTM transfers to hiring almost structurally. In GTM, an Ideal Customer Profile is scored against signal sources — and Google Patents told us *which company had the problem*. In hiring, **ICP stands for Ideal Candidate Profile**, and the same patent corpus answers a different question: *which engineer solved the problem.* A patent names its inventors. The signal we already know how to mine points at people instead of companies.
 
@@ -839,7 +839,7 @@ That is the good news. The rest of this subsection is mostly about the constrain
 
 The brief lists talent acquisition as a legitimate service line, but it also says plainly that depth on one line beats shallow coverage of many. A third fully-built line would cost us the depth mark.
 
-So PARAKH is scoped as **the extension model's hardest test case**. Onboarding and exit are mirror images of each other — same connectors, opposite direction — and a sceptic can fairly say the second line was easy because it was the first one backwards. Talent intelligence has a completely different shape:
+So FairHire is scoped as **the extension model's hardest test case**. Onboarding and exit are mirror images of each other — same connectors, opposite direction — and a sceptic can fairly say the second line was easy because it was the first one backwards. Talent intelligence has a completely different shape:
 
 | | Onboarding / exit | Talent intelligence |
 |---|---|---|
@@ -1002,7 +1002,7 @@ How this stays cheap and stays fair at once — the two requirements turn out to
 - **A claim with no evidence span is discarded.** This is the cheapest available defence against a confident model inventing a qualification, and it is what lets us satisfy *explain why each candidate was ranked where they were* from stored data rather than from a second model call.
 - **`prohibited_criteria` is enforced at the kernel.** A field on that list is stripped by the PII proxy before the model sees it, and a scoring rule referencing one fails pack validation at load time. The guardrail is structural, not a prompt instruction.
 - **Rejection stays reserved.** `hire.reject_candidate` is already in the `may_never` verb list (§7.2). Agents rank and explain; a human rejects, with a reason recorded.
-- **Prativaad Gate D earns its keep here** (§10.2): it attacks each rationale for proxies — college tier leaking in via "top-tier institute," gender via activity names, caregiving via gaps — and flags them to the human reviewer rather than silently rewriting the ranking.
+- **Devil's Advocate Gate D earns its keep here** (§10.2): it attacks each rationale for proxies — college tier leaking in via "top-tier institute," gender via activity names, caregiving via gaps — and flags them to the human reviewer rather than silently rewriting the ranking.
 
 #### 9.5.7 Governed outreach
 
@@ -1040,7 +1040,7 @@ reserved:
 | `sourcing_mock` connector (synthetic profiles) | Small | None |
 | `mail_mock` connector + payload viewer | Small | None |
 | Evidence-extraction skill (tier 1) | Medium | None |
-| Gate D proxy-bias challenge | Small — Prativaad already exists | None |
+| Gate D proxy-bias challenge | Small — Devil's Advocate already exists | None |
 | Four new reserved registry entries | Minutes | None |
 
 Everything lands on extension points that already exist. If any of it needs a change in `core/`, that is a finding about the kernel and we fix the kernel — which is exactly the value of building this line before the finale rather than discovering the gap in front of the panel.
@@ -1049,7 +1049,7 @@ Everything lands on extension points that already exist. If any of it needs a ch
 
 ---
 
-## 10. PRATIVAAD — the devil's advocate layer
+## 10. Devil's Advocate — the challenge layer
 
 We have used an adversarial self-critique pass before (the Devil's Advocate pass in the AMD captioning pipeline, and devil's-advocate analysis on the Mitigata/CyberForge work). It fits here better than it fitted either, because the brief's own guardrails are adversarial in nature: *what could go wrong, who gets hurt, and did a rule get skipped.*
 
@@ -1057,31 +1057,31 @@ We have used an adversarial self-critique pass before (the Devil's Advocate pass
 
 Objective 6 asks for safe failure when an agent is **unsure**. But the real danger in agentic HR is an agent that is **confidently wrong** — a plausible plan that happens to order a second laptop, revoke a card a day early, or apply the wrong notice-period rule. Confidence thresholds do not catch that. A second, adversarial reader does.
 
-Prativaad is a cheap, structured, bounded adversary. Its instruction is not "check this" but **"find the reason this must not run."** It is scored on whether humans upheld its objections.
+Devil's Advocate is a cheap, structured, bounded adversary. Its instruction is not "check this" but **"find the reason this must not run."** It is scored on whether humans upheld its objections.
 
 ### 10.2 Three gates (plus one line-specific)
 
 ```mermaid
 flowchart TB
     subgraph RUN["Gate A — pre-commit (runtime)"]
-        A1["Agent plan with<br/>irreversible actions"] --> A2["Prativaad:<br/>attack the plan"]
+        A1["Agent plan with<br/>irreversible actions"] --> A2["Devil's Advocate:<br/>attack the plan"]
         A2 -->|OBJECT| A3["Human queue<br/>+ objection attached"]
         A2 -->|CLEAR| A4["Kernel proceeds<br/>to policy check"]
     end
 
     subgraph POLICY["Gate B — policy change (design time)"]
-        B1["HR edits a policy pack"] --> B2["Prativaad:<br/>generate counter-examples,<br/>find contradictions with<br/>other packs + statutory floors"]
+        B1["HR edits a policy pack"] --> B2["Devil's Advocate:<br/>generate counter-examples,<br/>find contradictions with<br/>other packs + statutory floors"]
         B2 --> B3["Proposed test cases<br/>added to the pack"]
         B2 --> B4["Blocking findings<br/>→ HR + dev review"]
     end
 
     subgraph EXTEND["Gate C — extension time (dev / live test)"]
-        C1["New workflow or skill"] --> C2["Governance lint +<br/>Prativaad attack:<br/>reserved? idempotent?<br/>PII declared? logged?"]
+        C1["New workflow or skill"] --> C2["Governance lint +<br/>Devil's Advocate attack:<br/>reserved? idempotent?<br/>PII declared? logged?"]
         C2 --> C3["hrx validate verdict"]
     end
 
     subgraph HIRE["Gate D — fair hiring (line-specific)"]
-        D1["Candidate ranking<br/>+ rationales"] --> D2["Prativaad:<br/>proxy-bias challenge"]
+        D1["Candidate ranking<br/>+ rationales"] --> D2["Devil's Advocate:<br/>proxy-bias challenge"]
         D2 --> D3["Flags surfaced to<br/>human reviewer"]
     end
 ```
@@ -1118,7 +1118,7 @@ Objection classes are a **fixed taxonomy**, which is what makes it cheap and mea
 | `compensation_coverage` | If this fails midway, can every completed step be undone? |
 | `proxy_bias` *(Gate D)* | Is a rationale standing in for a protected characteristic? |
 
-**Gate B — policy-change review.** HR edits the notice-period pack; Prativaad writes adversarial cases ("fixed-term, Karnataka, contract notice 10 days — does this undercut the statutory floor?"), checks for contradictions against sibling packs, and proposes new entries for `tests:`. Policy authoring becomes test-driven without asking an HR manager to write tests.
+**Gate B — policy-change review.** HR edits the notice-period pack; Devil's Advocate writes adversarial cases ("fixed-term, Karnataka, contract notice 10 days — does this undercut the statutory floor?"), checks for contradictions against sibling packs, and proposes new entries for `tests:`. Policy authoring becomes test-driven without asking an HR manager to write tests.
 
 **Gate C — extension-time review.** Powers `hrx validate`'s governance lint (§9.3). On the finale day, this is our safety net.
 
@@ -1130,12 +1130,12 @@ Four constraints, because an unbounded critic is a cost disaster and judges will
 
 1. **Tier 1 model only** — small or open-weight, with a fixed checklist and strict JSON output. Gate A target ≤ ₹0.10 per invocation.
 2. **Triggered, not universal** — irreversible batches only. Target ≤ 30% of steps.
-3. **Budget-capped** — Prativaad may not exceed **8% of a workflow's cost budget**. Over budget, it degrades to the deterministic rule-only lint (the checks that are pure code) and logs the degradation.
+3. **Budget-capped** — Devil's Advocate may not exceed **8% of a workflow's cost budget**. Over budget, it degrades to the deterministic rule-only lint (the checks that are pure code) and logs the degradation.
 4. **Deterministic pre-filter first** — the mechanical checks (duplicate keys, date ordering, compensation coverage, policy staleness) run in **code**. The model is asked only about the judgement-shaped residue. Cheaper, and consistent with "using an LLM where a rule would do counts against you."
 
 ### 10.4 Measured, not asserted
 
-Prativaad gets its own dashboard tiles, which turns a nice idea into evidence:
+Devil's Advocate gets its own dashboard tiles, which turns a nice idea into evidence:
 
 | Metric | Why it matters |
 |---|---|
@@ -1145,7 +1145,7 @@ Prativaad gets its own dashboard tiles, which turns a nice idea into evidence:
 | Cost overhead (₹ and % of workflow) | Is it worth it? |
 | False-clear rate on an injected-fault corpus | Honest failure reporting |
 
-We will build a **fault-injection corpus**: ~20 synthetic runs with deliberately planted defects (duplicate allocation, card revoked pre-LWD, stale policy pack, reserved leakage, PII overreach). Prativaad's catch rate on that corpus is a number we can put on a slide. If it turns out the deterministic pre-filter catches most of them and the model adds little, **we will say so and shrink the model's role** — exactly what happened to the DA pass in the AMD pipeline, and reporting it honestly scored better than defending it would have.
+We will build a **fault-injection corpus**: ~20 synthetic runs with deliberately planted defects (duplicate allocation, card revoked pre-LWD, stale policy pack, reserved leakage, PII overreach). Devil's Advocate's catch rate on that corpus is a number we can put on a slide. If it turns out the deterministic pre-filter catches most of them and the model adds little, **we will say so and shrink the model's role** — exactly what happened to the DA pass in the AMD pipeline, and reporting it honestly scored better than defending it would have.
 
 ---
 
@@ -1155,8 +1155,8 @@ We will build a **fault-injection corpus**: ~20 synthetic runs with deliberately
 
 | Tier | What runs here | Used for | Share target |
 |---|---|---|---|
-| **0 — code** | Rules engine, date maths, eligibility, routing, templating, entitlement resolution, deterministic Prativaad checks | Everything that can possibly be a rule | **≥ 70% of steps** |
-| **1 — small / open-weight** | Classification, extraction, intent detection, drafting, packet assembly, Prativaad gate A | The default model path | ~22% |
+| **0 — code** | Rules engine, date maths, eligibility, routing, templating, entitlement resolution, deterministic Devil's Advocate checks | Everything that can possibly be a rule | **≥ 70% of steps** |
+| **1 — small / open-weight** | Classification, extraction, intent detection, drafting, packet assembly, Devil's Advocate gate A | The default model path | ~22% |
 | **2 — mid** | Ambiguous policy questions, conflicting-data reasoning, multi-document reconciliation | Only on a measured trigger | ~7% |
 | **3 — frontier** | Genuinely novel reasoning | Exception path, justified per call | **< 1%** |
 
@@ -1202,7 +1202,7 @@ cost_per_completed_workflow =
   + Σ(connector call costs, where metered)
 ```
 
-Reported per run **and** as p50/p95 across runs, split by tier, and with the Prativaad overhead broken out. Self-hosting is costed at real GPU-hour prices with measured utilisation — the brief explicitly calls out that a self-hosted model is not free, and teams that forget this will be caught in Q&A.
+Reported per run **and** as p50/p95 across runs, split by tier, and with the Devil's Advocate overhead broken out. Self-hosting is costed at real GPU-hour prices with measured utilisation — the brief explicitly calls out that a self-hosted model is not free, and teams that forget this will be caught in Q&A.
 
 ### 11.4 Monthly projection
 
@@ -1288,7 +1288,7 @@ One **intent API** behind every surface. Web console, Slack and Teams are thin a
 | Slack / Teams | Employees, managers | Ask ("how many casual leaves do I have?", "what's the notice period for L4?"), act ("apply leave", "I want to resign"), approve reserved decisions with a receipt |
 | Web console | HR | Workflow board, human queue, policy pack editor with Gate-B review, reserved-decision registry, kill switch, audit explorer |
 | Web console | Employees | Self-service, document upload, DSR requests |
-| Dashboard | HR leadership, TBO panel | Cost, automation, cycle time, escalation, Prativaad tiles |
+| Dashboard | HR leadership, TBO panel | Cost, automation, cycle time, escalation, Devil's Advocate tiles |
 
 Two deliberate choices:
 
@@ -1309,7 +1309,7 @@ Objective 8, one screen, measured from real runs on the synthetic dataset — no
 | **Escalation rate** | Runs with ≥1 human-queue event ÷ total runs, by reason class |
 | **Reserved-decision throughput** | Count, median time-to-approve, by approver role |
 | **Policy-block rate** | Actions refused by the PDP, by rule — this tile is the governance story in one number |
-| **Prativaad** | Objections raised, precision, incidents prevented, cost overhead |
+| **Devil's Advocate** | Objections raised, precision, incidents prevented, cost overhead |
 | **Projected monthly cost** | Measured ₹/run × assumed volumes, assumptions visible on the tile |
 
 Design rule: every tile is **drillable to the audit entries that produced it**. A judge clicking "automation rate 79%" should land on the 21% that needed a human and see why each one did. Numbers you can audit are worth more than numbers you have to trust — and the drill-down is where a sceptical panel is won.
@@ -1345,7 +1345,7 @@ Per-workflow budgets; exceeding one downgrades the tier and then escalates to a 
 A timer, three unseen requirements, the scaffolder, and a checklist. Plus two spare connector stubs (calendar, document-signing) pre-registered but unused, so a surprise requirement needing one does not cost us 20 minutes.
 
 ### 16.9 Fault-injection corpus
-§10.4. ~20 runs with planted defects. Gives us an honest number for safe-failure and Prativaad effectiveness, and a slide no one else will have.
+§10.4. ~20 runs with planted defects. Gives us an honest number for safe-failure and Devil's Advocate effectiveness, and a slide no one else will have.
 
 ### 16.10 Reserved-decision drill
 A one-click demo mode where an agent **deliberately attempts** every reserved action in the registry and the kernel refuses each one, producing an audit entry. A 30-second clip that settles the disqualification risk in the panel's mind before they can ask about it.
@@ -1397,7 +1397,7 @@ setu/
 │   ├── router/                #   model routing + cost meter
 │   ├── pii/                   #   tokenisation proxy + vault client
 │   ├── audit/                 #   hash-linked chain
-│   └── prativaad/             #   devil's advocate gates
+│   └── devils_advocate/             #   devil's advocate gates
 ├── workflows/                 # EXTENSION POINT 1
 │   ├── onboarding.v3.yaml
 │   └── exit.v1.yaml
@@ -1450,9 +1450,9 @@ Page budget for `ARCHITECTURE_6PAGE.md`, extracted from this document:
 | 3 | Governance model: policy as config, reserved registry, receipts, audit | §7 |
 | 4 | Compliance by design: the requirement→mechanism table | §8 |
 | 5 | Model choice, routing, estimated cost per workflow, threshold justification method | §11 |
-| 6 | Extension model + live-extension-test readiness; Prativaad in one panel | §9, §10.2 |
+| 6 | Extension model + live-extension-test readiness; Devil's Advocate in one panel | §9, §10.2 |
 
-**Video (5 min):** 0:00 the chase problem · 0:40 the one architecture diagram · 1:20 Meera's onboarding with the Prativaad objection · 2:40 the reserved-decision refusal (agent tries, kernel says no) · 3:20 the cost tile and the tier mix · 4:00 adding a workflow in the scaffolder, live · 4:40 "now give us your requirement."
+**Video (5 min):** 0:00 the chase problem · 0:40 the one architecture diagram · 1:20 Meera's onboarding with the Devil's Advocate objection · 2:40 the reserved-decision refusal (agent tries, kernel says no) · 3:20 the cost tile and the tier mix · 4:00 adding a workflow in the scaffolder, live · 4:40 "now give us your requirement."
 
 Shortlisting is on soundness of design, governance and cost logic — so the video leads with governance, not with UI.
 
@@ -1464,7 +1464,7 @@ Deliverables: working demo on the synthetic dataset · repo with README and setu
 |---|---|
 | 1 | Kernel skeleton: orchestrator, PDP, reserved gate, idempotency, audit. Temporal-vs-own spike decided. Connectors against the mocks. One onboarding step running end to end through the full seven-step flow |
 | 2 | Onboarding complete (24 steps), policy packs with tests, PII proxy, cost meter, human queue with context packets |
-| 3 | Prativaad gates A and C, `hrx` CLI, web console, Slack adapter, dashboard |
+| 3 | Devil's Advocate gates A and C, `hrx` CLI, web console, Slack adapter, dashboard |
 | 4 | **Exit line built via extension points only** (commit evidence), fault corpus, chaos drill, bench harness, routing-threshold calibration with the plot, DEVGUIDE |
 | 5 | Measure, polish, demo script, extension-test rehearsals on three unseen requirements |
 
@@ -1491,7 +1491,7 @@ Prepared answers for the questions the panel will ask:
 |---|---|---|
 | Kernel-first means a late-looking demo | High | Vertical slice by end of week 1: one onboarding step through all seven flow steps, visible and metered |
 | Temporal setup cost eats build time | Medium | Week-1 spike with a hard decision date; Postgres state machine fallback; workflow definition format unchanged either way |
-| Prativaad adds cost without catching much | Medium | Deterministic pre-filter first, 8% budget cap, fault corpus to measure it, and willingness to shrink its role and **report that honestly** |
+| Devil's Advocate adds cost without catching much | Medium | Deterministic pre-filter first, 8% budget cap, fault corpus to measure it, and willingness to shrink its role and **report that honestly** |
 | Live extension test needs a connector we lack | Medium | Spare connector stubs pre-registered; rehearsals on three unseen requirements |
 | Over-engineering the kernel, under-building the demo | High | §16 drop order agreed in advance; the 10% experience mark is still 10% |
 | Mock APIs behave differently than assumed | Medium | Connector contract tests from day one; `_spares/` and an adapter layer absorb surprises |
@@ -1523,7 +1523,7 @@ The matrix a judge can tick straight down. This is also our internal completenes
 | POSH / grievance / whistleblower: route only | Hard stop, no classification or summary | Demo the hard stop |
 | DPDP: purpose, consent, retention, DSR | Purpose tags, consent records, retention clocks, DSR endpoints | Cross-purpose read refused; clock fast-forward; live DSR |
 | PII: what reaches a model, where hosted | Tokenisation proxy + hosting table | Payload viewer |
-| Fair hiring: no auto-rejection, explain rankings | `may_never` verb list + Prativaad gate D + evidence-span requirement | Rejection attempt refused; bias flag shown; ranking explained from stored spans |
+| Fair hiring: no auto-rejection, explain rankings | `may_never` verb list + Devil's Advocate gate D + evidence-span requirement | Rejection attempt refused; bias flag shown; ranking explained from stored spans |
 | Lawful basis for non-applicants (our addition) | Lawful-basis gate; `pointer_only`; `sourcing.add_source` reserved to Legal + DPO | Refusal to profile a sourced individual, live |
 | TBO's own non-solicit obligations (our addition) | No-raid guard, Legal-owned restricted list, exception reserved | Block showing the clause ID |
 | Explainability | Audit entry per action | "Explain this" from the log, not from a model |

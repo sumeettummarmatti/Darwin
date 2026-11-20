@@ -1,4 +1,4 @@
-# SETU in six diagrams
+# HR Autopilot in six diagrams
 
 Read them in order. Each one zooms into a part of the one before. Blue boxes are things the agents do; the kernel boxes are the strict checks; red/maroon is where a human decides.
 
@@ -21,9 +21,9 @@ flowchart TB
         S2["AI helpers<br/>drafts, ID check, claims"]
     end
 
-    subgraph KERNEL["VIDHI kernel - the only way out"]
+    subgraph KERNEL["Gatekeeper kernel - the only way out"]
         ORCH["Workflow runner"]
-        GATE["Checks: Prativaad, permissions,<br/>reserved decisions, privacy"]
+        GATE["Checks: Devil's Advocate, permissions,<br/>reserved decisions, privacy"]
         EXEC["Executor: once-only,<br/>verify, retry safely"]
         AUDIT["Audit chain + cost meter"]
     end
@@ -69,7 +69,7 @@ flowchart TD
     A["Agent wants to do something"] --> K{"Kill switch on?"}
     K -->|yes| PARK["Pause and park it<br/>for a human, with context"]
     K -->|no| P{"Can it be undone?"}
-    P -->|"no, irreversible"| DA["Prativaad checks:<br/>duplicate? wrong date? raw personal data?<br/>skipped approval? old rules?"]
+    P -->|"no, irreversible"| DA["Devil's Advocate checks:<br/>duplicate? wrong date? raw personal data?<br/>skipped approval? old rules?"]
     P -->|yes| AUTH
     DA -->|"objection it can verify by reading"| AUTH
     DA -->|"objection it cannot resolve"| HUMAN["Human decides:<br/>proceed or stop"]
@@ -103,7 +103,7 @@ flowchart LR
     PACKET --> ACCEPT["Rohan, then Priya<br/>accept - receipt"]
     ACCEPT --> BUYOUT["Deepa agrees buyout<br/>- receipt"]
     ACCEPT --> CARD["Cancel card<br/>scheduled on last day"]
-    BUYOUT -.->|"date moved: Prativaad<br/>reschedules the card"| CARD
+    BUYOUT -.->|"date moved: Devil's Advocate<br/>reschedules the card"| CARD
     ACCEPT --> LAPTOP["Laptop recovery"]
     ACCEPT --> EMAIL["Suspend email<br/>on last day"]
     BUYOUT --> FINAL["Final settlement<br/>by rule"]
@@ -168,7 +168,7 @@ The five things a developer can add: **workflow** (recipe), **policy pack** (rul
 
 ---
 
-## 6. Finding talent fairly (PARAKH)
+## 6. Finding talent fairly (FairHire)
 
 Who may be scored, who is only a link, and who decides.
 
@@ -185,7 +185,7 @@ flowchart TD
     RAID -->|no, applicant| CLAIMS["AI pulls facts from the CV<br/>each needs an exact quote"]
     CLAIMS -->|"no exact quote"| BIN["Fact thrown away"]
     CLAIMS --> SCORE["Score = arithmetic<br/>in the ICP rules file"]
-    SCORE --> BIAS["Prativaad flags proxy words<br/>like 'top-tier institute'"]
+    SCORE --> BIAS["Devil's Advocate flags proxy words<br/>like 'top-tier institute'"]
     SCORE -->|"agent tries to reject"| NO403["Refused 403<br/>only a hiring manager rejects"]
     RAID -->|no, pointer| CAMP["Outreach campaign<br/>Ananya must approve"]
     CAMP --> SEND["Notice-first message<br/>who we are, how to say stop"]
