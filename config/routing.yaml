@@ -27,8 +27,9 @@ profiles:
     tier3: { adapter: sim, model: alt-frontier,  region: "in-process (no egress)", inr_per_m_in: 240, inr_per_m_out: 980 }
 
   # Groq (OpenAI-compatible). Put GROQ_API_KEY in .env and this profile is chosen automatically.
-  # Both models are Apache-2.0 (commercial use). Rates: approximate USD list prices converted
-  # at ₹88/$ — an ASSUMPTION; check groq.com/pricing and update before quoting a number.
+  # Both models are Apache-2.0 (commercial use). Rates checked 2026-11-20 against
+  # console.groq.com/docs/models: gpt-oss-20b $0.075 in / $0.30 out, gpt-oss-120b $0.15 / $0.60
+  # per 1M tokens. Converted at ₹88/$ — the exchange rate is the one ASSUMPTION left.
   groq:
     tier1: { adapter: openai_compatible, base_url: "https://api.groq.com/openai/v1", model: "openai/gpt-oss-20b",  api_key_env: GROQ_API_KEY, region: "Groq cloud (US)", inr_per_m_in: 6.6,  inr_per_m_out: 26.4, hosting_note: "hosted inference; only tokenised synthetic payloads are sent" }
     tier2: { adapter: openai_compatible, base_url: "https://api.groq.com/openai/v1", model: "openai/gpt-oss-120b", api_key_env: GROQ_API_KEY, region: "Groq cloud (US)", inr_per_m_in: 13.2, inr_per_m_out: 52.8 }

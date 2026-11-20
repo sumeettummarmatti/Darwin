@@ -38,6 +38,18 @@ From `make bench`, sim profile, synthetic dataset (bench/results/latest.md). Rup
 | Leave | ₹0.0000 | ₹0.0000 | 90% | demo clock | 0% | 40 runs |
 | Helpdesk | ₹0.0024 | ₹0.0278 | 100% | demo clock | 0% | 32 runs |
 
+**On Groq** (`python -m bench.run --profile groq`, 2026-11-20; bench/results/groq.md): 80 real model calls (75 on gpt-oss-20b, 5 escalated to gpt-oss-120b), provider-reported tokens, Groq list prices at ₹88/$, no simulator fallbacks.
+
+| Workflow | ₹/run p50 | ₹/run p95 | Automation rate | Escalation rate | Measured on |
+|---|---|---|---|---|---|
+| Onboarding | ₹0.0483 | ₹0.0725 | 98% | 11% | 9 runs |
+| Exit | ₹0.0278 | ₹0.0308 | **37%** | 62% | 8 runs |
+| Leave | ₹0.0000 | ₹0.0000 | 90% | 0% | 40 runs |
+| Helpdesk | ₹0.0055 | ₹0.0357 | 100% | 0% | 24 runs |
+| Sourcing | ₹0.0165 | ₹0.0165 | 91% | 0% | 1 run |
+
+**Negative result on Groq:** Prativaad's model layer raised 32 runtime objections with 9% precision, a 75% false-alarm rate on clean fault-corpus steps, and 57% of run spend; it added no catches over the rules (88%). Its false objections are why exit drops to 37% automation. Recommended next step: run Prativaad rules-only on real models (shrink, per CLAUDE.md), then re-measure.
+
 | Prativaad | Value | Measured on |
 |---|---|---|
 | Objections per run (bench week) | 71 over 90 runs, mostly low-severity compensation advisories | bench |
