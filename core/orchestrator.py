@@ -37,6 +37,12 @@ if TYPE_CHECKING:
 
 TERMINAL = ("done", "skipped", "rejected", "cancelled", "compensated")
 RETRY_BACKOFF_S = 2
+REFUSAL_TITLES = {   # display names for why the kernel refused a skill; the audit keeps the exception type
+    "PointerOnlyViolation": "no permission to use this person's data",
+    "PurposeViolation": "data used for the wrong purpose",
+    "UndeclaredInput": "the AI asked for data it didn't declare",
+    "DeterministicViolation": "a rules-only step tried to use AI",
+}
 SYSTEM_NAMES = {"assets": "laptop", "tickets": "IT ticketing", "access": "access card", "directory": "email directory",
                 "payroll": "payroll", "mail": "mail", "calendar": "calendar"}   # display names only
 SYSTEM_NOTICE_AFTER = 3   # failed attempts before a person is told a system is down (an open breaker tells them at once)
@@ -410,8 +416,8 @@ class Orchestrator:
         except (PointerOnlyViolation, UndeclaredInput, PurposeViolation, DeterministicViolation) as exc:
             self.k.audit.append(AuditEntry(actor=agent.label, action=f"skill.{spec.name}", kind="policy", outcome="refused",
                                            run_id=run["id"], step_id=step.id, detail={"error": str(exc), "type": type(exc).__name__}))
-            self._to_human(run, step, kind="refused", title=f"Refused · {type(exc).__name__}",
-                           question=f"The kernel refused this step: {exc}. Abort this step, or complete it by hand?",
+            self._to_human(run, step, kind="refused", title=f"Blocked · {REFUSAL_TITLES.get(type(exc).__name__, 'a safety rule')}",
+                           question=f"HR Autopilot blocked this step: {exc}. Stop this step, or complete it by hand?",
                            packet={"summary": str(exc), "conflict": type(exc).__name__, "clauses": _clauses(ctx)},
                            roles=["hr_business_partner"], status="refused")
             return
