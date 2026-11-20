@@ -164,6 +164,15 @@ systemctl is-active sixthsense-core sixthsense-insight sixthsense-worker caddy
 
 ## Deployment log
 
+### 2026-11-20 (evening) — rename to HR Autopilot ✅
+
+| Check | Result |
+|---|---|
+| Code | The GitHub repo is now **private**, so the server can no longer pull anonymously. `deploy` was shipped as a git bundle from a developer machine (`git bundle create … <server-head>..deploy`, `scp`, `git pull --ff-only <bundle> deploy`). Long-term fix: a read-only deploy key |
+| Container | rebuilt and replaced as in step 2; demo data reset so no old names remain in the history log |
+| Live | health ok, audit chain intact, console shows "HR Autopilot" and "Devil's Advocate", public URL 401 without credentials |
+| SixthSense after | `api.` and `insight.` `/docs` both 200; `sixthsense-core`, `sixthsense-insight`, `caddy` active. Caddy not touched |
+
 ### 2026-11-20 — redeploy: plain-language console, system-down notices, icp v3 ✅
 
 | Check | Result |
