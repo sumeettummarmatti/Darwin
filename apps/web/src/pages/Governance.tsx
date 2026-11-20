@@ -161,7 +161,7 @@ function Chaos() {
       </div>
       <div className="small" style={{ marginTop: 12 }}>
         {broken.map((c: any) => <span key={c.system} className="tag seal" style={{ marginRight: 6 }}>{SYSTEM_LABEL[c.system] || c.system} broken</span>)}
-        {tripped.map((b: any) => <span key={b.name} className="tag warn" style={{ marginRight: 6 }}>HR Autopilot stopped calling {SYSTEM_LABEL[b.name] || humanize(b.name)} for now</span>)}
+        {tripped.map((b: any) => <span key={b.name} className="tag warn" style={{ marginRight: 6 }}>HR Autopilot stopped calling {SYSTEM_LABEL[String(b.name).split(".").pop() as string] || humanize(String(b.name).split(".").pop() || "")} for now</span>)}
         {!broken.length && !tripped.length && <span className="muted">All systems working.</span>}
       </div>
       {(data?.calls || []).length > 0 && (
