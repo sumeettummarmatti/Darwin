@@ -72,9 +72,23 @@ def handle(kernel: "Kernel", user_id: str, text: str, channel: str = "web") -> d
                                  "no one else, and no automated system has assessed it. They will contact you directly.",
                 "queue_id": item["id"]}
 
+    first_name = (profile.get("name") or "there").split()[0]
+    if intent == "greeting":
+        return {**base, "tier": 0, "reply": (
+            f"Hi {first_name}! I can check your leave balance, book leave, tell you where your joining stands, "
+            "and answer HR policy questions like what to bring on day one. Anything sensitive, like a complaint, "
+            "goes privately to the right person.")}
+
     if person_id is None:
         return {**base, "reply": "I can only act for employees with a record. Please use the console."}
     subject = kernel.sor.person(person_id)
+
+    if intent == "self.profile":
+        return {**base, "tier": 0, "reply": _profile_reply(subject),
+                "citations": [{"source": "system_of_record", "field": "employee record"}]}
+
+    if intent == "onboarding.status":
+        return {**base, "tier": 0, **_onboarding_status(kernel, person_id, subject)}
 
     if intent == "exit.resign":
         hrbp = kernel.principal(subject["attrs"].get("hrbp_id", "USR-101"))
@@ -91,15 +105,20 @@ def handle(kernel: "Kernel", user_id: str, text: str, channel: str = "web") -> d
         run = kernel.orchestrator.run(run_id)
         steps = kernel.orchestrator.steps(run_id)
         evaluation = (steps["evaluate"]["outputs"] or {})
+        days = slots["days"]
+        day_word = "day" if days == 1 else "days"
+        # The rule reference travels as a citation, so the reply itself stays plain.
+        rules = [{"clause": f"leave rules ({', '.join(evaluation.get('rule_ids', []))})", "pack": evaluation.get("policy")}]
         if run["status"] == "completed":
-            reply = (f"Booked: {slots['days']} day(s) of {slots['leave_type']} leave from {slots['start_date']}. "
-                     f"Balance after: {evaluation.get('balance_after')}. ({evaluation.get('policy')} {', '.join(evaluation.get('rule_ids', []))})")
+            left = evaluation.get("balance_after")
+            left_text = f" You have {left:g} {slots['leave_type']} days left." if isinstance(left, (int, float)) else ""
+            reply = f"Done. {days} {day_word} of {slots['leave_type']} leave booked from {slots['start_date']}.{left_text}"
         else:
             route = evaluation.get("route")
-            who = "your manager" if route == "manager" else "the HR Head as a policy exception"
-            reply = (f"I've sent {slots['days']} day(s) of {slots['leave_type']} leave from {slots['start_date']} to {who} — "
-                     f"{evaluation.get('reason')}. ({evaluation.get('policy')} {', '.join(evaluation.get('rule_ids', []))})")
-        return {**base, "run_id": run_id, "slots": slots, "reply": reply}
+            who = "your manager" if route == "manager" else "the HR Head as an exception"
+            reply = (f"I've sent your request for {days} {day_word} of {slots['leave_type']} leave from {slots['start_date']} "
+                     f"to {who} ({evaluation.get('reason')}). You'll hear back here.")
+        return {**base, "run_id": run_id, "slots": slots, "reply": reply, "citations": rules}
 
     kind = "leave_balance" if intent == "helpdesk.leave_balance" else "policy"
     run_id = kernel.orchestrator.start("helpdesk", subject_id=person_id, principal=user, channel=channel,
@@ -109,7 +128,60 @@ def handle(kernel: "Kernel", user_id: str, text: str, channel: str = "web") -> d
     step = steps["leave_balance" if kind == "leave_balance" else "answer"]
     out = step["outputs"] or {}
     if step["status"] != "done":
-        return {**base, "run_id": run_id, "reply": "I'm not confident enough to answer that from policy. I've passed it to HR with the clauses I found.",
-                "escalated": True}
+        return {**base, "run_id": run_id, "escalated": True, "reply": (
+            "I couldn't answer that confidently from HR policy, so I've passed it to HR and they'll reply here. "
+            "I can help with leave, your joining, notice periods and other policy questions.")}
     return {**base, "run_id": run_id, "reply": out.get("answer"), "citations": out.get("citations", []),
             "tier": step["tier"], "cost_inr": round(run["cost_inr"], 5), "retrieval_support": out.get("retrieval_support")}
+
+
+# ── answers from the record (tier 0: no model) ────────────────────────────────
+
+def _profile_reply(subject: dict[str, Any]) -> str:
+    a = subject.get("attrs", {})
+    parts = [f"You're {subject.get('display_name')}"]
+    if a.get("role_title"):
+        parts[0] += f", {a['role_title']}"
+    if a.get("org_unit"):
+        parts[0] += f" in {a['org_unit']}"
+    lines = [parts[0] + "."]
+    if a.get("manager_name"):
+        lines.append(f"Your manager is {a['manager_name']}.")
+    if a.get("buddy_name"):
+        lines.append(f"Your buddy is {a['buddy_name']}.")
+    if a.get("status") == "pre_joining" and a.get("date_of_joining"):
+        lines.append(f"You join on {a['date_of_joining']}.")
+    return " ".join(lines)
+
+
+_ONBOARDING_ITEMS = [("allocate_laptop", "Laptop"), ("issue_access_card", "Access card"),
+                     ("create_account", "Email account"), ("schedule_induction", "Induction")]
+_DONE_WORD = {"allocate_laptop": "issued", "issue_access_card": "issued", "create_account": "created", "schedule_induction": "booked"}
+_STEP_WORDS = {"done": "ready", "skipped": "not needed", "awaiting_human": "waiting for HR", "scheduled": "scheduled",
+               "pending": "not started yet", "running": "in progress", "failed": "delayed, HR is on it",
+               "refused": "on hold, HR is on it"}
+
+
+def _onboarding_status(kernel: "Kernel", person_id: str, subject: dict[str, Any]) -> dict[str, Any]:
+    row = kernel.store.one("SELECT id FROM workflow_runs WHERE workflow='onboarding' AND subject=? ORDER BY created_at DESC LIMIT 1",
+                           (person_id,))
+    if not row:
+        when = subject.get("attrs", {}).get("date_of_joining")
+        return {"reply": "Your joining hasn't started yet. HR starts it once your offer is accepted"
+                         + (f", ahead of your first day on {when}." if when else ".")}
+    steps = kernel.orchestrator.steps(row["id"])
+    lines = []
+    for step_id, label in _ONBOARDING_ITEMS:
+        st = steps.get(step_id)
+        if not st:
+            continue
+        word = _DONE_WORD[step_id] if st["status"] == "done" else _STEP_WORDS.get(st["status"], st["status"].replace("_", " "))
+        out = st.get("outputs") or {}
+        serial = (out.get("response") or {}).get("serial") if isinstance(out.get("response"), dict) else None
+        if st["status"] == "scheduled" and st.get("scheduled_for"):
+            word = f"scheduled for {str(st['scheduled_for'])[:10]}"
+        lines.append(f"{label}: {word}{f' ({serial})' if serial and step_id == 'allocate_laptop' else ''}.")
+    waiting = any(s["status"] == "awaiting_human" for s in steps.values())
+    tail = " One item is waiting for HR to check something; you don't need to do anything." if waiting else ""
+    return {"reply": "Here's where your joining stands. " + " ".join(lines) + tail, "run_id": row["id"],
+            "citations": [{"source": "onboarding process", "field": "joining status"}]}
