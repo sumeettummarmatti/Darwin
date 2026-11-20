@@ -1,0 +1,18 @@
+hrx validate
+  ✓ policy packs: 17 loaded, 82 pack tests passing
+  ✓ reserved registry reserved_decisions@v4: 18 reserved actions, 3 route-only, may_never ['approve', 'accept', 'reject_candidate', 'sign_off', 'decide']
+  ✓ skills: 13 — no reserved verb granted, no prohibited input declared
+  ✓ connectors: 10 (including spares)
+  ✓ workflows: 9 — idempotency keys templated and unique, deterministic steps model-free, reserved actions known
+  ⚠ governance lint C-COMP exit@v1:revoke_access_card: irreversible action admin.access.revoke_card declares no compensation
+  ⚠ governance lint C-COMP exit@v1:recover_laptop: irreversible action it.assets.recover declares no compensation
+  ⚠ governance lint C-COMP exit@v1:prepare_settlement: irreversible action payroll.prepare_settlement declares no compensation
+  ⚠ governance lint C-TIER0 helpdesk@v1: only 50% of steps are tier 0 (code); target is ≥ 70%
+  ⚠ governance lint C-COMP leave_encashment@v1:pay: irreversible action payroll.prepare_settlement declares no compensation
+  ⚠ governance lint C-COMP onboarding@v3:send_welcome: irreversible action mail.send declares no compensation
+  ⚠ governance lint C-COMP sourcing@v1:send_notices: irreversible action mail.send declares no compensation
+  ⚠ governance lint C-TIER0 sourcing_assess@v1: only 0% of steps are tier 0 (code); target is ≥ 70%
+  ⚠ governance lint C-COMP sourcing_reply@v1:suppress_on_objection: irreversible action hr.record.suppress_and_delete declares no compensation
+
+valid
+exit 0

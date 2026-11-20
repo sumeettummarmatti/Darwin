@@ -3,7 +3,7 @@
   "profile": "sim",
   "dataset": "synthetic seed (tools/seed.py), seeded RNG",
   "note": "Human approvals in this harness are simulated and labelled as such in each receipt note.",
-  "runs_started": 90,
+  "runs_started": 86,
   "workflows": {
     "exit": {
       "workflow": "exit@v1",
@@ -20,8 +20,8 @@
       "steps_human": 20,
       "target_automation_rate": 0.7,
       "escalation_rate": 0.0,
-      "cycle_p50_s": 8640505.0,
-      "cycle_p95_s": 8640505.0,
+      "cycle_p50_s": 8640506.0,
+      "cycle_p95_s": 8640506.0,
       "tier_mix": {
         "0": 100,
         "1": 8,
@@ -32,15 +32,15 @@
     "helpdesk": {
       "workflow": "helpdesk@v1",
       "description": "Answers employee questions. Record lookups are tier 0; policy questions cite clause and pack version.",
-      "runs": 32,
-      "completed": 32,
+      "runs": 24,
+      "completed": 24,
       "in_flight": 0,
       "cost_p50": 0.002392,
       "cost_p95": 0.027752999999999996,
-      "cost_mean": 0.0071259999999999995,
+      "cost_mean": 0.005873499999999999,
       "budget_inr_per_run": 0.1,
       "automation_rate": 1.0,
-      "steps_done": 32,
+      "steps_done": 24,
       "steps_human": 0,
       "target_automation_rate": 0.95,
       "escalation_rate": 0.0,
@@ -48,8 +48,8 @@
       "cycle_p95_s": 0.0,
       "tier_mix": {
         "0": 8,
-        "1": 16,
-        "2": 8,
+        "1": 12,
+        "2": 4,
         "3": 0
       }
     },
@@ -117,7 +117,7 @@
       "target_automation_rate": 0.85,
       "escalation_rate": 0.1111111111111111,
       "cycle_p50_s": 0.0,
-      "cycle_p95_s": 6.0,
+      "cycle_p95_s": 5.0,
       "tier_mix": {
         "0": 91,
         "1": 17,
@@ -155,9 +155,9 @@
       "runs": 1,
       "completed": 1,
       "in_flight": 0,
-      "cost_p50": 0.01564,
-      "cost_p95": 0.01564,
-      "cost_mean": 0.01564,
+      "cost_p50": 0.01652,
+      "cost_p95": 0.01652,
+      "cost_mean": 0.01652,
       "budget_inr_per_run": 1.0,
       "automation_rate": 0.9090909090909091,
       "steps_done": 11,
@@ -234,10 +234,10 @@
   },
   "audit_chain": {
     "ok": true,
-    "checked": 1391,
+    "checked": 1347,
     "broken_at": null,
     "reason": null,
-    "head": "sha256:d3e39b2c9b7231a27522bf9b3040a4cd685a84e79f8eb67ab088ab442c075fb5"
+    "head": "sha256:1f05b3d5e113ccdd45036b24bc5700dd9387c9763c156c455c8e9fd9488235d9"
   },
   "devils_advocate": {
     "objections": 71,
@@ -259,24 +259,24 @@
     "upheld": 7,
     "precision": 1.0,
     "cost_inr": 0.080584,
-    "overhead_share": 0.21054391731244548
+    "overhead_share": 0.27173465878052566
   },
   "models": {
     "by_tier": {
       "tier1": {
-        "calls": 85,
-        "inr": 0.240344,
-        "tokens_in": 20257,
-        "tokens_out": 4893
+        "calls": 77,
+        "inr": 0.222856,
+        "tokens_in": 18799,
+        "tokens_out": 4529
       },
       "tier2": {
-        "calls": 9,
-        "inr": 0.18286999999999998,
-        "tokens_in": 1882,
-        "tokens_out": 496
+        "calls": 5,
+        "inr": 0.11417,
+        "tokens_in": 1110,
+        "tokens_out": 332
       }
     },
-    "escalations": 9,
+    "escalations": 5,
     "profile": "sim"
   },
   "projection": {

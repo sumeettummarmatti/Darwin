@@ -1,0 +1,232 @@
+[
+  {
+    "scenario": "s01_onboarding",
+    "check": "ID check stops for a person when the AI is unsure",
+    "ok": true
+  },
+  {
+    "scenario": "s01_onboarding",
+    "check": "plain reason shown",
+    "ok": true
+  },
+  {
+    "scenario": "s01_onboarding",
+    "check": "name masked before the AI call",
+    "ok": true
+  },
+  {
+    "scenario": "s01_onboarding",
+    "check": "onboarding finishes",
+    "ok": true
+  },
+  {
+    "scenario": "s01_onboarding",
+    "check": "duplicate laptop caught",
+    "ok": true
+  },
+  {
+    "scenario": "s01_onboarding",
+    "check": "checked the return ledger first",
+    "ok": true
+  },
+  {
+    "scenario": "s02_system_down",
+    "check": "laptop system broken",
+    "ok": true
+  },
+  {
+    "scenario": "s02_system_down",
+    "check": "a person is told the system is down, with context",
+    "ok": true
+  },
+  {
+    "scenario": "s02_system_down",
+    "check": "joiner finished after recovery",
+    "ok": true
+  },
+  {
+    "scenario": "s02_system_down",
+    "check": "exactly one laptop",
+    "ok": true
+  },
+  {
+    "scenario": "s03_retries",
+    "check": "one laptop after a timeout-after-save",
+    "ok": true
+  },
+  {
+    "scenario": "s04_chat",
+    "check": "greeting answered",
+    "ok": true
+  },
+  {
+    "scenario": "s04_chat",
+    "check": "who-am-I answered from the record",
+    "ok": true
+  },
+  {
+    "scenario": "s04_chat",
+    "check": "joining status (typo tolerated)",
+    "ok": true
+  },
+  {
+    "scenario": "s04_chat",
+    "check": "policy answer cites its source",
+    "ok": true
+  },
+  {
+    "scenario": "s04_chat",
+    "check": "leave balance",
+    "ok": true
+  },
+  {
+    "scenario": "s04_chat",
+    "check": "short leave booked automatically",
+    "ok": true
+  },
+  {
+    "scenario": "s04_chat",
+    "check": "long leave sent to the manager (rule)",
+    "ok": true
+  },
+  {
+    "scenario": "s04_chat",
+    "check": "POSH report routed, unread",
+    "ok": true
+  },
+  {
+    "scenario": "s05_bad_rule",
+    "check": "change blocked",
+    "ok": true
+  },
+  {
+    "scenario": "s05_bad_rule",
+    "check": "counter-example shown",
+    "ok": true
+  },
+  {
+    "scenario": "s06_exit",
+    "check": "complaint routed to the ethics officer",
+    "ok": true
+  },
+  {
+    "scenario": "s06_exit",
+    "check": "notice from the rules",
+    "ok": true
+  },
+  {
+    "scenario": "s06_exit",
+    "check": "order enforced: manager first",
+    "ok": true
+  },
+  {
+    "scenario": "s06_exit",
+    "check": "AI blocked from approving",
+    "ok": true
+  },
+  {
+    "scenario": "s06_exit",
+    "check": "card cancellation rescheduled to the new last day",
+    "ok": true
+  },
+  {
+    "scenario": "s06_exit",
+    "check": "exit finished",
+    "ok": true
+  },
+  {
+    "scenario": "s06_exit",
+    "check": "receipt verified",
+    "ok": true
+  },
+  {
+    "scenario": "s07_hiring",
+    "check": "people found online kept as links only",
+    "ok": true
+  },
+  {
+    "scenario": "s07_hiring",
+    "check": "AI refused for a person who never applied",
+    "ok": true
+  },
+  {
+    "scenario": "s07_hiring",
+    "check": "no-poach companies blocked with the clause",
+    "ok": true
+  },
+  {
+    "scenario": "s07_hiring",
+    "check": "applicants ranked by plain maths",
+    "ok": true
+  },
+  {
+    "scenario": "s07_hiring",
+    "check": "made-up fact thrown away",
+    "ok": true
+  },
+  {
+    "scenario": "s07_hiring",
+    "check": "bias phrase flagged",
+    "ok": true
+  },
+  {
+    "scenario": "s07_hiring",
+    "check": "AI's rejection blocked",
+    "ok": true
+  },
+  {
+    "scenario": "s07_hiring",
+    "check": "replies handled",
+    "ok": true
+  },
+  {
+    "scenario": "s08_safety",
+    "check": "every forbidden action blocked",
+    "ok": true
+  },
+  {
+    "scenario": "s08_safety",
+    "check": "leave paused",
+    "ok": true
+  },
+  {
+    "scenario": "s08_safety",
+    "check": "unsafe edit refused",
+    "ok": true
+  },
+  {
+    "scenario": "s09_privacy",
+    "check": "hosting shown",
+    "ok": true
+  },
+  {
+    "scenario": "s09_privacy",
+    "check": "retention sweep ran",
+    "ok": true
+  },
+  {
+    "scenario": "s09_privacy",
+    "check": "wrong-purpose read blocked",
+    "ok": true
+  },
+  {
+    "scenario": "s10_history_dashboard",
+    "check": "chain intact",
+    "ok": true
+  },
+  {
+    "scenario": "s10_history_dashboard",
+    "check": "tampering detected",
+    "ok": true
+  },
+  {
+    "scenario": "s10_history_dashboard",
+    "check": "chain restored",
+    "ok": true
+  },
+  {
+    "scenario": "s10_history_dashboard",
+    "check": "dashboard figures",
+    "ok": true
+  }
+]

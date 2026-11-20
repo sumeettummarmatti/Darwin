@@ -122,6 +122,11 @@ Only the ones that could change what we do this week. Full list in `DESIGN.md` �
 
 ## Session log
 
+### 2026-11-20 (late) — Recorded evidence of every feature
+
+- `docs/evidence/record_demo.mjs` drives the real console in Chrome and records one video per scenario (10 scenarios, 46 on-screen checks, all passing on Groq; FairHire on the simulator). `docs/EVIDENCE.md` maps every objective, guardrail and edge case to its video and tests; logs of the 96 tests, `hrx validate`, `hrx test` and `make bench` are in `docs/evidence/`.
+- **Found by recording:** "Book 9 days of earned leave from …" (a chat suggestion) was not recognised as a leave request — `intents@v3` adds an action-word + "leave" rule with tests. A refusal title showed a code exception name and a breaker label read "It assets"; both now plain.
+
 ### 2026-11-20 — Plain-language console, real-model fixes, system-down notices
 
 **Shipped**
